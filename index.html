@@ -128,8 +128,7 @@
             ChevronRight: (p) => <Icon {...p} path={<path d="m9 18 6-6-6-6"/>} />,
             Lock: (p) => <Icon {...p} path={<><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>} />,
             Edit: (p) => <Icon {...p} path={<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>} />,
-            Bell: (p) => <Icon {...p} path={<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>} />,
-            Search: (p) => <Icon {...p} path={<><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>} />
+            Bell: (p) => <Icon {...p} path={<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>} />
         };
         const { MapPin, Settings, Moon, Sun, BookOpen, CheckCircle, RefreshCw, Globe, Navigation, Clock, Menu, AlertTriangle, ChevronRight, Lock, Edit, Bell, Search } = Icons;
 
@@ -449,7 +448,7 @@
                                 text: d2.data.ayahs[i] ? d2.data.ayahs[i].text : '',
                                 trans: d3.data.ayahs[i] ? turkify(d3.data.ayahs[i].text) : '',
                                 info: `${getSurahNameTR(ayah.surah.number)} : ${ayah.numberInSurah}`
-                            })); // No slice, show all ayahs in page
+                            })).slice(0, 15);
 
                             if (combined.length > 0) {
                                 setAyahs(combined);
@@ -738,7 +737,7 @@
                 const common = {
                     fatiha: { target: 19, title: "Fatiha", text: "Elhamdülillâhi rabbil'alemin...", arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ" },
                     estag: { target: 100, title: "Estağfirullah", text: "Estağfirullah el azim...", arabic: "أَسْتَغْفِرُ اللّٰهَ" },
-                    salavatM: { target: 10, title: t('salavatMuhammed'), text: "Allahümme salli ala seyyidina Muhammed", arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ" },
+                    salavatM: { target: 10, title: t('salavatMuhammed'), text: "Allahümme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed", arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ" },
                     salavatA: { target: 10, title: t('salavatAdam'), text: "Allâhümme salli alâ seyyidinâ Âdem", arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا آدَمَ" },
                     salavatI: { target: 10, title: t('salavatIsa'), text: "Allâhümme salli alâ seyyidinâ İsâ", arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا عِيسَى" },
                     kehf1: { target: 10, title: t('readFirst10'), type: 'kehf_first_10', isReading: true },
@@ -803,7 +802,7 @@
                     ))}</div>
                     {isFinishedToday ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border border-emerald-100 dark:border-emerald-800">
-                            <CheckCircle size={40} className="text-emerald-500 mb-2"/><h2 className="font-bold text-lg text-emerald-800 dark:text-emerald-100">{t('completed')}</h2>
+                            <CheckCircle size={40} className="text-emerald-500 dark:text-emerald-400 mb-2"/><h2 className="font-bold text-lg text-emerald-800 dark:text-emerald-100">{t('completed')}</h2>
                             <button onClick={reset} className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs">{t('reset')}</button>
                         </div>
                     ) : (
