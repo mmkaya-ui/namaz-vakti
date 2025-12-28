@@ -40,10 +40,8 @@
         button { touch-action: manipulation; }
         body { 
             -webkit-tap-highlight-color: transparent; 
-            overscroll-behavior-y: none; 
-            height: 100vh;
-            height: 100dvh; /* Dynamic viewport height for mobile browsers */
-            overflow: hidden; /* Prevent body scroll */
+            /* overflow: hidden; REMOVED to allow pull-to-refresh */
+            min-height: 100vh;
         }
         /* Number input spinner hide */
         input[type=number]::-webkit-inner-spin-button, 
@@ -51,7 +49,7 @@
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-emerald-200 dark:selection:bg-emerald-800 transition-colors duration-300">
-    <div id="root" class="h-full"></div>
+    <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useCallback, useMemo, memo } = React;
@@ -130,16 +128,17 @@
             ChevronRight: (p) => <Icon {...p} path={<path d="m9 18 6-6-6-6"/>} />,
             Lock: (p) => <Icon {...p} path={<><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>} />,
             Edit: (p) => <Icon {...p} path={<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>} />,
-            Bell: (p) => <Icon {...p} path={<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>} />
+            Bell: (p) => <Icon {...p} path={<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>} />,
+            Search: (p) => <Icon {...p} path={<><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>} />
         };
-        const { MapPin, Settings, Moon, Sun, BookOpen, CheckCircle, RefreshCw, Globe, Navigation, Clock, Menu, AlertTriangle, ChevronRight, Lock, Edit, Bell } = Icons;
+        const { MapPin, Settings, Moon, Sun, BookOpen, CheckCircle, RefreshCw, Globe, Navigation, Clock, Menu, AlertTriangle, ChevronRight, Lock, Edit, Bell, Search } = Icons;
 
         // --- TRANSLATIONS ---
         const TRANSLATIONS = {
             tr: {
                 appName: "Namaz ve Tesbih", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...",
                 prayerTimes: "Namaz Vakitleri", tasbeeh: "Tesbihat", quran: "Kur'an Oku", settings: "Ayarlar",
-                times: "Vakitler", // Fixed Label
+                times: "Vakitler",
                 calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle",
                 asr: "İkindi", maghrib: "Akşam", isha: "Yatsı", midnight: "Gece Yarısı", teheccud: "Teheccüd",
                 kerahatMorning: "İşrak", kerahatNoon: "İstiva", kerahatEvening: "İsfirar",
@@ -161,7 +160,7 @@
             en: {
                 appName: "Prayer & Dhikr", location: "Loc", detectLocation: "Find", searchCity: "City...",
                 prayerTimes: "Times", tasbeeh: "Dhikr", quran: "Read Quran", settings: "Settings",
-                times: "Times", // Fixed Label
+                times: "Times",
                 calcMethod: "Method", language: "Lang", fajr: "Fajr", sunrise: "Sun", dhuhr: "Dhuhr",
                 asr: "Asr", maghrib: "Maghrib", isha: "Isha", midnight: "Midnight", teheccud: "Tahajjud",
                 kerahatMorning: "Ishraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar",
@@ -183,7 +182,7 @@
             de: {
                 appName: "Gebet & Tasbih", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...",
                 prayerTimes: "Zeiten", tasbeeh: "Tasbih", quran: "Koran", settings: "Optionen",
-                times: "Zeiten", // Fixed Label
+                times: "Zeiten",
                 calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonne", dhuhr: "Dhuhur",
                 asr: "Assr", maghrib: "Maghrib", isha: "Ischa", midnight: "Mitternacht", teheccud: "Tahajjud",
                 kerahatMorning: "Ischraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar",
@@ -363,7 +362,7 @@
         );
 
         const Header = memo(({ currentTime, appName, toggleTheme, isDarkMode }) => (
-            <header className="bg-white dark:bg-slate-850 z-10 sticky top-0 border-b border-slate-50 dark:border-slate-800 transition-colors duration-300">
+            <header className="fixed top-0 left-0 right-0 mx-auto max-w-md bg-white dark:bg-slate-850 z-50 border-b border-slate-50 dark:border-slate-800 transition-colors duration-300">
                 <div className="px-4 pt-4 pb-2 flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                         <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white"><Moon size={18} /></div>
@@ -450,7 +449,7 @@
                                 text: d2.data.ayahs[i] ? d2.data.ayahs[i].text : '',
                                 trans: d3.data.ayahs[i] ? turkify(d3.data.ayahs[i].text) : '',
                                 info: `${getSurahNameTR(ayah.surah.number)} : ${ayah.numberInSurah}`
-                            })).slice(0, 15);
+                            })); // No slice, show all ayahs in page
 
                             if (combined.length > 0) {
                                 setAyahs(combined);
@@ -637,7 +636,7 @@
             const fmt = (d) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
             return (
-                <div className="space-y-2 animate-fade-in pb-16">
+                <div className="space-y-2 animate-fade-in pt-20 pb-16">
                     <div className="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden transition-colors duration-300">
                         <div className="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4"><Moon size={100} /></div>
                         <div className="relative z-10 flex justify-between items-start mb-2">
@@ -798,7 +797,7 @@
             }, [isFinishedToday, cooldown, current, count, index, saveProgress]);
 
             return (
-                <div className="pb-20 flex flex-col h-full">
+                <div className="pb-20 flex flex-col h-full pt-20">
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-2 transition-colors duration-300">{['morning', 'ikindi', 'night'].map(m => (
                         <button key={m} onClick={() => setMode(m)} className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition ${mode===m ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{t(m+'Zikr')}</button>
                     ))}</div>
@@ -862,7 +861,7 @@
             }, []);
 
             return (
-                <div className="pb-20 space-y-3">
+                <div className="pb-20 space-y-3 pt-20">
                     <div className="flex justify-between items-center"><h2 className="text-base font-bold text-slate-800 dark:text-slate-100">{t('randomAyahs')} <span className="text-[10px] font-normal text-slate-400">({t('pageInfo')} {pageInfo})</span></h2><button onClick={load} className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full"><RefreshCw size={16} className={loading ? "animate-spin" : ""}/></button></div>
                     {ayahs.length === 0 && !loading ? (
                         <div className="text-center py-6 bg-slate-50 dark:bg-slate-800 rounded-xl border border-dashed border-slate-300 dark:border-slate-700"><BookOpen size={24} className="mx-auto text-slate-300 dark:text-slate-600 mb-2"/><button onClick={load} className="bg-emerald-600 text-white px-3 py-1.5 rounded-full text-xs">{t('loadBtn')}</button></div>
@@ -883,70 +882,93 @@
 
         // SettingsView, Navbar, App ... (Same logic as v2)
         const SettingsView = memo(({ t, locationHook, setMethod, setLang, methodId, lang, setAsrMethod, asrMethod, setOffsets, offsets }) => (
-            <div className="pb-20 space-y-3">
-                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">{t('settings')}</h2>
+            <div className="space-y-2 pb-20 pt-16">
                 
-                {/* Location */}
-                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
-                    <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><MapPin size={14} className="mr-2 text-emerald-500" /> {t('location')}</h3>
-                    <button onClick={locationHook.getUserLocation} className="w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 py-1.5 rounded-lg text-xs font-medium flex justify-center items-center"><Navigation size={10} className="mr-1"/> {t('detectLocation')}</button>
-                    <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex space-x-2"><input name="q" placeholder={t('searchCity')} className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"/><button className="bg-slate-800 dark:bg-slate-700 text-white px-2.5 rounded-lg text-[10px]">{t('search')}</button></form>
-                    <p className="text-[9px] text-center text-slate-400">{locationHook.locationName}</p>
-                </div>
-
-                {/* Notifications */}
-                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
-                    <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Bell size={14} className="mr-2 text-emerald-500" /> {t('notifications')}</h3>
-                    <button onClick={async () => { const granted = await requestNotificationPermission(); if(granted) alert(t('notificationGranted')); }} className="w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 py-1.5 rounded-lg text-xs font-medium">{t('enableNotifications')}</button>
-                </div>
-
-                {/* Calculation Method */}
-                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
-                    <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Settings size={14} className="mr-2 text-emerald-500" /> {t('calcMethod')}</h3>
-                    <div className="grid gap-1.5">{CALCULATION_METHODS.map(m => (<button key={m.id} onClick={() => { setMethod(m.id); safeStorage.setItem('calcMethod', m.id); }} className={`text-left px-2 py-1.5 rounded-lg text-[10px] transition ${methodId === m.id ? 'bg-emerald-600 text-white' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}><span>{m.name}</span></button>))}</div>
-                </div>
-
-                {/* Asr Method */}
-                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
-                    <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Settings size={14} className="mr-2 text-emerald-500" /> {t('asrMethod')}</h3>
-                    <div className="grid gap-1.5 grid-cols-2">
-                         <button onClick={() => { setAsrMethod(0); safeStorage.setItem('asrMethod', 0); }} className={`px-2 py-1.5 rounded-lg text-[10px] transition ${asrMethod === 0 ? 'bg-emerald-600 text-white' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>{t('standard')}</button>
-                         <button onClick={() => { setAsrMethod(1); safeStorage.setItem('asrMethod', 1); }} className={`px-2 py-1.5 rounded-lg text-[10px] transition ${asrMethod === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>{t('hanafi')}</button>
+                {/* Location - Compact */}
+                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><MapPin size={14} className="mr-1.5 text-emerald-500" /> {t('location')}</h3>
+                        <span className="text-[9px] text-slate-400 max-w-[120px] truncate">{locationHook.locationName}</span>
+                    </div>
+                    <div className="flex space-x-2">
+                         <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex-1 flex space-x-1">
+                            <input name="q" placeholder={t('searchCity')} className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-w-0"/>
+                            <button className="bg-slate-800 dark:bg-slate-700 text-white px-2 rounded-lg"><Icon path={<><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>} size={14}/></button> {/* Simple Search Icon inline */}
+                        </form>
+                        <button onClick={locationHook.getUserLocation} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 rounded-lg flex items-center justify-center"><Navigation size={14}/></button>
                     </div>
                 </div>
 
-                {/* Time Offsets */}
-                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
+                {/* Calculation Method (Dropdown) & Asr Method (Toggle) - Grouped */}
+                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-3">
+                    {/* Calc Method */}
+                    <div className="flex flex-col space-y-1">
+                        <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Settings size={14} className="mr-1.5 text-emerald-500" /> {t('calcMethod')}</h3>
+                        <select 
+                            value={methodId} 
+                            onChange={(e) => { setMethod(parseInt(e.target.value)); safeStorage.setItem('calcMethod', e.target.value); }}
+                            className="w-full bg-slate-50 dark:bg-slate-900 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300"
+                        >
+                            {CALCULATION_METHODS.map(m => (
+                                <option key={m.id} value={m.id}>{m.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="h-px bg-slate-100 dark:bg-slate-800"></div>
+
+                    {/* Asr Method */}
                     <div className="flex justify-between items-center">
-                        <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Edit size={14} className="mr-2 text-emerald-500" /> {t('timeAdjustments')}</h3>
+                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs">{t('asrMethod')}</h3>
+                         <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
+                            <button onClick={() => { setAsrMethod(0); safeStorage.setItem('asrMethod', 0); }} className={`px-2 py-1 rounded-md text-[10px] transition ${asrMethod === 0 ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{t('standard')}</button>
+                            <button onClick={() => { setAsrMethod(1); safeStorage.setItem('asrMethod', 1); }} className={`px-2 py-1 rounded-md text-[10px] transition ${asrMethod === 1 ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{t('hanafi')}</button>
+                         </div>
+                    </div>
+                </div>
+
+                {/* Notifications & Language - Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                     <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
+                        <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs mb-2"><Bell size={14} className="mr-1.5 text-emerald-500" /> {t('notifications')}</h3>
+                        <button onClick={async () => { const granted = await requestNotificationPermission(); if(granted) alert(t('notificationGranted')); }} className="w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 py-1.5 rounded-lg text-[10px] font-medium">{t('enableNotifications')}</button>
+                     </div>
+
+                     <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
+                        <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs mb-2"><Globe size={14} className="mr-1.5 text-emerald-500" /> {t('language')}</h3>
+                        <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
+                            {['tr', 'en', 'de'].map(l => (
+                                <button key={l} onClick={() => setLang(l)} className={`flex-1 py-1 text-[10px] rounded uppercase ${lang === l ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{l}</button>
+                            ))}
+                        </div>
+                     </div>
+                </div>
+
+                {/* Time Offsets - Compact Grid */}
+                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Edit size={14} className="mr-1.5 text-emerald-500" /> {t('timeAdjustments')}</h3>
                         <button onClick={() => safeStorage.setItem('timeOffsets', JSON.stringify(offsets))} className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded">{t('save')}</button>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-6 gap-1">
                         {['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'].map(p => (
-                            <div key={p} className="flex flex-col">
-                                <label className="text-[9px] text-slate-500 dark:text-slate-400 mb-1 capitalize">{t(p)}</label>
+                            <div key={p} className="flex flex-col items-center">
+                                <label className="text-[8px] text-slate-400 dark:text-slate-500 mb-0.5 capitalize truncate w-full text-center">{t(p).substring(0,3)}</label>
                                 <input 
                                     type="number" 
                                     value={offsets[p]} 
                                     onChange={(e) => setOffsets({...offsets, [p]: e.target.value})}
-                                    className="border dark:border-slate-700 rounded p-1 text-[10px] text-center bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500"
+                                    className="w-full border dark:border-slate-700 rounded p-1 text-[10px] text-center bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500"
                                 />
                             </div>
                         ))}
                     </div>
                 </div>
-
-                {/* Language */}
-                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
-                    <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Globe size={14} className="mr-2 text-emerald-500" /> {t('language')}</h3>
-                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg transition-colors duration-300">{['tr', 'en', 'de'].map(l => (<button key={l} onClick={() => setLang(l)} className={`flex-1 py-1 text-[10px] rounded uppercase ${lang === l ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{l}</button>))}</div>
-                </div>
-
             </div>
         ));
 
-        const Navbar = memo(({ active, setActive, t }) => (
-            <nav className="absolute bottom-0 w-full bg-white dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 px-4 py-2 flex justify-between items-center z-20 shadow-lg transition-colors duration-300">
+        const Navbar = memo(({ active, setActive, t, className }) => (
+            <nav className={`fixed bottom-0 left-0 right-0 mx-auto max-w-md bg-white dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 px-4 py-2 flex justify-between items-center z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] pb-6 ${className}`}>
                 {[{ id: 'times', i: Clock }, { id: 'tasbeeh', i: RefreshCw }, { id: 'quran', i: BookOpen }, { id: 'settings', i: Menu }].map(b => (
                     <button key={b.id} onClick={() => {
                         if (active !== b.id) {
@@ -1016,7 +1038,7 @@
             }, []);
 
             return (
-                <div className="max-w-md mx-auto h-[100dvh] bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden flex flex-col">
+                <div className="max-w-md mx-auto h-[100dvh] bg-white dark:bg-slate-900 shadow-2xl relative flex flex-col">
                     <Header currentTime={currentTime} appName={t('appName')} toggleTheme={toggleTheme} isDarkMode={isDarkMode} />
                     <main className="flex-1 p-3 overflow-y-auto no-scrollbar relative z-0">
                         {activeTab === 'times' && <PrayerTimesView prayerData={prayerData.data} loading={prayerData.loading} currentTime={currentTime} locationName={location.locationName} t={t} offsets={offsets} />}
