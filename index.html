@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#059669">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Namaz ve Tesbih</title>
+    
+    <!-- PWA Manifest (Embedded) -->
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiTmFtYXogdmUgVGVzYmloIiwic2hvcnRfbmFtZSI6Ik5hbWF6Iiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNmZmZmZmYiLCJ0aGVtZV9jb2xvciI6IiMwNTk2NjkiLCJpY29ucyI6W3sic3JjIjoiaHR0cHM6Ly9jZG4taWNvbnMtcG5nLmZsYXRpY29uLmNvbS81MTIvNTEyMC81MTIwOTAxLnBuZyIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9wbmcifV19">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -30,14 +36,22 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
-        body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+        /* Disable double-tap zoom on buttons for app-like feel */
+        button { touch-action: manipulation; }
+        body { 
+            -webkit-tap-highlight-color: transparent; 
+            overscroll-behavior-y: none; 
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile browsers */
+            overflow: hidden; /* Prevent body scroll */
+        }
         /* Number input spinner hide */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-emerald-200 dark:selection:bg-emerald-800 transition-colors duration-300">
-    <div id="root"></div>
+    <div id="root" class="h-full"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useCallback, useMemo, memo } = React;
@@ -77,17 +91,24 @@
             removeItem: (key) => { try { localStorage.removeItem(key); } catch (e) { } }
         };
 
-        // --- ASYNC RETRY HELPER ---
-        const fetchWithRetry = async (url, retries = 3) => {
-            for (let i = 0; i < retries; i++) {
+        // --- NOTIFICATION HELPER ---
+        const requestNotificationPermission = async () => {
+            if (!("Notification" in window)) {
+                alert("Bu tarayıcı bildirimleri desteklemiyor.");
+                return false;
+            }
+            const permission = await Notification.requestPermission();
+            return permission === "granted";
+        };
+
+        const sendNotification = (title, body) => {
+            if ("Notification" in window && Notification.permission === "granted") {
                 try {
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error(`Status ${res.status}`);
-                    return await res.json();
-                } catch (err) {
-                    if (i === retries - 1) throw err;
-                    await new Promise(r => setTimeout(r, 1000)); // wait 1s before retry
-                }
+                    new Notification(title, { 
+                        body, 
+                        icon: 'https://cdn-icons-png.flaticon.com/512/5110/5110594.png' 
+                    });
+                } catch(e) { console.error(e); }
             }
         };
 
@@ -108,15 +129,17 @@
             AlertTriangle: (p) => <Icon {...p} path={<><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></>} />,
             ChevronRight: (p) => <Icon {...p} path={<path d="m9 18 6-6-6-6"/>} />,
             Lock: (p) => <Icon {...p} path={<><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>} />,
-            Edit: (p) => <Icon {...p} path={<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>} />
+            Edit: (p) => <Icon {...p} path={<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>} />,
+            Bell: (p) => <Icon {...p} path={<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>} />
         };
-        const { MapPin, Settings, Moon, Sun, BookOpen, CheckCircle, RefreshCw, Globe, Navigation, Clock, Menu, AlertTriangle, ChevronRight, Lock, Edit } = Icons;
+        const { MapPin, Settings, Moon, Sun, BookOpen, CheckCircle, RefreshCw, Globe, Navigation, Clock, Menu, AlertTriangle, ChevronRight, Lock, Edit, Bell } = Icons;
 
         // --- TRANSLATIONS ---
         const TRANSLATIONS = {
             tr: {
                 appName: "Namaz ve Tesbih", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...",
-                prayerTimes: "Namaz", tasbeeh: "Tesbihat", quran: "Kur'an Oku", settings: "Ayarlar",
+                prayerTimes: "Namaz Vakitleri", tasbeeh: "Tesbihat", quran: "Kur'an Oku", settings: "Ayarlar",
+                times: "Vakitler", // Fixed Label
                 calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle",
                 asr: "İkindi", maghrib: "Akşam", isha: "Yatsı", midnight: "Gece Yarısı", teheccud: "Teheccüd",
                 kerahatMorning: "İşrak", kerahatNoon: "İstiva", kerahatEvening: "İsfirar",
@@ -132,11 +155,13 @@
                 salavatIsa: "İsa (a.s)", salavatMuhammed: "Salavat-ı Şerife",
                 salavatBedr: "Bedir & Kehf Salavatı", tryAgain: "Tekrar Dene", connectionError: "Bağlantı Hatası",
                 pageInfo: "Sayfa", asrMethod: "İkindi Yöntemi", standard: "Standart (Cumhur)", hanafi: "Hanefi (Geç İkindi)",
-                timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet"
+                timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet",
+                enableNotifications: "Bildirim İzni Ver", notificationGranted: "Bildirim İzni Verildi", notifications: "Bildirimler"
             },
             en: {
                 appName: "Prayer & Dhikr", location: "Loc", detectLocation: "Find", searchCity: "City...",
                 prayerTimes: "Times", tasbeeh: "Dhikr", quran: "Read Quran", settings: "Settings",
+                times: "Times", // Fixed Label
                 calcMethod: "Method", language: "Lang", fajr: "Fajr", sunrise: "Sun", dhuhr: "Dhuhr",
                 asr: "Asr", maghrib: "Maghrib", isha: "Isha", midnight: "Midnight", teheccud: "Tahajjud",
                 kerahatMorning: "Ishraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar",
@@ -152,12 +177,14 @@
                 salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat",
                 salavatBedr: "Badr & Kahf", tryAgain: "Try Again", connectionError: "Connection Error",
                 pageInfo: "Page", asrMethod: "Asr Method", standard: "Standard", hanafi: "Hanafi",
-                timeAdjustments: "Time Adjustments (min)", save: "Save"
+                timeAdjustments: "Time Adjustments (min)", save: "Save",
+                enableNotifications: "Enable Notifications", notificationGranted: "Notifications Enabled", notifications: "Notifications"
             },
             de: {
                 appName: "Gebet & Tasbih", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...",
                 prayerTimes: "Zeiten", tasbeeh: "Tasbih", quran: "Koran", settings: "Optionen",
-                calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonnenaufgang", dhuhr: "Dhuhur",
+                times: "Zeiten", // Fixed Label
+                calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonne", dhuhr: "Dhuhur",
                 asr: "Assr", maghrib: "Maghrib", isha: "Ischa", midnight: "Mitternacht", teheccud: "Tahajjud",
                 kerahatMorning: "Ischraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar",
                 remaining: "Rest", loading: "Laden...", error: "Fehler", morningZikr: "Morgen",
@@ -172,7 +199,8 @@
                 salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat",
                 salavatBedr: "Badr & Kahf", tryAgain: "Wiederholen", connectionError: "Verbindungsfehler",
                 pageInfo: "Seite", asrMethod: "Assr Methode", standard: "Standard", hanafi: "Hanafi",
-                timeAdjustments: "Zeitanpassungen (Min)", save: "Speichern"
+                timeAdjustments: "Zeitanpassungen (Min)", save: "Speichern",
+                enableNotifications: "Benachrichtigungen aktivieren", notificationGranted: "Benachrichtigungen aktiviert", notifications: "Benachrichtigungen"
             }
         };
 
@@ -292,7 +320,6 @@
             return useMemo(() => ({ coords, locationName, loading, getUserLocation, searchLocation }), [coords, locationName, loading, getUserLocation, searchLocation]);
         };
 
-        // Updated PrayerTimes Hook to support Hanafi School (asrMethod)
         const usePrayerTimes = (coords, methodId, asrMethod) => {
             const [data, setData] = useState(null);
             const [loading, setLoading] = useState(false);
@@ -336,8 +363,8 @@
         );
 
         const Header = memo(({ currentTime, appName, toggleTheme, isDarkMode }) => (
-            <header className="px-4 pt-4 pb-2 bg-white dark:bg-slate-850 z-10 sticky top-0 border-b border-slate-50 dark:border-slate-800 transition-colors duration-300">
-                <div className="flex justify-between items-center">
+            <header className="bg-white dark:bg-slate-850 z-10 sticky top-0 border-b border-slate-50 dark:border-slate-800 transition-colors duration-300">
+                <div className="px-4 pt-4 pb-2 flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                         <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white"><Moon size={18} /></div>
                         <span className="font-bold text-base tracking-tight text-slate-800 dark:text-slate-100">{appName}</span>
@@ -696,8 +723,9 @@
                 const today = new Date().toISOString().split('T')[0];
                 safeStorage.setItem(`tasbeeh_status_${mode}`, JSON.stringify({ date: today, finished: true }));
                 safeStorage.removeItem(`tasbeeh_progress_${mode}`); // Clear progress on finish
+                sendNotification("Tesbihat Tamamlandı", `${t(mode + 'Zikr')} başarıyla tamamlandı.`);
                 setIsFinishedToday(true);
-            }, [mode]);
+            }, [mode, t]);
 
             const reset = useCallback(() => {
                 const today = new Date().toISOString().split('T')[0];
@@ -866,6 +894,12 @@
                     <p className="text-[9px] text-center text-slate-400">{locationHook.locationName}</p>
                 </div>
 
+                {/* Notifications */}
+                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Bell size={14} className="mr-2 text-emerald-500" /> {t('notifications')}</h3>
+                    <button onClick={async () => { const granted = await requestNotificationPermission(); if(granted) alert(t('notificationGranted')); }} className="w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 py-1.5 rounded-lg text-xs font-medium">{t('enableNotifications')}</button>
+                </div>
+
                 {/* Calculation Method */}
                 <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
                     <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Settings size={14} className="mr-2 text-emerald-500" /> {t('calcMethod')}</h3>
@@ -912,7 +946,7 @@
         ));
 
         const Navbar = memo(({ active, setActive, t }) => (
-            <nav className="absolute bottom-0 w-full bg-white dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 px-4 py-2 flex justify-between items-center z-20 shadow-lg">
+            <nav className="absolute bottom-0 w-full bg-white dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 px-4 py-2 flex justify-between items-center z-20 shadow-lg transition-colors duration-300">
                 {[{ id: 'times', i: Clock }, { id: 'tasbeeh', i: RefreshCw }, { id: 'quran', i: BookOpen }, { id: 'settings', i: Menu }].map(b => (
                     <button key={b.id} onClick={() => {
                         if (active !== b.id) {
@@ -982,17 +1016,15 @@
             }, []);
 
             return (
-                <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-emerald-200 dark:selection:bg-emerald-800 transition-colors duration-300">
-                    <div className="max-w-md mx-auto min-h-screen bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden flex flex-col">
-                        <Header currentTime={currentTime} appName={t('appName')} toggleTheme={toggleTheme} isDarkMode={isDarkMode} />
-                        <main className="flex-1 p-3 overflow-y-auto no-scrollbar">
-                            {activeTab === 'times' && <PrayerTimesView prayerData={prayerData.data} loading={prayerData.loading} currentTime={currentTime} locationName={location.locationName} t={t} offsets={offsets} />}
-                            {activeTab === 'tasbeeh' && <TasbeehView t={t} />}
-                            {activeTab === 'quran' && <QuranView t={t} />}
-                            {activeTab === 'settings' && <SettingsView t={t} locationHook={location} setMethod={setMethodId} setLang={setLang} methodId={methodId} lang={lang} asrMethod={asrMethod} setAsrMethod={setAsrMethod} offsets={offsets} setOffsets={setOffsets} />}
-                        </main>
-                        <Navbar active={activeTab} setActive={setActiveTab} t={t} />
-                    </div>
+                <div className="max-w-md mx-auto h-[100dvh] bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden flex flex-col">
+                    <Header currentTime={currentTime} appName={t('appName')} toggleTheme={toggleTheme} isDarkMode={isDarkMode} />
+                    <main className="flex-1 p-3 overflow-y-auto no-scrollbar relative z-0">
+                        {activeTab === 'times' && <PrayerTimesView prayerData={prayerData.data} loading={prayerData.loading} currentTime={currentTime} locationName={location.locationName} t={t} offsets={offsets} />}
+                        {activeTab === 'tasbeeh' && <TasbeehView t={t} />}
+                        {activeTab === 'quran' && <QuranView t={t} />}
+                        {activeTab === 'settings' && <SettingsView t={t} locationHook={location} setMethod={setMethodId} setLang={setLang} methodId={methodId} lang={lang} asrMethod={asrMethod} setAsrMethod={setAsrMethod} offsets={offsets} setOffsets={setOffsets} />}
+                    </main>
+                    <Navbar active={activeTab} setActive={setActiveTab} t={t} className="shrink-0 z-20" />
                 </div>
             );
         }
