@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Namaz ve Tesbih</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: { 850: '#1e293b' }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- React Dependencies -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+        body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+        /* Number input spinner hide */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-emerald-200 dark:selection:bg-emerald-800 transition-colors duration-300">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useMemo, memo } = React;
+
+        // --- CONSTANTS ---
+        const SURAH_NAMES_TR = [
+            "Fatiha", "Bakara", "Ali İmran", "Nisa", "Maide", "En'am", "Araf", "Enfal", "Tevbe", "Yunus", "Hud", "Yusuf", "Ra'd", "İbrahim", "Hicr", "Nahl", "İsra", "Kehf", "Meryem", "Taha", "Enbiya", "Hac", "Mü'minun", "Nur", "Furkan", "Şuara", "Neml", "Kasas", "Ankebut", "Rum", "Lokman", "Secde", "Ahzab", "Sebe", "Fatır", "Yasin", "Saffat", "Sad", "Zümer", "Mü'min", "Fussilet", "Şura", "Zuhruf", "Duhan", "Casiye", "Ahkaf", "Muhammed", "Fetih", "Hucurat", "Kaf", "Zariyat", "Tur", "Necm", "Kamer", "Rahman", "Vakıa", "Hadid", "Mücadele", "Haşr", "Mümtehine", "Saf", "Cuma", "Münafikun", "Tegabun", "Talak", "Tahrim", "Mülk", "Kalem", "Hakka", "Mearic", "Nuh", "Cin", "Müzzemmil", "Müddessir", "Kıyamet", "İnsan", "Mürselat", "Nebe", "Naziat", "Abese", "Tekvir", "İnfitar", "Mutaffifin", "İnşikak", "Buruc", "Tarık", "A'la", "Gaşiye", "Fecr", "Beled", "Şems", "Leyl", "Duha", "İnşirah", "Tin", "Alak", "Kadir", "Beyyine", "Zilzal", "Adiyat", "Karia", "Tekasür", "Asr", "Hümeze", "Fil", "Kureyn", "Maun", "Kevser", "Kafirun", "Nasr", "Tebbet", "İhlas", "Felak", "Nas"
+        ];
+        const getSurahNameTR = (num) => (num > 0 && num <= 114) ? SURAH_NAMES_TR[num - 1] : "Sure " + num;
+
+        // --- UTILS ---
+        const turkify = (text) => {
+            if(!text) return "";
+            return text
+                .replace(/'/g, '')
+                .replace(/aa/g, 'â').replace(/Aa/g, 'Â')
+                .replace(/ii/g, 'î').replace(/ee/g, 'î')
+                .replace(/uu/g, 'û').replace(/oo/g, 'û')
+                .replace(/sh/g, 'ş').replace(/Sh/g, 'Ş')
+                .replace(/ch/g, 'ç').replace(/Ch/g, 'Ç')
+                .replace(/gh/g, 'ğ').replace(/Gh/g, 'Ğ')
+                .replace(/kh/g, 'h').replace(/Kh/g, 'H')
+                .replace(/dh/g, 'z').replace(/Dh/g, 'Z')
+                .replace(/th/g, 's').replace(/Th/g, 'S')
+                .replace(/q/g, 'k').replace(/Q/g, 'K')
+                .replace(/w/g, 'v').replace(/W/g, 'V')
+                .replace(/j/g, 'c').replace(/J/g, 'C')
+                .replace(/\b(Wa|Va)\b/gi, 'Ve').replace(/^Wa/g, 'Ve').replace(/ wa/g, ' ve').replace(/ va/g, ' ve')
+                .replace(/ai/g, 'ey').replace(/ay/g, 'ey')
+                .replace(/ou/g, 'u')
+                .replace(/([^y])y\b/g, '$1i');
+        };
+
+        const safeStorage = {
+            getItem: (key) => { try { return localStorage.getItem(key); } catch (e) { return null; } },
+            setItem: (key, val) => { try { localStorage.setItem(key, val); } catch (e) { } },
+            removeItem: (key) => { try { localStorage.removeItem(key); } catch (e) { } }
+        };
+
+        // --- ASYNC RETRY HELPER ---
+        const fetchWithRetry = async (url, retries = 3) => {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`Status ${res.status}`);
+                    return await res.json();
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    await new Promise(r => setTimeout(r, 1000)); // wait 1s before retry
+                }
+            }
+        };
+
+        // --- ICONS ---
+        const Icon = ({ path, size = 20, className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{path}</svg>;
+        const Icons = {
+            MapPin: (p) => <Icon {...p} path={<><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></>} />,
+            Settings: (p) => <Icon {...p} path={<><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1-1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></>} />,
+            Moon: (p) => <Icon {...p} path={<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>} />,
+            Sun: (p) => <Icon {...p} path={<><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></>} />,
+            BookOpen: (p) => <Icon {...p} path={<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>} />,
+            CheckCircle: (p) => <Icon {...p} path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></>} />,
+            RefreshCw: (p) => <Icon {...p} path={<><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></>} />,
+            Globe: (p) => <Icon {...p} path={<><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></>} />,
+            Navigation: (p) => <Icon {...p} path={<polygon points="3 11 22 2 13 21 11 13 3 11"/>} />,
+            Clock: (p) => <Icon {...p} path={<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>} />,
+            Menu: (p) => <Icon {...p} path={<><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></>} />,
+            AlertTriangle: (p) => <Icon {...p} path={<><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></>} />,
+            ChevronRight: (p) => <Icon {...p} path={<path d="m9 18 6-6-6-6"/>} />,
+            Lock: (p) => <Icon {...p} path={<><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>} />,
+            Edit: (p) => <Icon {...p} path={<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>} />
+        };
+        const { MapPin, Settings, Moon, Sun, BookOpen, CheckCircle, RefreshCw, Globe, Navigation, Clock, Menu, AlertTriangle, ChevronRight, Lock, Edit } = Icons;
+
+        // --- TRANSLATIONS ---
+        const TRANSLATIONS = {
+            tr: {
+                appName: "Namaz ve Tesbih", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...",
+                prayerTimes: "Namaz", tasbeeh: "Tesbihat", quran: "Kur'an Oku", settings: "Ayarlar",
+                calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle",
+                asr: "İkindi", maghrib: "Akşam", isha: "Yatsı", midnight: "Gece Yarısı", teheccud: "Teheccüd",
+                kerahatMorning: "İşrak", kerahatNoon: "İstiva", kerahatEvening: "İsfirar",
+                remaining: "Kalan", loading: "Yükleniyor...", error: "Hata", morningZikr: "Sabah",
+                ikindiZikr: "İkindi", nightZikr: "Yatsı", tapToCount: "Dokun",
+                completed: "Tamamlandı", next: "İleri", nextZikr: "Sonraki", nextAyah: "Sıradaki",
+                reset: "Sıfırla", manualLocation: "Konum", search: "Ara", randomAyahs: "Rastgele Bir Sayfa",
+                turkishTrans: "Okunuş", turkishMean: "Meal", amenarresulu: "Amenerrasulü",
+                nextPrayer: "Vakit", now: "Şu an", bestTimeTeheccud: "Gece namazı vakti",
+                kerahatHeader: "Kerahat", step: "Adım", target: "Hedef", loadContent: "Yükle",
+                loadBtn: "Getir", readFirst10: "Kehf (İlk 10)", readLast10: "Kehf (Son 10)",
+                read15Random: "15 Ayet Oku", salavatAdam: "Adem (a.s)",
+                salavatIsa: "İsa (a.s)", salavatMuhammed: "Salavat-ı Şerife",
+                salavatBedr: "Bedir & Kehf Salavatı", tryAgain: "Tekrar Dene", connectionError: "Bağlantı Hatası",
+                pageInfo: "Sayfa", asrMethod: "İkindi Yöntemi", standard: "Standart (Cumhur)", hanafi: "Hanefi (Geç İkindi)",
+                timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet"
+            },
+            en: {
+                appName: "Prayer & Dhikr", location: "Loc", detectLocation: "Find", searchCity: "City...",
+                prayerTimes: "Times", tasbeeh: "Dhikr", quran: "Read Quran", settings: "Settings",
+                calcMethod: "Method", language: "Lang", fajr: "Fajr", sunrise: "Sun", dhuhr: "Dhuhr",
+                asr: "Asr", maghrib: "Maghrib", isha: "Isha", midnight: "Midnight", teheccud: "Tahajjud",
+                kerahatMorning: "Ishraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar",
+                remaining: "Left", loading: "Loading...", error: "Error", morningZikr: "Morning",
+                ikindiZikr: "Asr", nightZikr: "Night", tapToCount: "Tap",
+                completed: "Done", next: "Next", nextZikr: "Next", nextAyah: "Next",
+                reset: "Reset", manualLocation: "Loc", search: "Go", randomAyahs: "Random Page",
+                turkishTrans: "Pronunciation", turkishMean: "Meaning", amenarresulu: "Amenarrasul",
+                nextPrayer: "Next", now: "Now", bestTimeTeheccud: "Night prayer",
+                kerahatHeader: "Kerahat", step: "Step", target: "Goal", loadContent: "Load",
+                loadBtn: "Load", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Last 10)",
+                read15Random: "Read 15 Ayahs", salavatAdam: "Adam (as)",
+                salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat",
+                salavatBedr: "Badr & Kahf", tryAgain: "Try Again", connectionError: "Connection Error",
+                pageInfo: "Page", asrMethod: "Asr Method", standard: "Standard", hanafi: "Hanafi",
+                timeAdjustments: "Time Adjustments (min)", save: "Save"
+            },
+            de: {
+                appName: "Gebet & Tasbih", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...",
+                prayerTimes: "Zeiten", tasbeeh: "Tasbih", quran: "Koran", settings: "Optionen",
+                calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonnenaufgang", dhuhr: "Dhuhur",
+                asr: "Assr", maghrib: "Maghrib", isha: "Ischa", midnight: "Mitternacht", teheccud: "Tahajjud",
+                kerahatMorning: "Ischraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar",
+                remaining: "Rest", loading: "Laden...", error: "Fehler", morningZikr: "Morgen",
+                ikindiZikr: "Assr", nightZikr: "Nacht", tapToCount: "Tippen",
+                completed: "Fertig", next: "Weiter", nextZikr: "Weiter", nextAyah: "Weiter",
+                reset: "Reset", manualLocation: "Ort", search: "Suche", randomAyahs: "Zufällige Seite",
+                turkishTrans: "Aussprache", turkishMean: "Bedeutung", amenarresulu: "Amenarrasul",
+                nextPrayer: "Nächstes", now: "Jetzt", bestTimeTeheccud: "Nachtgebet",
+                kerahatHeader: "Kerahat", step: "Schritt", target: "Ziel", loadContent: "Laden",
+                loadBtn: "Laden", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Letzte)",
+                read15Random: "15 Verse Lesen", salavatAdam: "Adam (as)",
+                salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat",
+                salavatBedr: "Badr & Kahf", tryAgain: "Wiederholen", connectionError: "Verbindungsfehler",
+                pageInfo: "Seite", asrMethod: "Assr Methode", standard: "Standard", hanafi: "Hanafi",
+                timeAdjustments: "Zeitanpassungen (Min)", save: "Speichern"
+            }
+        };
+
+        const CALCULATION_METHODS = [
+            { id: 13, name: 'Diyanet', short: 'Diyanet' },
+            { id: 3, name: 'Muslim World League', short: 'MWL' },
+            { id: 2, name: 'ISNA', short: 'ISNA' },
+            { id: 5, name: 'Egypt', short: 'Egypt' },
+        ];
+
+        const KEHF_DATA = {
+            first10: [
+                { n: 1, tr: "Elhamdülillâhillezî enzele alâ abdihil kitâbe ve lem yec'al lehu ivecâ.", me: "Hamd, kuluna Kitab'ı (Kur'an'ı) indiren ve onda hiçbir eğrilik yapmayan Allah'a mahsustur." },
+                { n: 2, tr: "Kayyimen li yünzira be'sen şedîden min ledünhü ve yübeşşiral mü'minînellezîne ya'melûnes sâlihâti enne lehüm ecran hasenâ.", me: "(Allah onu), katından gelecek şiddetli bir azap ile (inanmayanları) uyarmak, salih ameller işleyen mü'minleri, kendileri için güzel bir mükafat bulunduğu müjdesini vermek için dosdoğru bir kitap kıldı." },
+                { n: 3, tr: "Mâkisîne fîhi ebedâ.", me: "Onlar orada ebedî kalacaklardır." },
+                { n: 4, tr: "Ve yünzirallezîne kâlûttehazallâhü veledâ.", me: "Ve «Allah çocuk edindi» diyenleri uyarmak için (bu Kitab'ı indirdi)." },
+                { n: 5, tr: "Mâ lehüm bihî min ilmin ve lâ li âbâihim, keburat kelimeten tahrucü min efvâhihim, in yekûlûne illâ kezibâ.", me: "Bu konuda ne kendilerinin ne de atalarının bir bilgisi vardır. Ağızlarından çıkan o söz ne büyük bir sözdür! Onlar yalandan başka bir şey söylemiyorlar." },
+                { n: 6, tr: "Fe lealleke bâhiun nefseke alâ âsârihim in lem yü'minû bi hâzel hadîsi esefâ.", me: "Şimdi onlar bu söze (Kur'an'a) inanmazlarsa, sen onların peşinden üzülerek neredeyse kendini helak edeceksin!" },
+                { n: 7, tr: "İnnâ cealnâ mâ alel ardı zîneten lehâ li neblüvehüm eyyühüm ahsenü amelâ.", me: "Biz yeryüzündeki şeyleri, insanların hangisinin daha güzel amel işleyeceğini denemek için yeryüzüne süs kıldık." },
+                { n: 8, tr: "Ve innâ le câilûne mâ aleyhâ saîden curuzâ.", me: "Biz mutlaka (zamanı gelince) yeryüzündeki her şeyi kupkuru bir toprak yapacağız." },
+                { n: 9, tr: "Em hasibte enne ashâbel kehfi ver rakîmi kânû min âyâtinâ acebâ.", me: "Yoksa sen, sadece Ashâb-ı Kehf ve Ashâb-ı Rakîm'i mi bizim ibret verici delillerimizden sandın?" },
+                { n: 10, tr: "İz evel fityetü ilel kehfi fe kâlû Rabbenâ âtinâ min ledünke rahmeten ve heyyi' lenâ min emrinâ raşedâ.", me: "O gençler mağaraya sığınmışlar ve «Rabbimiz! Bize katından rahmet ver ve işimizde bize doğruyu göster, bizi başarılı kıl» demişlerdi." }
+            ],
+            last10: [
+                { n: 101, tr: "Ellezîne kânet a'yunühüm fî gıtâin an zikrî ve kânû lâ yestetîûne sem'â.", me: "Onlar, beni hatırlama konusunda gözleri perdeli olan ve (Kur'an'ı) dinlemeye tahammül edemeyen kimselerdi." },
+                { n: 102, tr: "E fe hasibellezîne keferû en yettehizû ibâdî min dûnî evliyâ', innâ a'tednâ li cehenneme lil kâfirîne nüzülâ.", me: "İnkâr edenler, beni bırakıp da kullarımı veliler edineceklerini mi sandılar? Biz cehennemi kâfirlere konak yeri olarak hazırladık." },
+                { n: 103, tr: "Kul hel nünebbiüküm bil ahserîne a'mâlâ.", me: "De ki: «Size, (yaptıkları) işler bakımından en çok ziyana uğrayanları bildirelim mi?»" },
+                { n: 104, tr: "Ellezîne dalle sa'yühüm fil hayâtid dunyâ ve hüm yahsebûne ennehüm yuhsinûne sun'â.", me: "Onlar, dünya hayatında çabaları boşa giden, oysa kendilerinin güzel iş yaptıklarını sanan kimselerdir." },
+                { n: 105, tr: "Ülâikellezîne keferû bi âyâti Rabbihim ve likâihî fe habitat a'mâlühüm fe lâ nukîmü lehüm yevmel kıyâmeti veznâ.", me: "İşte onlar, Rablerinin âyetlerini ve O'na kavuşmayı inkâr eden, bu yüzden amelleri boşa giden kimselerdir. Kıyamet günü biz onlar için bir terazi kurmayacağız (onlara değer vermeyeceğiz)." },
+                { n: 106, tr: "Zâlike cezâühüm cehennemü bimâ keferû vettehazû âyâtî ve rusülî hüzüvâ.", me: "İşte böyle; inkâr etmeleri, âyetlerimi ve peygamberlerimi alaya almaları yüzünden onların cezası cehennemdir." },
+                { n: 107, tr: "İnnellezîne âmenû ve amilûs sâlihâti kânet lehüm cennatül firdevsi nüzülâ.", me: "İman edip salih ameller işleyenlere gelince; onlar için konak yeri olarak Firdevs cennetleri vardır." },
+                { n: 108, tr: "Hâlidîne fîhâ lâ yebgûne anhâ hıvelâ.", me: "Orada ebedî kalacaklardır. Oradan hiç ayrılmak istemezler." },
+                { n: 109, tr: "Kul lev kânel bahru midâden li kelimâti Rabbî le nefidel bahru kable en tenfede kelimâtü Rabbî ve lev ci'nâ bi mislihî mededâ.", me: "De ki: «Rabbimin sözlerini yazmak için denizler mürekkep olsa ve bir o kadar da yardımcı olarak katsak, Rabbimin sözleri tükenmeden denizler tükenirdi.»" },
+                { n: 110, tr: "Kul innemâ ene beşerun mislüküm yûhâ ileyye ennemâ ilâhüküm ilâhun vâhid, fe men kâne yercû likâe Rabbihî felya'mel amelen sâlihan ve lâ yüşrik bi ibâdeti Rabbihî ehadâ.", me: "De ki: «Ben de ancak sizin gibi bir insanım. (Ne var ki) bana, «İlâhınız ancak bir tek ilâhtır» diye vahyolunuyor. Kim Rabbine kavuşmayı umuyorsa yararlı bir iş yapsın ve Rabbine ibadette kimseyi ortak koşmasın.»" }
+            ]
+        };
+
+        // --- 3. LOGIC ---
+        const useTime = () => {
+            const [time, setTime] = useState(new Date());
+            useEffect(() => {
+                const timer = setInterval(() => setTime(new Date()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+            return time;
+        };
+
+        const useGeolocation = (t) => {
+            const [coords, setCoords] = useState(null);
+            const [locationName, setLocationName] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const setDefault = useCallback(() => {
+                if (!coords) {
+                    setCoords({ lat: 41.0082, lng: 28.9784 });
+                    setLocationName("İstanbul");
+                }
+            }, [coords]);
+
+            useEffect(() => {
+                const storedCoords = safeStorage.getItem('coords');
+                const storedName = safeStorage.getItem('locName');
+                if (storedCoords) setCoords(JSON.parse(storedCoords));
+                if (storedName) setLocationName(storedName);
+                if (!storedCoords) getUserLocation();
+            }, []);
+
+            const getUserLocation = useCallback(() => {
+                if (!navigator.geolocation) {
+                    alert("Geolocation not supported");
+                    setDefault();
+                    return;
+                }
+                setLoading(true);
+                const geoTimeout = setTimeout(() => { setLoading(false); setDefault(); }, 10000);
+
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        clearTimeout(geoTimeout);
+                        try {
+                            const newCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                            setCoords(newCoords);
+                            safeStorage.setItem('coords', JSON.stringify(newCoords));
+                            try {
+                                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${newCoords.lat}&lon=${newCoords.lng}`);
+                                const data = await res.json();
+                                const name = data.address.city || data.address.town || data.address.suburb || "Loc";
+                                setLocationName(name);
+                                safeStorage.setItem('locName', name);
+                            } catch(e) { setLocationName(t('location')); }
+                        } catch (err) { } finally { setLoading(false); }
+                    },
+                    (err) => { clearTimeout(geoTimeout); setLoading(false); setDefault(); },
+                    { timeout: 5000, enableHighAccuracy: false }
+                );
+            }, [coords, t, setDefault]);
+
+            const searchLocation = useCallback(async (query) => {
+                if (!query) return;
+                setLoading(true);
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+                    const data = await res.json();
+                    if (data && data.length > 0) {
+                        const place = data[0];
+                        const newCoords = { lat: parseFloat(place.lat), lng: parseFloat(place.lon) };
+                        setCoords(newCoords);
+                        const name = place.display_name.split(',')[0];
+                        setLocationName(name);
+                        safeStorage.setItem('coords', JSON.stringify(newCoords));
+                        safeStorage.setItem('locName', name);
+                    } else { alert("Not found"); }
+                } catch(e) { alert(t('error')); }
+                setLoading(false);
+            }, [t]);
+
+            return useMemo(() => ({ coords, locationName, loading, getUserLocation, searchLocation }), [coords, locationName, loading, getUserLocation, searchLocation]);
+        };
+
+        // Updated PrayerTimes Hook to support Hanafi School (asrMethod)
+        const usePrayerTimes = (coords, methodId, asrMethod) => {
+            const [data, setData] = useState(null);
+            const [loading, setLoading] = useState(false);
+
+            useEffect(() => {
+                if (!coords) return;
+                const controller = new AbortController();
+                const fetchTimes = async () => {
+                    setLoading(true);
+                    try {
+                        const date = new Date();
+                        const strDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+                        // Add school parameter: 0 for Shafi (Standard), 1 for Hanafi
+                        const schoolParam = asrMethod === 1 ? '&school=1' : '&school=0';
+                        const res = await fetch(`https://api.aladhan.com/v1/timings/${strDate}?latitude=${coords.lat}&longitude=${coords.lng}&method=${methodId}${schoolParam}`, { signal: controller.signal });
+                        const json = await res.json();
+                        if (json.code === 200) setData(json.data);
+                    } catch (e) { }
+                    setLoading(false);
+                };
+                fetchTimes();
+                return () => controller.abort();
+            }, [coords, methodId, asrMethod]);
+
+            return { data, loading };
+        };
+
+        const parseTime = (timeStr) => {
+            if (!timeStr) return null;
+            const [hours, minutes] = timeStr.split(' ')[0].split(':').map(Number);
+            const date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            return date;
+        };
+        const fmt = (date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // --- 4. COMPONENTS ---
+
+        const LoadingView = () => (
+            <div className="flex justify-center items-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 dark:border-emerald-400"></div></div>
+        );
+
+        const Header = memo(({ currentTime, appName, toggleTheme, isDarkMode }) => (
+            <header className="px-4 pt-4 pb-2 bg-white dark:bg-slate-850 z-10 sticky top-0 border-b border-slate-50 dark:border-slate-800 transition-colors duration-300">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white"><Moon size={18} /></div>
+                        <span className="font-bold text-base tracking-tight text-slate-800 dark:text-slate-100">{appName}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <div className="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-500 dark:text-slate-400">{fmt(currentTime)}</div>
+                        <button onClick={toggleTheme} className="text-slate-500 dark:text-slate-400 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                        </button>
+                    </div>
+                </div>
+            </header>
+        ));
+
+        const ProgressBar = ({ current, total }) => (
+            <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1"><div className="bg-emerald-600 h-2 rounded-full transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (current / total) * 100)}%` }}></div></div>
+        );
+
+        const AmenarresuluCard = memo(({ current, count, next, tap, cooldown, t }) => {
+            const done = count >= current.target;
+            return (
+                <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col h-full transition-colors duration-300">
+                    <div className="flex justify-between items-center mb-2 text-xs">
+                        <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><BookOpen size={16}/><span>{current.title}</span></div>
+                        <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono">{count}/{current.target}</span>
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto mb-2 space-y-2">
+                        <div>
+                            <h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1">{t('turkishTrans')}</h4>
+                            <p className="text-slate-700 dark:text-slate-300 text-xs leading-relaxed italic">
+                                "Amenerrasulü bima ünzile ileyhi mirrabbihi vel mü'minun, küllün amene billahi ve melaiketihi ve kütübihi ve rusülih, la nüferriku beyne ehadin min rusülih, ve kalu semi'na ve ata'na gufraneke rabbena ve ileykel masir. La yükellifullahü nefsen illa vüs'aha, leha ma kesebet ve aleyha mektesebet, rabbena la tüahizna in nesina ev ahta'na, rabbena ve la tahmil aleyna isran kema hameltehü alellezine min kablina, rabbena ve la tühammilna ma la takate lena bih, va'fü anna, vagfir lena, verhamna, ente mevlana fensurna alel kavmil kafirin."
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1">{t('turkishMean')}</h4>
+                            <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+                                "Peygamber, Rabbinden kendisine indirilene iman etti, mü'minler de (iman ettiler). Her biri; Allah'a, meleklerine, kitaplarına ve peygamberlerine iman ettiler ve şöyle dediler: 'Onun peygamberlerinden hiçbirini (diğerinden) ayırt etmeyiz.' Şöyle de dediler: 'İşittik ve itaat ettik. Ey Rabbimiz! Senden bağışlama dileriz. Sonunda dönüş yalnız sanadır.' Allah bir kimseyi ancak gücünün yettiği şeyle yükümlü kılar. Onun kazandığı iyilik kendi yararına, kötülük de kendi zararınadır. (Şöyle diyerek dua ediniz): 'Ey Rabbimiz! Unutur, ya da yanılırsak bizi sorumlu tutma! Ey Rabbimiz! Bize, bizden öncekilere yüklediğin yük gibi yük yükleme. Ey Rabbimiz! Bize gücümüzün yetmediği şeyleri yükleme! Bizi affet, bizi bağışla, bize acı! Sen bizim Mevlâmızsın. Kâfirler topluluğuna karşı bize yardım et.'"
+                            </p>
+                        </div>
+                    </div>
+
+                    <button onClick={done ? next : tap} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold text-sm flex justify-center items-center space-x-1 transition ${cooldown ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500' : 'bg-emerald-600 text-white active:scale-95'}`}>
+                        {cooldown ? <Lock size={16}/> : (done ? <span>{t('nextZikr')} <ChevronRight size={16} className="inline"/></span> : <span>{t('tapToCount')} ({count})</span>)}
+                    </button>
+                </div>
+            );
+        });
+
+        // FIXED: MultiAyahReadingCard with robust parallel fetching and Surah names
+        const MultiAyahReadingCard = memo(({ current, next, cooldown, t }) => {
+            const [ayahs, setAyahs] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [localIndex, setLocalIndex] = useState(0);
+            const [error, setError] = useState(false);
+
+            useEffect(() => {
+                let isMounted = true;
+                const fetchSequential = async () => {
+                    try {
+                        const randomPage = Math.floor(Math.random() * 604) + 1; 
+                        
+                        const [p1, p2, p3] = await Promise.all([
+                            fetch(`https://api.alquran.cloud/v1/page/${randomPage}/quran-uthmani`),
+                            fetch(`https://api.alquran.cloud/v1/page/${randomPage}/tr.diyanet`),
+                            fetch(`https://api.alquran.cloud/v1/page/${randomPage}/en.transliteration`)
+                        ]);
+
+                        if (!isMounted) return;
+
+                        if (!p1.ok || !p2.ok || !p3.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+
+                        const d1 = await p1.json();
+                        const d2 = await p2.json();
+                        const d3 = await p3.json();
+
+                        if (d1.code === 200 && d2.code === 200 && d3.code === 200) {
+                            const combined = d1.data.ayahs.map((ayah, i) => ({
+                                arabic: ayah.text,
+                                text: d2.data.ayahs[i] ? d2.data.ayahs[i].text : '',
+                                trans: d3.data.ayahs[i] ? turkify(d3.data.ayahs[i].text) : '',
+                                info: `${getSurahNameTR(ayah.surah.number)} : ${ayah.numberInSurah}`
+                            })).slice(0, 15);
+
+                            if (combined.length > 0) {
+                                setAyahs(combined);
+                                setLoading(false);
+                            } else {
+                                setError(true);
+                            }
+                        } else {
+                            setError(true);
+                        }
+                    } catch (e) {
+                        console.error("Fetch Error:", e);
+                        if (isMounted) {
+                            setError(true);
+                            setLoading(false);
+                        }
+                    }
+                };
+                
+                fetchSequential();
+                return () => { isMounted = false; };
+            }, []);
+
+            if (error) return (
+                 <div className="bg-white dark:bg-slate-850 border border-red-200 dark:border-red-900 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-full transition-colors duration-300">
+                    <p className="text-red-500 mb-2 text-xs">{t('connectionError')}</p>
+                    <button onClick={next} className="bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded text-xs text-slate-600 dark:text-slate-300">{t('next')}</button>
+                 </div>
+            );
+
+            if (loading || !ayahs) return <LoadingView />;
+
+            const currentAyah = ayahs[localIndex];
+            // Safety check
+            if (!currentAyah) return <div onClick={next} className="p-4 text-center text-xs">Loading error. Tap to skip.</div>;
+
+            const isLast = localIndex >= ayahs.length - 1;
+
+            const handleNext = () => {
+                if (isLast) next();
+                else setLocalIndex(i => i + 1);
+            };
+
+            return (
+                <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col h-full transition-colors duration-300">
+                    <div className="flex justify-between items-center mb-2 text-xs shrink-0">
+                        <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                            <BookOpen size={16}/><span>{current.title}</span>
+                        </div>
+                        <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono">{localIndex + 1}/{ayahs.length}</span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto mb-2">
+                        <div className="mb-1 text-[10px] text-emerald-600 dark:text-emerald-500 font-bold uppercase tracking-wider">{currentAyah.info}</div>
+                        <p className="text-right font-serif text-lg text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl">{currentAyah.arabic}</p>
+                        <p className="text-slate-800 dark:text-slate-200 text-xs font-medium mb-1">{currentAyah.trans}</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-[10px] italic">{currentAyah.text}</p>
+                    </div>
+                    <button onClick={handleNext} className="w-full py-2.5 rounded-lg font-bold bg-emerald-600 text-white active:scale-95 transition text-sm">
+                        {isLast ? t('completed') : t('nextAyah')}
+                    </button>
+                </div>
+            );
+        });
+
+        const KehfCard = memo(({ current, count, next, tap, cooldown, t }) => {
+            const ds = current.type === 'kehf_first_10' ? KEHF_DATA.first10 : KEHF_DATA.last10;
+            const ayah = ds[count] || ds[0];
+            const isLast = count >= current.target - 1;
+            return (
+                <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col transition-colors duration-300">
+                    <div className="flex justify-between items-center mb-2 text-xs">
+                        <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><BookOpen size={16}/><span>{current.title}</span></div>
+                        <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono">{count + 1}/{current.target}</span>
+                    </div>
+                    <div className="mb-2 overflow-y-auto max-h-[50vh]">
+                        <p className="text-emerald-800 dark:text-emerald-400 font-semibold mb-1 text-sm leading-relaxed">{ayah.tr}</p>
+                        <p className="text-slate-600 dark:text-slate-400 italic text-xs">{ayah.me}</p>
+                    </div>
+                    <button onClick={isLast ? next : tap} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500' : 'bg-emerald-600 text-white active:scale-95'}`}>
+                        {cooldown ? <Lock size={16}/> : <span>{isLast ? t('completed') : t('nextAyah')}</span>}
+                    </button>
+                </div>
+            );
+        });
+
+        const CounterCard = memo(({ current, count, next, tap, cooldown, t, index, totalLength }) => {
+            const done = count >= current.target;
+            return (
+                <div className={`border-2 rounded-2xl p-3 flex flex-col items-center text-center shadow-sm transition-colors duration-300 select-none ${done ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500' : 'bg-white dark:bg-slate-850 border-emerald-100 dark:border-slate-700'}`}>
+                    <div className="w-full flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-1">
+                        <span>{t('step')} {index + 1}/{totalLength}</span>
+                        <span>{t('target')}: {current.target}</span>
+                    </div>
+                    <ProgressBar current={count} total={current.target}/>
+                    <div className="my-2" onClick={!done ? tap : undefined}>
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">{current.title}</h2>
+                        {current.arabic && <p className="text-xl font-serif text-emerald-600 dark:text-emerald-400 dir-rtl mb-1">{current.arabic}</p>}
+                        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed mx-auto max-w-[250px]">{current.text}</p>
+                    </div>
+                    {done ? (
+                        <button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold text-white flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-600 animate-pulse-slow'}`}>
+                            <span>{t('nextZikr')}</span><ChevronRight size={16}/>
+                        </button>
+                    ) : (
+                        <div className="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition" onClick={tap}>
+                            <div className="w-24 h-24 rounded-full border-4 border-slate-100 dark:border-slate-700 flex items-center justify-center bg-white dark:bg-slate-800 shadow-inner">
+                                <span className="text-3xl font-mono font-bold text-emerald-600 dark:text-emerald-400">{count}</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full font-medium">{t('tapToCount')}</span>
+                        </div>
+                    )}
+                </div>
+            );
+        });
+
+        const ReadingCard = memo(({ current, next, cooldown, t }) => (
+            <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center text-center shadow-sm transition-colors duration-300">
+                <BookOpen size={32} className="text-emerald-500 mb-2"/>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">{current.title}</h3>
+                <p className="text-slate-600 dark:text-slate-400 mb-3 text-xs">{current.text}</p>
+                <button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold transition text-sm ${cooldown ? 'bg-slate-300 dark:bg-slate-600' : 'bg-emerald-600 text-white'}`}>
+                    {cooldown ? <Lock size={16} className="mx-auto"/> : t('completed')}
+                </button>
+            </div>
+        ));
+
+        // --- MAIN VIEWS ---
+
+        const PrayerTimesView = memo(({ prayerData, currentTime, locationName, t, loading, offsets }) => {
+            if (loading || !prayerData) return <LoadingView />;
+            const timings = prayerData.timings;
+            
+            // Helper to apply offset
+            const applyOffset = (date, minutes) => {
+                if (!date) return null;
+                const newDate = new Date(date);
+                // Ensure minutes is treated as an integer
+                const offsetMin = parseInt(minutes);
+                if (!isNaN(offsetMin)) {
+                    newDate.setMinutes(newDate.getMinutes() + offsetMin);
+                }
+                return newDate;
+            };
+
+            const parseAndAdjust = (timeStr, offset) => {
+                if (!timeStr) return null;
+                const [h, m] = timeStr.split(' ')[0].split(':').map(Number);
+                const d = new Date(); d.setHours(h, m, 0, 0);
+                return applyOffset(d, offset);
+            };
+
+            const times = { 
+                fajr: parseAndAdjust(timings.Fajr, offsets.fajr), 
+                sunrise: parseAndAdjust(timings.Sunrise, offsets.sunrise), 
+                dhuhr: parseAndAdjust(timings.Dhuhr, offsets.dhuhr), 
+                asr: parseAndAdjust(timings.Asr, offsets.asr), 
+                maghrib: parseAndAdjust(timings.Maghrib, offsets.maghrib), 
+                isha: parseAndAdjust(timings.Isha, offsets.isha) 
+            };
+            
+            // Re-calculate derived times based on adjusted times
+            const ishraqEnd = new Date(times.sunrise.getTime() + 45 * 60000);
+            const istiwaStart = new Date(times.dhuhr.getTime() - 45 * 60000);
+            const isfirarStart = new Date(times.maghrib.getTime() - 45 * 60000);
+            const fajrTomorrow = new Date(times.fajr);
+            fajrTomorrow.setDate(fajrTomorrow.getDate() + 1);
+            const teheccudStart = new Date(fajrTomorrow.getTime() - ((fajrTomorrow - times.maghrib) / 3));
+            
+            const now = currentTime.getTime();
+            let nextP = t('fajr'), nextT = new Date(times.fajr); nextT.setDate(nextT.getDate() + 1);
+            
+            // Recalculate next prayer based on adjusted times
+            if (now < times.fajr.getTime()) { nextP = t('fajr'); nextT = times.fajr; }
+            else if (now < times.sunrise.getTime()) { nextP = t('sunrise'); nextT = times.sunrise; }
+            else if (now < times.dhuhr.getTime()) { nextP = t('dhuhr'); nextT = times.dhuhr; }
+            else if (now < times.asr.getTime()) { nextP = t('asr'); nextT = times.asr; }
+            else if (now < times.maghrib.getTime()) { nextP = t('maghrib'); nextT = times.maghrib; }
+            else if (now < times.isha.getTime()) { nextP = t('isha'); nextT = times.isha; }
+
+            const diff = nextT - now;
+            const diffH = Math.floor(diff / 3600000);
+            const diffM = Math.floor((diff % 3600000) / 60000);
+            
+            const fmt = (d) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+            return (
+                <div className="space-y-2 animate-fade-in pb-16">
+                    <div className="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden transition-colors duration-300">
+                        <div className="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4"><Moon size={100} /></div>
+                        <div className="relative z-10 flex justify-between items-start mb-2">
+                            <div><h2 className="text-emerald-100 text-xs font-medium uppercase tracking-wider">{t('nextPrayer')}</h2><h1 className="text-3xl font-bold mt-1">{nextP}</h1></div>
+                            <div className="text-right"><p className="text-emerald-100 text-xs">{t('remaining')}</p><p className="text-2xl font-mono font-semibold mt-1">{diffH > 0 ? `${diffH}h ` : ''}{diffM}m</p></div>
+                        </div>
+                        <div className="flex items-center space-x-2 text-xs text-emerald-100 bg-emerald-900/30 w-fit px-2 py-1 rounded-full backdrop-blur-sm relative z-10"><MapPin size={12} /><span>{locationName}</span></div>
+                    </div>
+                    <div className="bg-white dark:bg-slate-850 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors duration-300">
+                        {[{ k: 'fajr', i: Moon }, { k: 'sunrise', i: Sun }, { k: 'dhuhr', i: Sun }, { k: 'asr', i: Sun }, { k: 'maghrib', i: Moon }, { k: 'isha', i: Moon }].map((o, idx) => (
+                            <div key={idx} className="flex items-center justify-between px-3 py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <div className="flex items-center space-x-3 text-slate-700 dark:text-slate-300 font-medium"><span className="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 p-1.5 rounded-lg"><o.i size={18} /></span><span className="text-sm">{t(o.k)}</span></div>
+                                <span className="font-mono font-bold text-base text-slate-800 dark:text-slate-200">{fmt(times[o.k])}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="space-y-2">
+                        <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-xl p-2 flex justify-between items-center transition-colors duration-300">
+                            <div className="flex items-center space-x-3"><div className="bg-indigo-100 dark:bg-indigo-800/40 text-indigo-600 dark:text-indigo-300 p-1.5 rounded-lg"><Moon size={16} /></div><div><p className="text-indigo-900 dark:text-indigo-200 font-bold text-sm">{t('teheccud')}</p><p className="text-[10px] text-indigo-600 dark:text-indigo-400 max-w-[150px] leading-tight">{t('bestTimeTeheccud')}</p></div></div>
+                            <span className="font-mono font-bold text-indigo-800 dark:text-indigo-300 text-xs">{fmt(teheccudStart)} - {fmt(fajrTomorrow)}</span>
+                        </div>
+                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-xl overflow-hidden transition-colors duration-300">
+                            <div className="p-2 bg-amber-100/50 dark:bg-amber-800/30 border-b border-amber-100 dark:border-amber-800 text-amber-800 dark:text-amber-200 font-semibold text-xs flex items-center"><span className="mr-2"><AlertTriangle size={14} /></span> {t('kerahatHeader')}</div>
+                            <div className="divide-y divide-amber-100 dark:divide-amber-800">
+                                <div className="p-1.5 flex justify-between text-xs text-amber-900 dark:text-amber-100"><span>{t('kerahatMorning')}</span><span className="font-mono font-medium">{fmt(times.sunrise)} - {fmt(ishraqEnd)}</span></div>
+                                <div className="p-1.5 flex justify-between text-xs text-amber-900 dark:text-amber-100"><span>{t('kerahatNoon')}</span><span className="font-mono font-medium">{fmt(istiwaStart)} - {fmt(times.dhuhr)}</span></div>
+                                <div className="p-1.5 flex justify-between text-xs text-amber-900 dark:text-amber-100"><span>{t('kerahatEvening')}</span><span className="font-mono font-medium">{fmt(isfirarStart)} - {fmt(times.maghrib)}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        });
+
+        const TasbeehView = memo(({ t }) => {
+            const [mode, setMode] = useState('morning');
+            const [index, setIndex] = useState(0);
+            const [count, setCount] = useState(0);
+            const [cooldown, setCooldown] = useState(false);
+            const [isFinishedToday, setIsFinishedToday] = useState(false);
+
+            useEffect(() => {
+                const today = new Date().toISOString().split('T')[0];
+                const savedStatus = safeStorage.getItem(`tasbeeh_status_${mode}`);
+                
+                // Get saved progress regardless of completion
+                const savedProgress = safeStorage.getItem(`tasbeeh_progress_${mode}`);
+
+                if (savedStatus) {
+                    const { date, finished } = JSON.parse(savedStatus);
+                    if (date === today && finished) {
+                         setIsFinishedToday(true);
+                         setIndex(0); setCount(0);
+                         return; // If finished today, don't load partial progress
+                    } else {
+                        setIsFinishedToday(false);
+                    }
+                } else {
+                    setIsFinishedToday(false);
+                }
+
+                // Load partial progress if not finished today
+                if (savedProgress) {
+                    const { date, idx, cnt } = JSON.parse(savedProgress);
+                    // Optional: You can choose to reset progress on a new day or keep it.
+                    // Here we keep it simple: if there is progress, load it. 
+                    // To reset on new day: if (date === today) ...
+                    setIndex(idx || 0);
+                    setCount(cnt || 0);
+                } else {
+                    setIndex(0);
+                    setCount(0);
+                }
+
+            }, [mode]);
+
+            const saveProgress = useCallback((idx, cnt) => {
+                 const today = new Date().toISOString().split('T')[0];
+                 safeStorage.setItem(`tasbeeh_progress_${mode}`, JSON.stringify({ date: today, idx, cnt }));
+            }, [mode]);
+
+            const handleCompletion = useCallback(() => {
+                const today = new Date().toISOString().split('T')[0];
+                safeStorage.setItem(`tasbeeh_status_${mode}`, JSON.stringify({ date: today, finished: true }));
+                safeStorage.removeItem(`tasbeeh_progress_${mode}`); // Clear progress on finish
+                setIsFinishedToday(true);
+            }, [mode]);
+
+            const reset = useCallback(() => {
+                const today = new Date().toISOString().split('T')[0];
+                safeStorage.removeItem(`tasbeeh_status_${mode}`);
+                safeStorage.removeItem(`tasbeeh_progress_${mode}`);
+                setIsFinishedToday(false);
+                setIndex(0); setCount(0); setCooldown(false);
+            }, [mode]);
+
+            const zikrList = useMemo(() => {
+                const common = {
+                    fatiha: { target: 19, title: "Fatiha", text: "Elhamdülillâhi rabbil'alemin...", arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ" },
+                    estag: { target: 100, title: "Estağfirullah", text: "Estağfirullah el azim...", arabic: "أَسْتَغْفِرُ اللّٰهَ" },
+                    salavatM: { target: 10, title: t('salavatMuhammed'), text: "Allahümme salli ala seyyidina Muhammed", arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ" },
+                    salavatA: { target: 10, title: t('salavatAdam'), text: "Allâhümme salli alâ seyyidinâ Âdem", arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا آدَمَ" },
+                    salavatI: { target: 10, title: t('salavatIsa'), text: "Allâhümme salli alâ seyyidinâ İsâ", arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا عِيسَى" },
+                    kehf1: { target: 10, title: t('readFirst10'), type: 'kehf_first_10', isReading: true },
+                    kehf2: { target: 10, title: t('readLast10'), type: 'kehf_last_10', isReading: true },
+                    salavatB: { target: 10, title: t('salavatBedr'), text: "Allâhumme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed ve alâ ashâbi’l-Kehfi ve ashâbi’r-Rakîmi ve ashâbi Bedrin ve melaiketi Bedri, sallallâhu teâlâ aleyhi ve sellem." },
+                    kuddus: { target: 40, title: "Ya Kuddüs", text: "Ya Kuddüs, Ya Kuddüs...", arabic: "يَا قُدُّوسُ" },
+                    random: { target: 1, title: t('read15Random'), type: 'random15', isReading: true },
+                    amena: { target: 11, title: t('amenarresulu'), type: 'amenarresulu' }
+                };
+                if(mode === 'morning') return [common.fatiha, common.estag, common.salavatA, common.salavatI, common.salavatM, common.kehf1, common.salavatB];
+                if(mode === 'ikindi') return [{...common.fatiha, target: 21}, {...common.salavatM, target: 11}, common.kuddus, common.kehf2, common.random];
+                return [common.amena];
+            }, [mode, t]);
+
+            const current = zikrList[index] || zikrList[0];
+            const isLastZikr = index >= zikrList.length - 1;
+
+            const next = useCallback(() => {
+                setCooldown(true); setTimeout(() => setCooldown(false), 500);
+                if (index < zikrList.length - 1) {
+                    const newIdx = index + 1; setIndex(newIdx); setCount(0); saveProgress(newIdx, 0);
+                } else handleCompletion();
+            }, [index, zikrList.length, handleCompletion, saveProgress]);
+
+            const tap = useCallback(() => {
+                if (isFinishedToday || cooldown) return;
+                const isSpecial = current.type?.includes('kehf');
+                let newCount = count;
+                
+                if (isSpecial) {
+                    if (count < current.target - 1) {
+                        setCooldown(true); setTimeout(() => setCooldown(false), 500);
+                        newCount = count + 1;
+                        setCount(newCount);
+                        if (newCount + 1 >= current.target && navigator.vibrate) navigator.vibrate(200);
+                        saveProgress(index, newCount); // Save state
+                    }
+                } else if (!current.isReading) {
+                    if (count < current.target) {
+                        newCount = count + 1;
+                        setCount(newCount);
+                        if (newCount + 1 >= current.target && navigator.vibrate) navigator.vibrate(200);
+                        saveProgress(index, newCount); // Save state
+                    }
+                }
+                
+                if (current.type === 'amenarresulu') {
+                     if (count < current.target) {
+                        newCount = count + 1;
+                        setCount(newCount);
+                        if (newCount >= current.target && navigator.vibrate) navigator.vibrate(200);
+                        saveProgress(index, newCount); // Save state
+                     }
+                }
+
+            }, [isFinishedToday, cooldown, current, count, index, saveProgress]);
+
+            return (
+                <div className="pb-20 flex flex-col h-full">
+                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-2 transition-colors duration-300">{['morning', 'ikindi', 'night'].map(m => (
+                        <button key={m} onClick={() => setMode(m)} className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition ${mode===m ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{t(m+'Zikr')}</button>
+                    ))}</div>
+                    {isFinishedToday ? (
+                        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                            <CheckCircle size={40} className="text-emerald-500 mb-2"/><h2 className="font-bold text-lg text-emerald-800 dark:text-emerald-100">{t('completed')}</h2>
+                            <button onClick={reset} className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs">{t('reset')}</button>
+                        </div>
+                    ) : (
+                        <div className="flex-1 space-y-2">
+                             {current.type?.includes('kehf') ? <KehfCard current={current} count={count} next={next} tap={tap} cooldown={cooldown} t={t} /> : 
+                              current.type === 'amenarresulu' ? <AmenarresuluCard current={current} count={count} next={next} tap={tap} cooldown={cooldown} t={t} /> :
+                              current.type === 'random15' ? <MultiAyahReadingCard current={current} next={next} cooldown={cooldown} t={t} /> :
+                              (current.isReading ? <ReadingCard current={current} next={next} cooldown={cooldown} t={t} /> : 
+                              <CounterCard current={current} count={count} next={next} tap={tap} cooldown={cooldown} t={t} index={index} totalLength={zikrList.length} />)}
+                        </div>
+                    )}
+                </div>
+            );
+        });
+
+        // REUSED QuranView Logic for "Random Page" Zikr
+        const QuranView = memo(({ t }) => {
+            const [ayahs, setAyahs] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [pageInfo, setPageInfo] = useState(0);
+
+            const load = useCallback(async () => {
+                setLoading(true);
+                try {
+                    let history = JSON.parse(safeStorage.getItem('quran_page_history') || "[]");
+                    if (history.length >= 604) history = [];
+
+                    let randomPage;
+                    let safety = 0;
+                    do {
+                        randomPage = Math.floor(Math.random() * 604) + 1;
+                        safety++;
+                    } while (history.includes(randomPage) && safety < 1000);
+                    
+                    safeStorage.setItem('quran_page_history', JSON.stringify([...history, randomPage]));
+                    setPageInfo(randomPage);
+
+                    const [p1, p2, p3] = await Promise.all([
+                        fetch(`https://api.alquran.cloud/v1/page/${randomPage}/quran-uthmani`).then(r=>r.json()),
+                        fetch(`https://api.alquran.cloud/v1/page/${randomPage}/tr.diyanet`).then(r=>r.json()),
+                        fetch(`https://api.alquran.cloud/v1/page/${randomPage}/en.transliteration`).then(r=>r.json())
+                    ]);
+
+                    if (p1.code === 200 && p2.code === 200 && p3.code === 200) {
+                         const combined = p1.data.ayahs.map((item, i) => ({
+                             arabic: item.text,
+                             text: p2.data.ayahs[i] ? p2.data.ayahs[i].text : '',
+                             trans: p3.data.ayahs[i] ? turkify(p3.data.ayahs[i].text) : '',
+                             info: `${getSurahNameTR(item.surah.number)} : ${item.numberInSurah}`
+                         }));
+                         setAyahs(combined);
+                    }
+                } catch(e) { console.warn("Load failed", e); }
+                setLoading(false);
+            }, []);
+
+            return (
+                <div className="pb-20 space-y-3">
+                    <div className="flex justify-between items-center"><h2 className="text-base font-bold text-slate-800 dark:text-slate-100">{t('randomAyahs')} <span className="text-[10px] font-normal text-slate-400">({t('pageInfo')} {pageInfo})</span></h2><button onClick={load} className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full"><RefreshCw size={16} className={loading ? "animate-spin" : ""}/></button></div>
+                    {ayahs.length === 0 && !loading ? (
+                        <div className="text-center py-6 bg-slate-50 dark:bg-slate-800 rounded-xl border border-dashed border-slate-300 dark:border-slate-700"><BookOpen size={24} className="mx-auto text-slate-300 dark:text-slate-600 mb-2"/><button onClick={load} className="bg-emerald-600 text-white px-3 py-1.5 rounded-full text-xs">{t('loadBtn')}</button></div>
+                    ) : (
+                        <div className="space-y-2">{ayahs.map((a, i) => (
+                            <div key={i} className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                                <div className="mb-1 border-b border-slate-50 dark:border-slate-800 pb-1 flex justify-between"><span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">{a.info}</span></div>
+                                <p className="text-right font-serif text-base text-emerald-800 dark:text-emerald-400 mb-1 leading-relaxed" dir="rtl">{a.arabic}</p>
+                                <p className="text-slate-800 dark:text-slate-200 font-medium mb-1 text-xs">{a.trans}</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-[10px] italic">{a.text}</p>
+                            </div>
+                        ))}</div>
+                    )}
+                     {loading && <LoadingView />}
+                </div>
+            );
+        });
+
+        // SettingsView, Navbar, App ... (Same logic as v2)
+        const SettingsView = memo(({ t, locationHook, setMethod, setLang, methodId, lang, setAsrMethod, asrMethod, setOffsets, offsets }) => (
+            <div className="pb-20 space-y-3">
+                <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">{t('settings')}</h2>
+                
+                {/* Location */}
+                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><MapPin size={14} className="mr-2 text-emerald-500" /> {t('location')}</h3>
+                    <button onClick={locationHook.getUserLocation} className="w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 py-1.5 rounded-lg text-xs font-medium flex justify-center items-center"><Navigation size={10} className="mr-1"/> {t('detectLocation')}</button>
+                    <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex space-x-2"><input name="q" placeholder={t('searchCity')} className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"/><button className="bg-slate-800 dark:bg-slate-700 text-white px-2.5 rounded-lg text-[10px]">{t('search')}</button></form>
+                    <p className="text-[9px] text-center text-slate-400">{locationHook.locationName}</p>
+                </div>
+
+                {/* Calculation Method */}
+                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Settings size={14} className="mr-2 text-emerald-500" /> {t('calcMethod')}</h3>
+                    <div className="grid gap-1.5">{CALCULATION_METHODS.map(m => (<button key={m.id} onClick={() => { setMethod(m.id); safeStorage.setItem('calcMethod', m.id); }} className={`text-left px-2 py-1.5 rounded-lg text-[10px] transition ${methodId === m.id ? 'bg-emerald-600 text-white' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}><span>{m.name}</span></button>))}</div>
+                </div>
+
+                {/* Asr Method */}
+                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Settings size={14} className="mr-2 text-emerald-500" /> {t('asrMethod')}</h3>
+                    <div className="grid gap-1.5 grid-cols-2">
+                         <button onClick={() => { setAsrMethod(0); safeStorage.setItem('asrMethod', 0); }} className={`px-2 py-1.5 rounded-lg text-[10px] transition ${asrMethod === 0 ? 'bg-emerald-600 text-white' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>{t('standard')}</button>
+                         <button onClick={() => { setAsrMethod(1); safeStorage.setItem('asrMethod', 1); }} className={`px-2 py-1.5 rounded-lg text-[10px] transition ${asrMethod === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>{t('hanafi')}</button>
+                    </div>
+                </div>
+
+                {/* Time Offsets */}
+                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
+                    <div className="flex justify-between items-center">
+                        <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Edit size={14} className="mr-2 text-emerald-500" /> {t('timeAdjustments')}</h3>
+                        <button onClick={() => safeStorage.setItem('timeOffsets', JSON.stringify(offsets))} className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded">{t('save')}</button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                        {['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'].map(p => (
+                            <div key={p} className="flex flex-col">
+                                <label className="text-[9px] text-slate-500 dark:text-slate-400 mb-1 capitalize">{t(p)}</label>
+                                <input 
+                                    type="number" 
+                                    value={offsets[p]} 
+                                    onChange={(e) => setOffsets({...offsets, [p]: e.target.value})}
+                                    className="border dark:border-slate-700 rounded p-1 text-[10px] text-center bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Language */}
+                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Globe size={14} className="mr-2 text-emerald-500" /> {t('language')}</h3>
+                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg transition-colors duration-300">{['tr', 'en', 'de'].map(l => (<button key={l} onClick={() => setLang(l)} className={`flex-1 py-1 text-[10px] rounded uppercase ${lang === l ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{l}</button>))}</div>
+                </div>
+
+            </div>
+        ));
+
+        const Navbar = memo(({ active, setActive, t }) => (
+            <nav className="absolute bottom-0 w-full bg-white dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 px-4 py-2 flex justify-between items-center z-20 shadow-lg">
+                {[{ id: 'times', i: Clock }, { id: 'tasbeeh', i: RefreshCw }, { id: 'quran', i: BookOpen }, { id: 'settings', i: Menu }].map(b => (
+                    <button key={b.id} onClick={() => {
+                        if (active !== b.id) {
+                            window.history.pushState({ tab: b.id }, '', `#${b.id}`);
+                            setActive(b.id);
+                        }
+                    }} className={`flex flex-col items-center space-y-0.5 transition ${active === b.id ? 'text-emerald-600 dark:text-emerald-400 -translate-y-0.5' : 'text-slate-400 dark:text-slate-600'}`}><b.i size={18}/><span className="text-[9px] font-medium max-w-[50px] truncate">{t(b.label || b.id)}</span></button>
+                ))}
+            </nav>
+        ));
+
+        function App() {
+            const [lang, setLang] = useState('tr');
+            const [activeTab, setActiveTab] = useState('times');
+            const [methodId, setMethodId] = useState(13);
+            const [isDarkMode, setIsDarkMode] = useState(false);
+            
+            // New State for features
+            const [asrMethod, setAsrMethod] = useState(0); // 0: Standard, 1: Hanafi
+            const [offsets, setOffsets] = useState({ fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 });
+
+            const t = useCallback((k) => TRANSLATIONS[lang][k] || k, [lang]);
+            const currentTime = useTime();
+            const location = useGeolocation(t);
+            const prayerData = usePrayerTimes(location.coords, methodId, asrMethod);
+
+            useEffect(() => {
+                const handlePopState = (event) => {
+                    if (event.state && event.state.tab) {
+                        setActiveTab(event.state.tab);
+                    } else {
+                        // Default back behavior or go to home tab if desired
+                        // For simplicity, if no state, go to times
+                        setActiveTab('times');
+                    }
+                };
+
+                window.addEventListener('popstate', handlePopState);
+                return () => window.removeEventListener('popstate', handlePopState);
+            }, []);
+
+            useEffect(() => {
+                if(prayerData.data) {
+                    const times = prayerData.data.timings;
+                    const now = new Date();
+                    const [ishaH, ishaM] = times.Isha.split(':').map(Number);
+                    const [sunH, sunM] = times.Sunrise.split(':').map(Number);
+                    const isha = new Date(); isha.setHours(ishaH, ishaM, 0);
+                    const sun = new Date(); sun.setHours(sunH, sunM, 0);
+                    if (now >= isha || now < sun) setIsDarkMode(true); else setIsDarkMode(false);
+                }
+            }, [prayerData.data]);
+
+            useEffect(() => { if (isDarkMode) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); }, [isDarkMode]);
+            const toggleTheme = () => setIsDarkMode(p => !p);
+            
+            // Load saved settings
+            useEffect(() => { 
+                const savedM = safeStorage.getItem('calcMethod'); 
+                if (savedM) setMethodId(parseInt(savedM)); 
+                
+                const savedAsr = safeStorage.getItem('asrMethod');
+                if (savedAsr) setAsrMethod(parseInt(savedAsr));
+
+                const savedOffsets = safeStorage.getItem('timeOffsets');
+                if (savedOffsets) setOffsets(JSON.parse(savedOffsets));
+            }, []);
+
+            return (
+                <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-emerald-200 dark:selection:bg-emerald-800 transition-colors duration-300">
+                    <div className="max-w-md mx-auto min-h-screen bg-white dark:bg-slate-900 shadow-2xl relative overflow-hidden flex flex-col">
+                        <Header currentTime={currentTime} appName={t('appName')} toggleTheme={toggleTheme} isDarkMode={isDarkMode} />
+                        <main className="flex-1 p-3 overflow-y-auto no-scrollbar">
+                            {activeTab === 'times' && <PrayerTimesView prayerData={prayerData.data} loading={prayerData.loading} currentTime={currentTime} locationName={location.locationName} t={t} offsets={offsets} />}
+                            {activeTab === 'tasbeeh' && <TasbeehView t={t} />}
+                            {activeTab === 'quran' && <QuranView t={t} />}
+                            {activeTab === 'settings' && <SettingsView t={t} locationHook={location} setMethod={setMethodId} setLang={setLang} methodId={methodId} lang={lang} asrMethod={asrMethod} setAsrMethod={setAsrMethod} offsets={offsets} setOffsets={setOffsets} />}
+                        </main>
+                        <Navbar active={activeTab} setActive={setActiveTab} t={t} />
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
