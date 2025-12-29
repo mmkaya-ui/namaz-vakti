@@ -104,11 +104,7 @@
                     if (!SoundManager.ctx) SoundManager.init();
                     const ctx = SoundManager.ctx;
                     if (!ctx) return;
-                    
-                    // Resume if suspended (Fix for iOS screen timeout issue)
-                    if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
-                        ctx.resume();
-                    }
+                    if (ctx.state === 'suspended') ctx.resume();
                     
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
@@ -119,18 +115,18 @@
                     const now = ctx.currentTime;
                     
                     if (type === 'tick') {
-                        // Shorter, sharper click (0.025s duration)
+                        // Soft, woody click
                         osc.type = 'sine';
                         osc.frequency.setValueAtTime(400, now);
-                        osc.frequency.exponentialRampToValueAtTime(100, now + 0.025);
+                        osc.frequency.exponentialRampToValueAtTime(100, now + 0.05);
                         gain.gain.setValueAtTime(0.15, now);
-                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
                         osc.start(now);
-                        osc.stop(now + 0.025);
+                        osc.stop(now + 0.05);
                     } else if (type === 'finish') {
-                        // Deep, peaceful chime
+                        // Deep, peaceful chime (Not high pitched)
                         osc.type = 'sine';
-                        osc.frequency.setValueAtTime(440, now); // Constant pitch (A4)
+                        osc.frequency.setValueAtTime(440, now); // Constant pitch (A4) - No weird effects
                         
                         // Gentle volume envelope
                         gain.gain.setValueAtTime(0, now);
@@ -452,11 +448,33 @@
         });
 
         const MultiAyahReadingCard = memo(({ current, next, cooldown, t, fontSize, lang }) => {
-            const [pageNumber] = useState(() => Math.floor(Math.random() * 604) + 1);
+            // Persist the random page using a date-based key
+            const [pageNumber] = useState(() => {
+                const today = new Date().toISOString().split('T')[0];
+                const key = `tasbeeh_read_page_${today}`;
+                const saved = safeStorage.getItem(key);
+                if (saved) return parseInt(saved);
+                const rnd = Math.floor(Math.random() * 604) + 1;
+                safeStorage.setItem(key, rnd);
+                return rnd;
+            });
+            
             const [ayahs, setAyahs] = useState(null);
             const [loading, setLoading] = useState(true);
-            const [localIndex, setLocalIndex] = useState(0);
+            
+            // Persist progress (current ayah index)
+            const [localIndex, setLocalIndex] = useState(() => {
+                const today = new Date().toISOString().split('T')[0];
+                const saved = safeStorage.getItem(`tasbeeh_read_index_${today}`);
+                return saved ? parseInt(saved) : 0;
+            });
             const [error, setError] = useState(false);
+
+            // Save progress whenever index changes
+            useEffect(() => {
+                const today = new Date().toISOString().split('T')[0];
+                safeStorage.setItem(`tasbeeh_read_index_${today}`, localIndex);
+            }, [localIndex]);
 
             useEffect(() => {
                 let isMounted = true;
