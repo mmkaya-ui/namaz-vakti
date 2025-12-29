@@ -161,7 +161,7 @@
             de: { appName: "Gebet & Dhikr", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...", prayerTimes: "Zeiten", tasbeeh: "Dhikr", quran: "Koran", settings: "Optionen", times: "Zeiten", calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonne", dhuhr: "Dhuhur", asr: "Assr", maghrib: "Maghrib", isha: "Ischa", midnight: "Mitternacht", teheccud: "Tahajjud", kerahatMorning: "Ischraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Rest", loading: "Laden...", error: "Fehler", morningZikr: "Morgen", ikindiZikr: "Assr", nightZikr: "Nacht", tapToCount: "Tippen", completed: "Fertig", next: "Weiter", nextZikr: "Weiter", nextAyah: "Weiter", reset: "Reset", manualLocation: "Ort", search: "Suche", randomAyahs: "Eine Seite aus Koran", turkishTrans: "Aussprache", turkishMean: "Bedeutung", amenarresulu: "Amenarrasul", nextPrayer: "Nächstes", now: "Jetzt", bestTimeTeheccud: "Nachtgebet", kerahatHeader: "Kerahat", step: "Schritt", target: "Ziel", loadContent: "Laden", loadBtn: "Laden", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Letzte)", read15Random: "1 Seite Lesen", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Wiederholen", connectionError: "Verbindungsfehler", pageInfo: "Seite", asrMethod: "Assr Methode", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Zeitanpassungen (Min)", save: "Speichern", enableNotifications: "Benachrichtigungen aktivieren", notificationGranted: "Benachrichtigungen aktiviert", notifications: "Benachrichtigungen", fontSize: "Textgröße", resetStep: "Reset" }
         };
 
-        const { useState, useEffect, useCallback, useMemo, memo, useReducer } = React;
+        const { useState, useEffect, useCallback, useMemo, memo, useReducer, useRef } = React;
 
         // --- 2. LOGIC HOOKS & SERVICES ---
 
@@ -176,6 +176,7 @@
 
         const useGeolocation = (t) => {
             const [state, setState] = useState({ coords: null, locationName: '', loading: false });
+            const [suggestions, setSuggestions] = useState([]);
 
             const update = useCallback((part) => setState(s => ({ ...s, ...part })), []);
 
@@ -186,25 +187,22 @@
                 }
             }, [state.coords, update]);
 
-            useEffect(() => {
-                const storedCoords = safeStorage.getItem('coords');
-                const storedName = safeStorage.getItem('locName');
-                if (storedCoords) update({ coords: JSON.parse(storedCoords), locationName: storedName || t('location') });
-                else getUserLocation();
-            }, []);
-
-            const getUserLocation = useCallback(async () => {
-                if (!navigator.geolocation) return setDefault();
-                update({ loading: true });
+            const getUserLocation = useCallback(async (isManual = false) => {
+                if (!navigator.geolocation) {
+                    if (isManual || !state.coords) setDefault();
+                    return;
+                }
+                
+                // Show loading only if manual click or no initial data
+                if (isManual || !state.coords) update({ loading: true });
                 
                 try {
                     const pos = await new Promise((resolve, reject) => 
-                        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+                        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 })
                     );
                     const newCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                     safeStorage.setItem('coords', JSON.stringify(newCoords));
                     
-                    // Fetch city name
                     let name = t('location');
                     try {
                         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${newCoords.lat}&lon=${newCoords.lng}`);
@@ -218,9 +216,22 @@
                     update({ coords: newCoords, locationName: name, loading: false });
                 } catch (e) {
                     update({ loading: false });
-                    setDefault();
+                    if (!state.coords) setDefault();
                 }
-            }, [t, setDefault, update]);
+            }, [t, setDefault, update, state.coords]);
+
+            useEffect(() => {
+                const storedCoords = safeStorage.getItem('coords');
+                const storedName = safeStorage.getItem('locName');
+                
+                // 1. Immediately show stored location for speed
+                if (storedCoords) {
+                    update({ coords: JSON.parse(storedCoords), locationName: storedName || t('location') });
+                }
+                
+                // 2. Always try to auto-update in background to handle travel/permission changes
+                getUserLocation(false); 
+            }, []);
 
             const searchLocation = useCallback(async (query) => {
                 if (!query) return;
@@ -236,12 +247,24 @@
                         update({ coords: newCoords, locationName: name, loading: false });
                         safeStorage.setItem('coords', JSON.stringify(newCoords));
                         safeStorage.setItem('locName', name);
+                        setSuggestions([]); // Clear suggestions on selection
                     } else alert("Not found");
                 } catch(e) { alert(t('error')); }
                 update({ loading: false });
             }, [t, update]);
 
-            return { ...state, getUserLocation, searchLocation };
+            const liveSearch = useCallback(async (query) => {
+                if (query.length < 3) { setSuggestions([]); return; }
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setSuggestions(data);
+                    }
+                } catch(e) {}
+            }, []);
+
+            return { ...state, getUserLocation, searchLocation, liveSearch, suggestions, setSuggestions, update };
         };
 
         const usePrayerTimes = (coords, methodId, asrMethod) => {
@@ -798,19 +821,52 @@
             );
         });
 
-        const SettingsView = memo(({ t, locationHook, setMethod, setLang, methodId, lang, setAsrMethod, asrMethod, setOffsets, offsets, fontSize, setFontSize }) => (
+        const SettingsView = memo(({ t, locationHook, setMethod, setLang, methodId, lang, setAsrMethod, asrMethod, setOffsets, offsets, fontSize, setFontSize }) => {
+            // Debounce Hook logic moved inline for clarity or simplicity
+            const timerRef = useRef(null);
+            
+            const handleSearchChange = (e) => {
+                const val = e.target.value;
+                if (timerRef.current) clearTimeout(timerRef.current);
+                timerRef.current = setTimeout(() => {
+                    locationHook.liveSearch(val);
+                }, 500); // 500ms debounce
+            };
+
+            const selectCity = (item) => {
+                const newCoords = { lat: parseFloat(item.lat), lng: parseFloat(item.lon) };
+                const name = item.display_name.split(',')[0];
+                // Manually trigger the update in hook
+                locationHook.update({ coords: newCoords, locationName: name, loading: false });
+                safeStorage.setItem('coords', JSON.stringify(newCoords));
+                safeStorage.setItem('locName', name);
+                locationHook.setSuggestions([]); // Clear list
+            };
+
+            return (
             <div className="space-y-2 pb-20 pt-16">
                 <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Icon path={ICONS.MapPin} size={14} className="mr-1.5 text-emerald-500" /> {t('location')}</h3>
                         <span className="text-[9px] text-slate-400 max-w-[120px] truncate">{locationHook.locationName}</span>
                     </div>
-                    <div className="flex space-x-2"> 
-                         <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex-1 flex space-x-1">
-                            <input name="q" placeholder={t('searchCity')} className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-w-0"/>
-                            <button className="bg-slate-800 dark:bg-slate-700 text-white px-2 rounded-lg"><Icon path={ICONS.RefreshCw} size={14}/></button>
+                    <div className="relative z-50"> 
+                         <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex space-x-1">
+                            <input name="q" placeholder={t('searchCity')} onChange={handleSearchChange} autoComplete="off" className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-w-0"/>
+                            <button type="submit" className="bg-slate-800 dark:bg-slate-700 text-white px-2 rounded-lg"><Icon path={ICONS.RefreshCw} size={14}/></button>
+                            <button type="button" onClick={() => locationHook.getUserLocation(true)} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 rounded-lg flex items-center justify-center"><Icon path={ICONS.Navigation} size={14}/></button>
                         </form>
-                        <button onClick={locationHook.getUserLocation} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 rounded-lg flex items-center justify-center"><Icon path={ICONS.Navigation} size={14}/></button>
+                        {/* Dynamic Search Results */}
+                        {locationHook.suggestions.length > 0 && (
+                            <ul className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-xl max-h-40 overflow-y-auto z-50">
+                                {locationHook.suggestions.map((item, idx) => (
+                                    <li key={idx} onClick={() => selectCity(item)} className="px-3 py-2 text-xs border-b dark:border-slate-700 last:border-0 hover:bg-emerald-50 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-200 flex justify-between items-center">
+                                        <span>{item.display_name.split(',')[0]}</span>
+                                        <span className="text-[9px] text-slate-400">{item.display_name.split(',').slice(1,2).join('')}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
                 <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-3">
@@ -865,7 +921,8 @@
                     </div>
                 </div>
             </div>
-        ));
+            );
+        });
 
         const Navbar = memo(({ active, setActive, t, className }) => (
             <nav className={`fixed bottom-0 left-0 right-0 mx-auto max-w-md bg-white dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 px-4 py-2 flex justify-between items-center z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] pb-6 ${className}`}>
