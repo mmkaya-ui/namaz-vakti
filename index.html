@@ -223,7 +223,7 @@
         // --- TRANSLATIONS ---
         const TRANSLATIONS = {
             tr: {
-                appName: "Namaz ve Tesbih", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...",
+                appName: "Namaz ve Zikir", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...",
                 prayerTimes: "Namaz Vakitleri", tasbeeh: "Tesbihat", quran: "Kur'an Oku", settings: "Ayarlar",
                 times: "Vakitler",
                 calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle",
@@ -269,8 +269,8 @@
                 fontSize: "Text Size", resetStep: "Reset Counter"
             },
             de: {
-                appName: "Gebet & Tasbih", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...",
-                prayerTimes: "Zeiten", tasbeeh: "Tasbih", quran: "Koran", settings: "Optionen",
+                appName: "Gebet & Dhikr", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...",
+                prayerTimes: "Zeiten", tasbeeh: "Dhikr", quran: "Koran", settings: "Optionen",
                 times: "Zeiten",
                 calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonne", dhuhr: "Dhuhur",
                 asr: "Assr", maghrib: "Maghrib", isha: "Ischa", midnight: "Mitternacht", teheccud: "Tahajjud",
@@ -549,26 +549,22 @@
                     </div>
                     <div className="mb-2 overflow-y-auto flex-1 space-y-2">
                         {current.type === 'amenarresulu' ? (
-                            // Show all for Amenarresulu usually, but if step by step requested:
-                            // Let's show currently indexed part but if it's the last step maybe show all?
-                            // Actually user wants standard zikrmatik feel.
-                            // If target is 11 (amenarresulu in zikrList), it means repeat 11 times or read 11 parts? 
-                            // Usually Amenarresulu is read once. Zikr list target=11 implies 11 repetitions? 
-                            // In v2 code it was single card. Let's assume it's read ONCE but maybe split in 2 ayahs?
-                            // No, typically Amenarresulu is treated as a single reading item in lists.
-                            // However, the previous code had a counter. 
-                            // If it is a counter (e.g. 11 times), we show the full text always.
-                            // If it is reading (Kehf), we show ayah by ayah.
-                            // Let's check zikrList: amena target is 11. 
-                            // So it's a counter. We show FULL TEXT.
-                            <div className="space-y-3">
-                                {data.map((d, i) => (
-                                    <div key={i}>
-                                        <p className="text-right font-serif text-lg text-emerald-800 dark:text-emerald-400 mb-1" dir="rtl">{d.arabic}</p>
-                                        <p className="text-slate-800 dark:text-slate-200 font-medium text-xs mb-1">{d.trans}</p>
-                                        <p className="text-slate-500 dark:text-slate-400 text-[10px] italic">{d.mean}</p>
-                                    </div>
-                                ))}
+                            <div className="space-y-4 p-2">
+                                <div className="text-right font-serif text-xl text-emerald-800 dark:text-emerald-400 mb-2 leading-loose" dir="rtl">
+                                    {data.map((d, i) => (
+                                        <span key={i}>
+                                            {d.arabic} <span className="text-sm border border-current rounded-full w-6 h-6 inline-flex items-center justify-center mx-1">{d.number}</span>
+                                        </span>
+                                    ))}
+                                </div>
+                                <div className="text-slate-800 dark:text-slate-200 font-medium text-sm mb-1 leading-relaxed">
+                                    <h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1 uppercase tracking-wider">{t('turkishTrans')}</h4>
+                                    {data.map(d => d.trans).join(' ')}
+                                </div>
+                                <div className="text-slate-600 dark:text-slate-400 text-xs italic leading-relaxed">
+                                    <h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1 uppercase tracking-wider">{t('turkishMean')}</h4>
+                                    {data.map(d => d.mean).join(' ')}
+                                </div>
                             </div>
                         ) : (
                             // Kehf -> Ayah by Ayah
@@ -811,7 +807,7 @@
         });
 
         const TasbeehView = memo(({ t, fontSize, lang }) => {
-            const [mode, setMode] = useState('morning');
+            const [mode, setMode] = useState(() => safeStorage.getItem('lastZikrMode') || 'morning');
             const [index, setIndex] = useState(0);
             const [count, setCount] = useState(0);
             const [cooldown, setCooldown] = useState(false);
@@ -944,7 +940,7 @@
             return (
                 <div className="pb-20 flex flex-col h-full pt-16">
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-2 transition-colors duration-300">{['morning', 'ikindi', 'night'].map(m => (
-                        <button key={m} onClick={() => setMode(m)} className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition ${mode===m ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{t(m+'Zikr')}</button>
+                        <button key={m} onClick={() => { setMode(m); safeStorage.setItem('lastZikrMode', m); }} className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition ${mode===m ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{t(m+'Zikr')}</button>
                     ))}</div>
                     {isFinishedToday ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border border-emerald-100 dark:border-emerald-800">
@@ -1097,7 +1093,7 @@
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs mb-2"><Globe size={14} className="mr-1.5 text-emerald-500" /> {t('language')}</h3>
                         <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
                             {['tr', 'en', 'de'].map(l => (
-                                <button key={l} onClick={() => setLang(l)} className={`flex-1 py-1 text-[10px] rounded uppercase ${lang === l ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{l}</button>
+                                <button key={l} onClick={() => { setLang(l); safeStorage.setItem('appLang', l); }} className={`flex-1 py-1 text-[10px] rounded uppercase ${lang === l ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{l}</button>
                             ))}
                         </div>
                      </div>
@@ -1140,8 +1136,13 @@
         ));
 
         function App() {
-            const [lang, setLang] = useState('tr');
-            const [activeTab, setActiveTab] = useState('times');
+            const [lang, setLang] = useState(() => safeStorage.getItem('appLang') || 'tr');
+            
+            const [activeTab, setActiveTab] = useState(() => {
+                const hash = window.location.hash.replace('#', '');
+                return ['times', 'tasbeeh', 'quran', 'settings'].includes(hash) ? hash : 'times';
+            });
+
             const [methodId, setMethodId] = useState(13);
             const [isDarkMode, setIsDarkMode] = useState(false);
             const [asrMethod, setAsrMethod] = useState(0); 
