@@ -124,7 +124,7 @@
                         osc.start(now);
                         osc.stop(now + 0.05);
                     } else if (type === 'finish') {
-                        // Simple, soft, steady tone fading out (Respectful)
+                        // Deep, peaceful chime (Not high pitched)
                         osc.type = 'sine';
                         osc.frequency.setValueAtTime(440, now); // Constant pitch (A4) - No weird effects
                         
@@ -213,8 +213,6 @@
                     if (isManual || !state.coords) setDefault();
                     return;
                 }
-                
-                // Show loading only if manual click or no initial data
                 if (isManual || !state.coords) update({ loading: true });
                 
                 try {
@@ -450,11 +448,28 @@
         });
 
         const MultiAyahReadingCard = memo(({ current, next, cooldown, t, fontSize, lang }) => {
-            const [pageNumber] = useState(() => Math.floor(Math.random() * 604) + 1);
+            const [pageNumber] = useState(() => {
+                const today = new Date().toISOString().split('T')[0];
+                const saved = safeStorage.getItem(`tasbeeh_random_page_${today}`);
+                if (saved) return parseInt(saved);
+                const rnd = Math.floor(Math.random() * 604) + 1;
+                safeStorage.setItem(`tasbeeh_random_page_${today}`, rnd);
+                return rnd;
+            });
+            
             const [ayahs, setAyahs] = useState(null);
             const [loading, setLoading] = useState(true);
-            const [localIndex, setLocalIndex] = useState(0);
+            const [localIndex, setLocalIndex] = useState(() => {
+                const today = new Date().toISOString().split('T')[0];
+                const saved = safeStorage.getItem(`tasbeeh_random_idx_${today}`);
+                return saved ? parseInt(saved) : 0;
+            });
             const [error, setError] = useState(false);
+
+            useEffect(() => {
+                const today = new Date().toISOString().split('T')[0];
+                safeStorage.setItem(`tasbeeh_random_idx_${today}`, localIndex);
+            }, [localIndex]);
 
             useEffect(() => {
                 let isMounted = true;
@@ -789,7 +804,10 @@
         const QuranView = memo(({ t, fontSize, lang }) => {
             const [ayahs, setAyahs] = useState([]);
             const [loading, setLoading] = useState(false);
-            const [pageInfo, setPageInfo] = useState(0);
+            const [pageInfo, setPageInfo] = useState(() => {
+                const saved = safeStorage.getItem('last_quran_page');
+                return saved ? parseInt(saved) : 0;
+            });
 
             // Modified load function to accept optional page number
             // If pageNum is provided, it loads that page. If not, generates random.
@@ -811,6 +829,7 @@
                     }
                     
                     setPageInfo(targetPage);
+                    safeStorage.setItem('last_quran_page', targetPage);
                     
                     const edition = getTranslationEdition(lang);
                     const transEdition = getTransliterationEdition(lang);
@@ -838,12 +857,19 @@
                 setLoading(false);
             }, [lang]);
 
+            // Initial load if we have a saved page
+            useEffect(() => {
+                if (pageInfo > 0 && ayahs.length === 0) {
+                    load(pageInfo);
+                }
+            }, []);
+
             // Reload current page when language changes
             useEffect(() => {
                 if (pageInfo > 0) {
                     load(pageInfo);
                 }
-            }, [lang, pageInfo]); // Removed 'load' from dependency to prevent loop, relied on pageInfo & lang
+            }, [lang, pageInfo]); 
 
             return (
                 <div className="pb-20 space-y-3 pt-16">
