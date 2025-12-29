@@ -104,7 +104,11 @@
                     if (!SoundManager.ctx) SoundManager.init();
                     const ctx = SoundManager.ctx;
                     if (!ctx) return;
-                    if (ctx.state === 'suspended') ctx.resume();
+                    
+                    // Resume if suspended (Fix for iOS screen timeout issue)
+                    if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
+                        ctx.resume();
+                    }
                     
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
@@ -115,18 +119,18 @@
                     const now = ctx.currentTime;
                     
                     if (type === 'tick') {
-                        // Soft, woody click
+                        // Shorter, sharper click (0.025s duration)
                         osc.type = 'sine';
                         osc.frequency.setValueAtTime(400, now);
-                        osc.frequency.exponentialRampToValueAtTime(100, now + 0.05);
+                        osc.frequency.exponentialRampToValueAtTime(100, now + 0.025);
                         gain.gain.setValueAtTime(0.15, now);
-                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
                         osc.start(now);
-                        osc.stop(now + 0.05);
+                        osc.stop(now + 0.025);
                     } else if (type === 'finish') {
-                        // Deep, peaceful chime (Not high pitched)
+                        // Deep, peaceful chime
                         osc.type = 'sine';
-                        osc.frequency.setValueAtTime(440, now); // Constant pitch (A4) - No weird effects
+                        osc.frequency.setValueAtTime(440, now); // Constant pitch (A4)
                         
                         // Gentle volume envelope
                         gain.gain.setValueAtTime(0, now);
@@ -142,7 +146,7 @@
 
         // Zikr Database
         const ZIKR_DB = {
-            fatiha: { tr: { t: "Elhamdülillâhi rabbil'alemin. Errahmânir'rahim. Mâliki yevmiddin. İyyâke na'budü ve iyyâke neste'în. İhdinessırâtel müstakîm. Sırâtellezine en'amte aleyhim ğayrilmağdûbi aleyhim ve leddâllîn.", m: "Hamd, Alemlerin Rabbi, Rahman, Rahim, din gününün sahibi Allah'a mahsustur..." }, en: { t: "Alhamdulillahi rabbil alamin. Ar-rahmanir rahim. Maliki yawmid din. Iyyaka na'budu wa iyyaka nasta'in. Ihdinas siratal mustaqim. Siratal lazina an'amta alayhim ghayril maghdubi alayhim walad dallin.", m: "All praise is due to Allah, Lord of the worlds, The Entirely Merciful, The Especially Merciful..." }, de: { t: "Alhamdulillahi rabbil alamin. Ar-rahmanir rahim. Maliki yawmid din. Iyyaka na'budu wa iyyaka nasta'in. Ihdinas siratal mustaqim. Siratal lazina an'amta alayhim ghayril maghdubi alayhim walad dallin.", m: "Alles Lob gebührt Allah, dem Herrn der Welten, dem Allerbarmer, dem Barmherzigen..." } },
+            fatiha: { tr: { t: "", m: "Hamd, Alemlerin Rabbi, Rahman, Rahim, din gününün sahibi Allah'a mahsustur..." }, en: { t: "", m: "All praise is due to Allah, Lord of the worlds, The Entirely Merciful, The Especially Merciful..." }, de: { t: "", m: "Alles Lob gebührt Allah, dem Herrn der Welten, dem Allerbarmer, dem Barmherzigen..." } },
             estag: { tr: { t: "Estağfirullah el azim ve etûbü ileyh", m: "Azim olan Allah'tan bağışlanma dilerim." }, en: { t: "Astaghfirullah al-azim wa atubu ilayh", m: "I seek forgiveness from Allah, the Magnificent." }, de: { t: "Astaghfirullah al-azim wa atubu ilayh", m: "Ich bitte Allah, den Allmächtigen, um Vergebung." } },
             salavatM: { tr: { t: "Allahümme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed", m: "Allah'ım! Efendimiz Muhammed'e ve Efendimiz Muhammed'in ailesine salat eyle." }, en: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad", m: "O Allah, send prayers upon our Master Muhammad and upon the family of our Master Muhammad." }, de: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad", m: "O Allah, segne unseren Meister Muhammad und die Familie unseres Meisters Muhammad." } },
             salavatA: { tr: { t: "Allâhümme salli alâ seyyidinâ Âdem", m: "Allah'ım! Efendimiz Adem'e salat eyle." }, en: { t: "Allahumma salli ala sayyidina Adam", m: "O Allah, send prayers upon our Master Adam." }, de: { t: "Allahumma salli ala sayyidina Adam", m: "O Allah, segne unseren Meister Adam." } },
@@ -448,28 +452,11 @@
         });
 
         const MultiAyahReadingCard = memo(({ current, next, cooldown, t, fontSize, lang }) => {
-            const [pageNumber] = useState(() => {
-                const today = new Date().toISOString().split('T')[0];
-                const saved = safeStorage.getItem(`tasbeeh_random_page_${today}`);
-                if (saved) return parseInt(saved);
-                const rnd = Math.floor(Math.random() * 604) + 1;
-                safeStorage.setItem(`tasbeeh_random_page_${today}`, rnd);
-                return rnd;
-            });
-            
+            const [pageNumber] = useState(() => Math.floor(Math.random() * 604) + 1);
             const [ayahs, setAyahs] = useState(null);
             const [loading, setLoading] = useState(true);
-            const [localIndex, setLocalIndex] = useState(() => {
-                const today = new Date().toISOString().split('T')[0];
-                const saved = safeStorage.getItem(`tasbeeh_random_idx_${today}`);
-                return saved ? parseInt(saved) : 0;
-            });
+            const [localIndex, setLocalIndex] = useState(0);
             const [error, setError] = useState(false);
-
-            useEffect(() => {
-                const today = new Date().toISOString().split('T')[0];
-                safeStorage.setItem(`tasbeeh_random_idx_${today}`, localIndex);
-            }, [localIndex]);
 
             useEffect(() => {
                 let isMounted = true;
@@ -548,7 +535,7 @@
                     <div className="flex-1 w-full flex flex-col min-h-0 relative">
                         {/* Text Section - Flexible Height with Scrolling */}
                         <div className="flex-1 overflow-y-auto no-scrollbar py-2 px-1 flex flex-col items-center justify-start text-center">
-                            <div className="my-auto w-full">
+                            <div className="w-full mt-1">
                                 <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1" style={{ fontSize: `${fontSize * 1.125}rem` }}>{current.title}</h2>
                                 {current.arabic && <p className="text-2xl font-serif text-emerald-600 dark:text-emerald-400 dir-rtl mb-2 leading-relaxed" style={{ fontSize: `${fontSize * 1.5}rem` }}>{current.arabic}</p>}
                                 <p className="text-slate-500 dark:text-slate-400 leading-relaxed mx-auto max-w-[280px]" style={{ fontSize: `${fontSize * 0.75}rem` }}>{current.text}</p>
@@ -556,7 +543,7 @@
                         </div>
                         
                         {/* Fixed Bottom Circle Section */}
-                        <div className="shrink-0 h-64 flex flex-col justify-center items-center w-full touch-manipulation cursor-pointer" onClick={!done ? tap : undefined}>
+                        <div className="shrink-0 h-56 flex flex-col justify-center items-center w-full touch-manipulation cursor-pointer" onClick={!done ? tap : undefined}>
                             {!done && (
                                 <>
                                     <div className="w-48 h-48 rounded-full border-8 border-slate-100 dark:border-slate-700 flex items-center justify-center bg-emerald-50 dark:bg-slate-800 shadow-inner ripple-effect transition-transform active:scale-95">
