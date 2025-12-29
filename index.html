@@ -758,7 +758,7 @@
             const fmt = (d) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
             return (
-                <div className="space-y-1.5 animate-fade-in pt-12 pb-14">
+                <div className="space-y-1.5 animate-fade-in">
                     <div className="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-2xl p-3 min-h-[100px] text-white shadow-lg relative overflow-hidden transition-colors duration-300">
                         <div className="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4"><Icon path={ICONS.Moon} size={100} /></div>
                         <div className="relative z-10 flex justify-between items-start mb-2">
@@ -905,7 +905,7 @@
             }, [isFinishedToday, cooldown, current, count, index, saveProgress, settings.soundEnabled, settings.vibrationEnabled]);
 
             return (
-                <div className="pb-20 flex flex-col h-full pt-14">
+                <div className="flex flex-col h-full">
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-2 transition-colors duration-300">{['morning', 'ikindi', 'night'].map(m => (
                         <button key={m} onClick={() => { setMode(m); StorageService.set('lastZikrMode', m); }} className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition ${mode===m ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{t(m+'Zikr')}</button>
                     ))}</div>
@@ -990,7 +990,7 @@
             }, [lang, pageInfo]); 
 
             return (
-                <div className="pb-20 space-y-3 pt-16">
+                <div className="space-y-3">
                     <div className="flex justify-between items-center"><h2 className="text-base font-bold text-slate-800 dark:text-slate-100">{t('randomAyahs')} <span className="text-[10px] font-normal text-slate-400">({t('pageInfo')} {pageInfo})</span></h2><button onClick={() => load(null)} className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full"><Icon path={ICONS.RefreshCw} size={16} className={loading ? "animate-spin" : ""}/></button></div>
                     {ayahs.length === 0 && !loading ? (
                         <div className="text-center py-6 bg-slate-50 dark:bg-slate-800 rounded-xl border border-dashed border-slate-300 dark:border-slate-700"><Icon path={ICONS.BookOpen} size={24} className="mx-auto text-slate-300 dark:text-slate-600 mb-2"/><button onClick={() => load(null)} className="bg-emerald-600 text-white px-3 py-1.5 rounded-full text-xs">{t('loadBtn')}</button></div>
@@ -1071,7 +1071,7 @@
             }, [locationHook]);
 
             return (
-            <div className="space-y-1.5 pb-20 pt-14">
+            <div className="space-y-1.5">
                 <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                     <div className="flex justify-between items-center mb-1">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Icon path={ICONS.MapPin} size={14} className="mr-1.5 text-emerald-500" /> {t('location')}</h3>
@@ -1219,7 +1219,7 @@
             return (
                 <div className="max-w-md mx-auto h-[100dvh] bg-white dark:bg-slate-900 shadow-2xl relative flex flex-col">
                     <Header currentTime={currentTime} />
-                    <main className="flex-1 p-3 overflow-y-auto no-scrollbar relative z-0">
+                    <main className="flex-1 overflow-y-auto no-scrollbar relative z-0 p-3 pt-20 pb-24">
                         <ErrorBoundary>
                             {activeTab === 'times' && <PrayerTimesView prayerData={prayerData.data} loading={prayerData.loading} currentTime={currentTime} locationName={location.locationName} />}
                             {activeTab === 'tasbeeh' && <TasbeehView />}
