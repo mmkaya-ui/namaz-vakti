@@ -659,7 +659,7 @@
                             {ayahs.map((currentAyah, index) => (
                                 <div key={index} className="border-b border-slate-50 dark:border-slate-800 pb-3 last:border-0">
                                     <div className="mb-1 text-[10px] text-emerald-600 dark:text-emerald-500 font-bold uppercase tracking-wider">{currentAyah.info}</div>
-                                    <p className="text-right font-serif text-lg text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl" style={{ fontSize: `${settings.fontSize * 1.2}rem` }}>{currentAyah.arabic}</p>
+                                    <p className="text-right font-serif text-lg text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl" style={{ fontSize: `${settings.fontSize * 1.5}rem` }}>{currentAyah.arabic}</p>
                                     <p className="text-slate-800 dark:text-slate-200 font-medium mb-1" style={{ fontSize: `${settings.fontSize * 0.75}rem` }}>{currentAyah.trans}</p>
                                     <p className="text-slate-500 dark:text-slate-400 italic" style={{ fontSize: `${settings.fontSize * 0.65}rem` }}>{currentAyah.text}</p>
                                 </div>
@@ -1058,7 +1058,7 @@
                         <div className="space-y-2">{ayahs.map((a, i) => (
                             <div key={i} className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                                 <div className="mb-1 border-b border-slate-50 dark:border-slate-800 pb-1 flex justify-between"><span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">{a.info}</span></div>
-                                <p className="text-right font-serif text-base text-emerald-800 dark:text-emerald-400 mb-1 leading-relaxed" dir="rtl">{a.arabic}</p>
+                                <p className="text-right font-serif text-base text-emerald-800 dark:text-emerald-400 mb-1 leading-relaxed" dir="rtl" style={{ fontSize: `${settings.fontSize * 1.5}rem` }}>{a.arabic}</p>
                                 <p className="text-slate-800 dark:text-slate-200 font-medium mb-1" style={{ fontSize: `${settings.fontSize * 0.75}rem` }}>{a.trans}</p>
                                 <p className="text-slate-500 dark:text-slate-400 italic" style={{ fontSize: `${settings.fontSize * 0.65}rem` }}>{a.text}</p>
                             </div>
