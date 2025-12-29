@@ -20,6 +20,9 @@
                 extend: {
                     colors: {
                         slate: { 850: '#1e293b' }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }
                 }
             }
@@ -40,7 +43,6 @@
         button { touch-action: manipulation; }
         body { 
             -webkit-tap-highlight-color: transparent; 
-            /* overflow: hidden; REMOVED to allow pull-to-refresh */
             min-height: 100vh;
         }
         /* Number input spinner hide */
@@ -52,6 +54,15 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        // --- GLOBAL ERROR HANDLER ---
+        // Catches external extension errors (AES/Crypto) and Geolocation rejections to prevent app crash/noise
+        window.addEventListener('unhandledrejection', (e) => {
+            if (e.reason && (e.reason.toString().includes('AES') || e.reason.toString().includes('Geolocation'))) {
+                e.preventDefault();
+                console.warn("Suppressed external/environment error:", e.reason);
+            }
+        });
+
         const { useState, useEffect, useCallback, useMemo, memo } = React;
 
         // --- CONSTANTS ---
@@ -95,8 +106,13 @@
                 alert("Bu tarayıcı bildirimleri desteklemiyor.");
                 return false;
             }
-            const permission = await Notification.requestPermission();
-            return permission === "granted";
+            try {
+                const permission = await Notification.requestPermission();
+                return permission === "granted";
+            } catch (e) {
+                console.warn("Notification permission error", e);
+                return false;
+            }
         };
 
         const sendNotification = (title, body) => {
@@ -128,9 +144,11 @@
             ChevronRight: (p) => <Icon {...p} path={<path d="m9 18 6-6-6-6"/>} />,
             Lock: (p) => <Icon {...p} path={<><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>} />,
             Edit: (p) => <Icon {...p} path={<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>} />,
-            Bell: (p) => <Icon {...p} path={<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>} />
+            Bell: (p) => <Icon {...p} path={<><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>} />,
+            RotateCcw: (p) => <Icon {...p} path={<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 16" />} />,
+            Type: (p) => <Icon {...p} path={<><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></>} />
         };
-        const { MapPin, Settings, Moon, Sun, BookOpen, CheckCircle, RefreshCw, Globe, Navigation, Clock, Menu, AlertTriangle, ChevronRight, Lock, Edit, Bell, Search } = Icons;
+        const { MapPin, Settings, Moon, Sun, BookOpen, CheckCircle, RefreshCw, Globe, Navigation, Clock, Menu, AlertTriangle, ChevronRight, Lock, Edit, Bell, RotateCcw, Type } = Icons;
 
         // --- TRANSLATIONS ---
         const TRANSLATIONS = {
@@ -154,7 +172,8 @@
                 salavatBedr: "Bedir & Kehf Salavatı", tryAgain: "Tekrar Dene", connectionError: "Bağlantı Hatası",
                 pageInfo: "Sayfa", asrMethod: "İkindi Yöntemi", standard: "Standart (Cumhur)", hanafi: "Hanefi (Geç İkindi)",
                 timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet",
-                enableNotifications: "Bildirim İzni Ver", notificationGranted: "Bildirim İzni Verildi", notifications: "Bildirimler"
+                enableNotifications: "Bildirim İzni Ver", notificationGranted: "Bildirim İzni Verildi", notifications: "Bildirimler",
+                fontSize: "Yazı Boyutu", resetStep: "Sayacı Sıfırla"
             },
             en: {
                 appName: "Prayer & Dhikr", location: "Loc", detectLocation: "Find", searchCity: "City...",
@@ -176,7 +195,8 @@
                 salavatBedr: "Badr & Kahf", tryAgain: "Try Again", connectionError: "Connection Error",
                 pageInfo: "Page", asrMethod: "Asr Method", standard: "Standard", hanafi: "Hanafi",
                 timeAdjustments: "Time Adjustments (min)", save: "Save",
-                enableNotifications: "Enable Notifications", notificationGranted: "Notifications Enabled", notifications: "Notifications"
+                enableNotifications: "Enable Notifications", notificationGranted: "Notifications Enabled", notifications: "Notifications",
+                fontSize: "Text Size", resetStep: "Reset Counter"
             },
             de: {
                 appName: "Gebet & Tasbih", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...",
@@ -198,7 +218,8 @@
                 salavatBedr: "Badr & Kahf", tryAgain: "Wiederholen", connectionError: "Verbindungsfehler",
                 pageInfo: "Seite", asrMethod: "Assr Methode", standard: "Standard", hanafi: "Hanafi",
                 timeAdjustments: "Zeitanpassungen (Min)", save: "Speichern",
-                enableNotifications: "Benachrichtigungen aktivieren", notificationGranted: "Benachrichtigungen aktiviert", notifications: "Benachrichtigungen"
+                enableNotifications: "Benachrichtigungen aktivieren", notificationGranted: "Benachrichtigungen aktiviert", notifications: "Benachrichtigungen",
+                fontSize: "Textgröße", resetStep: "Reset"
             }
         };
 
@@ -267,33 +288,55 @@
             }, []);
 
             const getUserLocation = useCallback(() => {
+                // If Geolocation is missing completely, default safely
                 if (!navigator.geolocation) {
-                    alert("Geolocation not supported");
                     setDefault();
                     return;
                 }
                 setLoading(true);
+                // Safety timeout
                 const geoTimeout = setTimeout(() => { setLoading(false); setDefault(); }, 10000);
 
-                navigator.geolocation.getCurrentPosition(
-                    async (pos) => {
-                        clearTimeout(geoTimeout);
-                        try {
-                            const newCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                            setCoords(newCoords);
-                            safeStorage.setItem('coords', JSON.stringify(newCoords));
+                try {
+                    navigator.geolocation.getCurrentPosition(
+                        async (pos) => {
+                            clearTimeout(geoTimeout);
                             try {
-                                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${newCoords.lat}&lon=${newCoords.lng}`);
-                                const data = await res.json();
-                                const name = data.address.city || data.address.town || data.address.suburb || "Loc";
-                                setLocationName(name);
-                                safeStorage.setItem('locName', name);
-                            } catch(e) { setLocationName(t('location')); }
-                        } catch (err) { } finally { setLoading(false); }
-                    },
-                    (err) => { clearTimeout(geoTimeout); setLoading(false); setDefault(); },
-                    { timeout: 5000, enableHighAccuracy: false }
-                );
+                                const newCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                                setCoords(newCoords);
+                                safeStorage.setItem('coords', JSON.stringify(newCoords));
+                                
+                                // Fetch address with error handling
+                                try {
+                                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${newCoords.lat}&lon=${newCoords.lng}`);
+                                    if (!res.ok) throw new Error("Network response not ok");
+                                    const data = await res.json();
+                                    const name = data.address.city || data.address.town || data.address.suburb || "Loc";
+                                    setLocationName(name);
+                                    safeStorage.setItem('locName', name);
+                                } catch(e) { 
+                                    setLocationName(t('location')); 
+                                }
+                            } catch (err) { 
+                                setDefault();
+                            } finally { 
+                                setLoading(false); 
+                            }
+                        },
+                        (err) => { 
+                            console.warn("Geo error:", err);
+                            clearTimeout(geoTimeout); 
+                            setLoading(false); 
+                            setDefault(); 
+                        },
+                        { timeout: 5000, enableHighAccuracy: false }
+                    );
+                } catch (e) {
+                    console.warn("Geo sync error:", e);
+                    clearTimeout(geoTimeout);
+                    setLoading(false);
+                    setDefault();
+                }
             }, [coords, t, setDefault]);
 
             const searchLocation = useCallback(async (query) => {
@@ -301,6 +344,7 @@
                 setLoading(true);
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+                    if (!res.ok) throw new Error("Network Error");
                     const data = await res.json();
                     if (data && data.length > 0) {
                         const place = data[0];
@@ -330,7 +374,6 @@
                     try {
                         const date = new Date();
                         const strDate = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
-                        // Add school parameter: 0 for Shafi (Standard), 1 for Hanafi
                         const schoolParam = asrMethod === 1 ? '&school=1' : '&school=0';
                         const res = await fetch(`https://api.aladhan.com/v1/timings/${strDate}?latitude=${coords.lat}&longitude=${coords.lng}&method=${methodId}${schoolParam}`, { signal: controller.signal });
                         const json = await res.json();
@@ -368,7 +411,7 @@
                         <span className="font-bold text-base tracking-tight text-slate-800 dark:text-slate-100">{appName}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <div className="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-500 dark:text-slate-400">{fmt(currentTime)}</div>
+                        <div className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{fmt(currentTime)}</div>
                         <button onClick={toggleTheme} className="text-slate-500 dark:text-slate-400 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                             {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
@@ -381,26 +424,36 @@
             <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1"><div className="bg-emerald-600 h-2 rounded-full transition-all duration-300 ease-out" style={{ width: `${Math.min(100, (current / total) * 100)}%` }}></div></div>
         );
 
-        const AmenarresuluCard = memo(({ current, count, next, tap, cooldown, t }) => {
+        // Reset Button Component
+        const ResetBtn = ({ onClick, t }) => (
+             <button onClick={(e) => { e.stopPropagation(); onClick(); }} className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition" title={t('resetStep')}>
+                 <RotateCcw size={14} />
+             </button>
+        );
+
+        const AmenarresuluCard = memo(({ current, count, next, tap, cooldown, t, resetLocal, fontSize }) => {
             const done = count >= current.target;
             return (
                 <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col h-full transition-colors duration-300">
                     <div className="flex justify-between items-center mb-2 text-xs">
                         <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><BookOpen size={16}/><span>{current.title}</span></div>
-                        <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono">{count}/{current.target}</span>
+                        <div className="flex items-center space-x-2">
+                            <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono">{count}/{current.target}</span>
+                            <ResetBtn onClick={resetLocal} t={t} />
+                        </div>
                     </div>
                     
                     <div className="flex-1 overflow-y-auto mb-2 space-y-2">
                         <div>
                             <h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1">{t('turkishTrans')}</h4>
-                            <p className="text-slate-700 dark:text-slate-300 text-xs leading-relaxed italic">
+                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed italic" style={{ fontSize: `${fontSize * 0.75}rem` }}>
                                 "Amenerrasulü bima ünzile ileyhi mirrabbihi vel mü'minun, küllün amene billahi ve melaiketihi ve kütübihi ve rusülih, la nüferriku beyne ehadin min rusülih, ve kalu semi'na ve ata'na gufraneke rabbena ve ileykel masir. La yükellifullahü nefsen illa vüs'aha, leha ma kesebet ve aleyha mektesebet, rabbena la tüahizna in nesina ev ahta'na, rabbena ve la tahmil aleyna isran kema hameltehü alellezine min kablina, rabbena ve la tühammilna ma la takate lena bih, va'fü anna, vagfir lena, verhamna, ente mevlana fensurna alel kavmil kafirin."
                             </p>
                         </div>
 
                         <div>
                             <h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1">{t('turkishMean')}</h4>
-                            <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+                            <p className="text-slate-600 dark:text-slate-400 leading-relaxed" style={{ fontSize: `${fontSize * 0.75}rem` }}>
                                 "Peygamber, Rabbinden kendisine indirilene iman etti, mü'minler de (iman ettiler). Her biri; Allah'a, meleklerine, kitaplarına ve peygamberlerine iman ettiler ve şöyle dediler: 'Onun peygamberlerinden hiçbirini (diğerinden) ayırt etmeyiz.' Şöyle de dediler: 'İşittik ve itaat ettik. Ey Rabbimiz! Senden bağışlama dileriz. Sonunda dönüş yalnız sanadır.' Allah bir kimseyi ancak gücünün yettiği şeyle yükümlü kılar. Onun kazandığı iyilik kendi yararına, kötülük de kendi zararınadır. (Şöyle diyerek dua ediniz): 'Ey Rabbimiz! Unutur, ya da yanılırsak bizi sorumlu tutma! Ey Rabbimiz! Bize, bizden öncekilere yüklediğin yük gibi yük yükleme. Ey Rabbimiz! Bize gücümüzün yetmediği şeyleri yükleme! Bizi affet, bizi bağışla, bize acı! Sen bizim Mevlâmızsın. Kâfirler topluluğuna karşı bize yardım et.'"
                             </p>
                         </div>
@@ -413,8 +466,7 @@
             );
         });
 
-        // FIXED: MultiAyahReadingCard with robust parallel fetching and Surah names
-        const MultiAyahReadingCard = memo(({ current, next, cooldown, t }) => {
+        const MultiAyahReadingCard = memo(({ current, next, cooldown, t, fontSize }) => {
             const [ayahs, setAyahs] = useState(null);
             const [loading, setLoading] = useState(true);
             const [localIndex, setLocalIndex] = useState(0);
@@ -466,13 +518,12 @@
                             setLoading(false);
                         }
                     }
-                };
-                
+                };                
                 fetchSequential();
                 return () => { isMounted = false; };
             }, []);
 
-            if (error) return (
+            if (error) return ( 
                  <div className="bg-white dark:bg-slate-850 border border-red-200 dark:border-red-900 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-full transition-colors duration-300">
                     <p className="text-red-500 mb-2 text-xs">{t('connectionError')}</p>
                     <button onClick={next} className="bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded text-xs text-slate-600 dark:text-slate-300">{t('next')}</button>
@@ -480,9 +531,7 @@
             );
 
             if (loading || !ayahs) return <LoadingView />;
-
             const currentAyah = ayahs[localIndex];
-            // Safety check
             if (!currentAyah) return <div onClick={next} className="p-4 text-center text-xs">Loading error. Tap to skip.</div>;
 
             const isLast = localIndex >= ayahs.length - 1;
@@ -503,8 +552,8 @@
                     <div className="flex-1 overflow-y-auto mb-2">
                         <div className="mb-1 text-[10px] text-emerald-600 dark:text-emerald-500 font-bold uppercase tracking-wider">{currentAyah.info}</div>
                         <p className="text-right font-serif text-lg text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl">{currentAyah.arabic}</p>
-                        <p className="text-slate-800 dark:text-slate-200 text-xs font-medium mb-1">{currentAyah.trans}</p>
-                        <p className="text-slate-500 dark:text-slate-400 text-[10px] italic">{currentAyah.text}</p>
+                        <p className="text-slate-800 dark:text-slate-200 font-medium mb-1" style={{ fontSize: `${fontSize * 0.75}rem` }}>{currentAyah.trans}</p>
+                        <p className="text-slate-500 dark:text-slate-400 italic" style={{ fontSize: `${fontSize * 0.65}rem` }}>{currentAyah.text}</p>
                     </div>
                     <button onClick={handleNext} className="w-full py-2.5 rounded-lg font-bold bg-emerald-600 text-white active:scale-95 transition text-sm">
                         {isLast ? t('completed') : t('nextAyah')}
@@ -513,40 +562,46 @@
             );
         });
 
-        const KehfCard = memo(({ current, count, next, tap, cooldown, t }) => {
+        const KehfCard = memo(({ current, count, next, tap, cooldown, t, resetLocal, fontSize }) => {
             const ds = current.type === 'kehf_first_10' ? KEHF_DATA.first10 : KEHF_DATA.last10;
             const ayah = ds[count] || ds[0];
             const isLast = count >= current.target - 1;
             return (
-                <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col transition-colors duration-300">
+                <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col transition-colors duration-300 h-full">
                     <div className="flex justify-between items-center mb-2 text-xs">
                         <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><BookOpen size={16}/><span>{current.title}</span></div>
-                        <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono">{count + 1}/{current.target}</span>
+                        <div className="flex items-center space-x-2">
+                            <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono">{count + 1}/{current.target}</span>
+                            <ResetBtn onClick={resetLocal} t={t} />
+                        </div>
                     </div>
-                    <div className="mb-2 overflow-y-auto max-h-[50vh]">
-                        <p className="text-emerald-800 dark:text-emerald-400 font-semibold mb-1 text-sm leading-relaxed">{ayah.tr}</p>
-                        <p className="text-slate-600 dark:text-slate-400 italic text-xs">{ayah.me}</p>
+                    <div className="mb-2 overflow-y-auto flex-1">
+                        <p className="text-emerald-800 dark:text-emerald-400 font-semibold mb-1 leading-relaxed" style={{ fontSize: `${fontSize * 0.85}rem` }}>{ayah.tr}</p>
+                        <p className="text-slate-600 dark:text-slate-400 italic" style={{ fontSize: `${fontSize * 0.75}rem` }}>{ayah.me}</p>
                     </div>
-                    <button onClick={isLast ? next : tap} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500' : 'bg-emerald-600 text-white active:scale-95'}`}>
+                    <button onClick={isLast ? next : tap} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold flex justify-center items-center space-x-1 transition text-sm shrink-0 ${cooldown ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500' : 'bg-emerald-600 text-white active:scale-95'}`}>
                         {cooldown ? <Lock size={16}/> : <span>{isLast ? t('completed') : t('nextAyah')}</span>}
                     </button>
                 </div>
             );
         });
 
-        const CounterCard = memo(({ current, count, next, tap, cooldown, t, index, totalLength }) => {
+        const CounterCard = memo(({ current, count, next, tap, cooldown, t, index, totalLength, resetLocal, fontSize }) => {
             const done = count >= current.target;
             return (
-                <div className={`border-2 rounded-2xl p-3 flex flex-col items-center text-center shadow-sm transition-colors duration-300 select-none ${done ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500' : 'bg-white dark:bg-slate-850 border-emerald-100 dark:border-slate-700'}`}>
-                    <div className="w-full flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-1">
+                <div className={`border-2 rounded-2xl p-3 flex flex-col items-center text-center shadow-sm transition-colors duration-300 select-none h-full relative ${done ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500' : 'bg-white dark:bg-slate-850 border-emerald-100 dark:border-slate-700'}`}>
+                    <div className="w-full flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-1 relative z-10">
                         <span>{t('step')} {index + 1}/{totalLength}</span>
-                        <span>{t('target')}: {current.target}</span>
+                        <div className="flex items-center gap-2">
+                             <span>{t('target')}: {current.target}</span>
+                             <ResetBtn onClick={resetLocal} t={t} />
+                        </div>
                     </div>
                     <ProgressBar current={count} total={current.target}/>
-                    <div className="my-2" onClick={!done ? tap : undefined}>
+                    <div className="my-2 flex-1 flex flex-col justify-center w-full" onClick={!done ? tap : undefined}>
                         <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">{current.title}</h2>
                         {current.arabic && <p className="text-xl font-serif text-emerald-600 dark:text-emerald-400 dir-rtl mb-1">{current.arabic}</p>}
-                        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed mx-auto max-w-[250px]">{current.text}</p>
+                        <p className="text-slate-500 dark:text-slate-400 leading-relaxed mx-auto max-w-[280px]" style={{ fontSize: `${fontSize * 0.75}rem` }}>{current.text}</p>
                     </div>
                     {done ? (
                         <button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold text-white flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-600 animate-pulse-slow'}`}>
@@ -564,11 +619,11 @@
             );
         });
 
-        const ReadingCard = memo(({ current, next, cooldown, t }) => (
-            <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center text-center shadow-sm transition-colors duration-300">
+        const ReadingCard = memo(({ current, next, cooldown, t, fontSize }) => (
+            <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center text-center shadow-sm transition-colors duration-300 h-full justify-center">
                 <BookOpen size={32} className="text-emerald-500 mb-2"/>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">{current.title}</h3>
-                <p className="text-slate-600 dark:text-slate-400 mb-3 text-xs">{current.text}</p>
+                <p className="text-slate-600 dark:text-slate-400 mb-3" style={{ fontSize: `${fontSize * 0.75}rem` }}>{current.text}</p>
                 <button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold transition text-sm ${cooldown ? 'bg-slate-300 dark:bg-slate-600' : 'bg-emerald-600 text-white'}`}>
                     {cooldown ? <Lock size={16} className="mx-auto"/> : t('completed')}
                 </button>
@@ -581,11 +636,9 @@
             if (loading || !prayerData) return <LoadingView />;
             const timings = prayerData.timings;
             
-            // Helper to apply offset
             const applyOffset = (date, minutes) => {
                 if (!date) return null;
                 const newDate = new Date(date);
-                // Ensure minutes is treated as an integer
                 const offsetMin = parseInt(minutes);
                 if (!isNaN(offsetMin)) {
                     newDate.setMinutes(newDate.getMinutes() + offsetMin);
@@ -609,7 +662,6 @@
                 isha: parseAndAdjust(timings.Isha, offsets.isha) 
             };
             
-            // Re-calculate derived times based on adjusted times
             const ishraqEnd = new Date(times.sunrise.getTime() + 45 * 60000);
             const istiwaStart = new Date(times.dhuhr.getTime() - 45 * 60000);
             const isfirarStart = new Date(times.maghrib.getTime() - 45 * 60000);
@@ -620,7 +672,6 @@
             const now = currentTime.getTime();
             let nextP = t('fajr'), nextT = new Date(times.fajr); nextT.setDate(nextT.getDate() + 1);
             
-            // Recalculate next prayer based on adjusted times
             if (now < times.fajr.getTime()) { nextP = t('fajr'); nextT = times.fajr; }
             else if (now < times.sunrise.getTime()) { nextP = t('sunrise'); nextT = times.sunrise; }
             else if (now < times.dhuhr.getTime()) { nextP = t('dhuhr'); nextT = times.dhuhr; }
@@ -635,7 +686,7 @@
             const fmt = (d) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
             return (
-                <div className="space-y-2 animate-fade-in pt-20 pb-16">
+                <div className="space-y-2 animate-fade-in pt-14 pb-16">
                     <div className="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden transition-colors duration-300">
                         <div className="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4"><Moon size={100} /></div>
                         <div className="relative z-10 flex justify-between items-start mb-2">
@@ -646,7 +697,7 @@
                     </div>
                     <div className="bg-white dark:bg-slate-850 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors duration-300">
                         {[{ k: 'fajr', i: Moon }, { k: 'sunrise', i: Sun }, { k: 'dhuhr', i: Sun }, { k: 'asr', i: Sun }, { k: 'maghrib', i: Moon }, { k: 'isha', i: Moon }].map((o, idx) => (
-                            <div key={idx} className="flex items-center justify-between px-3 py-2 border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <div key={idx} className="flex items-center justify-between px-3 py-1 border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                 <div className="flex items-center space-x-3 text-slate-700 dark:text-slate-300 font-medium"><span className="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 p-1.5 rounded-lg"><o.i size={18} /></span><span className="text-sm">{t(o.k)}</span></div>
                                 <span className="font-mono font-bold text-base text-slate-800 dark:text-slate-200">{fmt(times[o.k])}</span>
                             </div>
@@ -670,7 +721,7 @@
             );
         });
 
-        const TasbeehView = memo(({ t }) => {
+        const TasbeehView = memo(({ t, fontSize }) => {
             const [mode, setMode] = useState('morning');
             const [index, setIndex] = useState(0);
             const [count, setCount] = useState(0);
@@ -679,17 +730,15 @@
 
             useEffect(() => {
                 const today = new Date().toISOString().split('T')[0];
-                const savedStatus = safeStorage.getItem(`tasbeeh_status_${mode}`);
-                
-                // Get saved progress regardless of completion
+                const savedStatus = safeStorage.getItem(`tasbeeh_status_${mode}`);                
                 const savedProgress = safeStorage.getItem(`tasbeeh_progress_${mode}`);
 
                 if (savedStatus) {
                     const { date, finished } = JSON.parse(savedStatus);
-                    if (date === today && finished) {
-                         setIsFinishedToday(true);
-                         setIndex(0); setCount(0);
-                         return; // If finished today, don't load partial progress
+                    if (date === today && finished) { 
+                         setIsFinishedToday(true); 
+                         setIndex(0); setCount(0); 
+                         return; 
                     } else {
                         setIsFinishedToday(false);
                     }
@@ -697,12 +746,8 @@
                     setIsFinishedToday(false);
                 }
 
-                // Load partial progress if not finished today
                 if (savedProgress) {
                     const { date, idx, cnt } = JSON.parse(savedProgress);
-                    // Optional: You can choose to reset progress on a new day or keep it.
-                    // Here we keep it simple: if there is progress, load it. 
-                    // To reset on new day: if (date === today) ...
                     setIndex(idx || 0);
                     setCount(cnt || 0);
                 } else {
@@ -712,7 +757,7 @@
 
             }, [mode]);
 
-            const saveProgress = useCallback((idx, cnt) => {
+            const saveProgress = useCallback((idx, cnt) => { 
                  const today = new Date().toISOString().split('T')[0];
                  safeStorage.setItem(`tasbeeh_progress_${mode}`, JSON.stringify({ date: today, idx, cnt }));
             }, [mode]);
@@ -720,7 +765,7 @@
             const handleCompletion = useCallback(() => {
                 const today = new Date().toISOString().split('T')[0];
                 safeStorage.setItem(`tasbeeh_status_${mode}`, JSON.stringify({ date: today, finished: true }));
-                safeStorage.removeItem(`tasbeeh_progress_${mode}`); // Clear progress on finish
+                safeStorage.removeItem(`tasbeeh_progress_${mode}`); 
                 sendNotification("Tesbihat Tamamlandı", `${t(mode + 'Zikr')} başarıyla tamamlandı.`);
                 setIsFinishedToday(true);
             }, [mode, t]);
@@ -732,6 +777,12 @@
                 setIsFinishedToday(false);
                 setIndex(0); setCount(0); setCooldown(false);
             }, [mode]);
+            
+            // New partial reset
+            const resetLocal = useCallback(() => {
+                setCount(0);
+                saveProgress(index, 0);
+            }, [index, saveProgress]);
 
             const zikrList = useMemo(() => {
                 const common = {
@@ -753,7 +804,6 @@
             }, [mode, t]);
 
             const current = zikrList[index] || zikrList[0];
-            const isLastZikr = index >= zikrList.length - 1;
 
             const next = useCallback(() => {
                 setCooldown(true); setTimeout(() => setCooldown(false), 500);
@@ -767,20 +817,33 @@
                 const isSpecial = current.type?.includes('kehf');
                 let newCount = count;
                 
+                // Vibration Logic:
+                // Normal tap: 40ms
+                // One before finish: 40ms (Request said "previous numbers short")
+                // Finish: 400ms
+                
+                const vibrate = (pattern) => { if(navigator.vibrate) navigator.vibrate(pattern); };
+
                 if (isSpecial) {
                     if (count < current.target - 1) {
                         setCooldown(true); setTimeout(() => setCooldown(false), 500);
                         newCount = count + 1;
                         setCount(newCount);
-                        if (newCount + 1 >= current.target && navigator.vibrate) navigator.vibrate(200);
-                        saveProgress(index, newCount); // Save state
+                        // Logic specific for Kehf scrolling next, usually no vib needed until done, but consistency:
+                        if (newCount + 1 >= current.target) vibrate(400); else vibrate(40);
+                        saveProgress(index, newCount); 
                     }
                 } else if (!current.isReading) {
                     if (count < current.target) {
                         newCount = count + 1;
                         setCount(newCount);
-                        if (newCount + 1 >= current.target && navigator.vibrate) navigator.vibrate(200);
-                        saveProgress(index, newCount); // Save state
+                        // If we just hit the target
+                        if (newCount === current.target) {
+                             vibrate(400); // Long vibration at end
+                        } else {
+                             vibrate(40); // Short vibration otherwise
+                        }
+                        saveProgress(index, newCount); 
                     }
                 }
                 
@@ -788,15 +851,15 @@
                      if (count < current.target) {
                         newCount = count + 1;
                         setCount(newCount);
-                        if (newCount >= current.target && navigator.vibrate) navigator.vibrate(200);
-                        saveProgress(index, newCount); // Save state
+                        if (newCount === current.target) vibrate(400); else vibrate(40);
+                        saveProgress(index, newCount); 
                      }
                 }
 
             }, [isFinishedToday, cooldown, current, count, index, saveProgress]);
 
             return (
-                <div className="pb-20 flex flex-col h-full pt-20">
+                <div className="pb-20 flex flex-col h-full pt-16">
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-2 transition-colors duration-300">{['morning', 'ikindi', 'night'].map(m => (
                         <button key={m} onClick={() => setMode(m)} className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition ${mode===m ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{t(m+'Zikr')}</button>
                     ))}</div>
@@ -806,20 +869,19 @@
                             <button onClick={reset} className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs">{t('reset')}</button>
                         </div>
                     ) : (
-                        <div className="flex-1 space-y-2">
-                             {current.type?.includes('kehf') ? <KehfCard current={current} count={count} next={next} tap={tap} cooldown={cooldown} t={t} /> : 
-                              current.type === 'amenarresulu' ? <AmenarresuluCard current={current} count={count} next={next} tap={tap} cooldown={cooldown} t={t} /> :
-                              current.type === 'random15' ? <MultiAyahReadingCard current={current} next={next} cooldown={cooldown} t={t} /> :
-                              (current.isReading ? <ReadingCard current={current} next={next} cooldown={cooldown} t={t} /> : 
-                              <CounterCard current={current} count={count} next={next} tap={tap} cooldown={cooldown} t={t} index={index} totalLength={zikrList.length} />)}
+                        <div className="flex-1 space-y-2 h-[60vh]">
+                             {current.type?.includes('kehf') ? <KehfCard current={current} count={count} next={next} tap={tap} cooldown={cooldown} t={t} resetLocal={resetLocal} fontSize={fontSize} /> : 
+                               current.type === 'amenarresulu' ? <AmenarresuluCard current={current} count={count} next={next} tap={tap} cooldown={cooldown} t={t} resetLocal={resetLocal} fontSize={fontSize} /> :
+                              current.type === 'random15' ? <MultiAyahReadingCard current={current} next={next} cooldown={cooldown} t={t} fontSize={fontSize} /> : 
+                              (current.isReading ? <ReadingCard current={current} next={next} cooldown={cooldown} t={t} fontSize={fontSize} /> : 
+                               <CounterCard current={current} count={count} next={next} tap={tap} cooldown={cooldown} t={t} index={index} totalLength={zikrList.length} resetLocal={resetLocal} fontSize={fontSize} />)}
                         </div>
                     )}
                 </div>
             );
         });
 
-        // REUSED QuranView Logic for "Random Page" Zikr
-        const QuranView = memo(({ t }) => {
+        const QuranView = memo(({ t, fontSize }) => {
             const [ayahs, setAyahs] = useState([]);
             const [loading, setLoading] = useState(false);
             const [pageInfo, setPageInfo] = useState(0);
@@ -833,7 +895,7 @@
                     let randomPage;
                     let safety = 0;
                     do {
-                        randomPage = Math.floor(Math.random() * 604) + 1;
+                        randomPage = Math.floor(Math.random() * 604) + 1; 
                         safety++;
                     } while (history.includes(randomPage) && safety < 1000);
                     
@@ -860,7 +922,7 @@
             }, []);
 
             return (
-                <div className="pb-20 space-y-3 pt-20">
+                <div className="pb-20 space-y-3 pt-16">
                     <div className="flex justify-between items-center"><h2 className="text-base font-bold text-slate-800 dark:text-slate-100">{t('randomAyahs')} <span className="text-[10px] font-normal text-slate-400">({t('pageInfo')} {pageInfo})</span></h2><button onClick={load} className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full"><RefreshCw size={16} className={loading ? "animate-spin" : ""}/></button></div>
                     {ayahs.length === 0 && !loading ? (
                         <div className="text-center py-6 bg-slate-50 dark:bg-slate-800 rounded-xl border border-dashed border-slate-300 dark:border-slate-700"><BookOpen size={24} className="mx-auto text-slate-300 dark:text-slate-600 mb-2"/><button onClick={load} className="bg-emerald-600 text-white px-3 py-1.5 rounded-full text-xs">{t('loadBtn')}</button></div>
@@ -869,18 +931,17 @@
                             <div key={i} className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                                 <div className="mb-1 border-b border-slate-50 dark:border-slate-800 pb-1 flex justify-between"><span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded">{a.info}</span></div>
                                 <p className="text-right font-serif text-base text-emerald-800 dark:text-emerald-400 mb-1 leading-relaxed" dir="rtl">{a.arabic}</p>
-                                <p className="text-slate-800 dark:text-slate-200 font-medium mb-1 text-xs">{a.trans}</p>
-                                <p className="text-slate-500 dark:text-slate-400 text-[10px] italic">{a.text}</p>
+                                <p className="text-slate-800 dark:text-slate-200 font-medium mb-1" style={{ fontSize: `${fontSize * 0.75}rem` }}>{a.trans}</p>
+                                <p className="text-slate-500 dark:text-slate-400 italic" style={{ fontSize: `${fontSize * 0.65}rem` }}>{a.text}</p>
                             </div>
                         ))}</div>
-                    )}
-                     {loading && <LoadingView />}
+                    )} 
+                    {loading && <LoadingView />}
                 </div>
             );
         });
 
-        // SettingsView, Navbar, App ... (Same logic as v2)
-        const SettingsView = memo(({ t, locationHook, setMethod, setLang, methodId, lang, setAsrMethod, asrMethod, setOffsets, offsets }) => (
+        const SettingsView = memo(({ t, locationHook, setMethod, setLang, methodId, lang, setAsrMethod, asrMethod, setOffsets, offsets, fontSize, setFontSize }) => (
             <div className="space-y-2 pb-20 pt-16">
                 
                 {/* Location - Compact */}
@@ -889,23 +950,22 @@
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><MapPin size={14} className="mr-1.5 text-emerald-500" /> {t('location')}</h3>
                         <span className="text-[9px] text-slate-400 max-w-[120px] truncate">{locationHook.locationName}</span>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-2"> 
                          <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex-1 flex space-x-1">
                             <input name="q" placeholder={t('searchCity')} className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-w-0"/>
-                            <button className="bg-slate-800 dark:bg-slate-700 text-white px-2 rounded-lg"><Icon path={<><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>} size={14}/></button> {/* Simple Search Icon inline */}
+                            <button className="bg-slate-800 dark:bg-slate-700 text-white px-2 rounded-lg"><Icon path={<><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>} size={14}/></button>
                         </form>
                         <button onClick={locationHook.getUserLocation} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 rounded-lg flex items-center justify-center"><Navigation size={14}/></button>
                     </div>
                 </div>
 
-                {/* Calculation Method (Dropdown) & Asr Method (Toggle) - Grouped */}
+                {/* Calculation Method (Dropdown) & Asr Method (Toggle) */}
                 <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-3">
-                    {/* Calc Method */}
                     <div className="flex flex-col space-y-1">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Settings size={14} className="mr-1.5 text-emerald-500" /> {t('calcMethod')}</h3>
                         <select 
-                            value={methodId} 
-                            onChange={(e) => { setMethod(parseInt(e.target.value)); safeStorage.setItem('calcMethod', e.target.value); }}
+                             value={methodId} 
+                             onChange={(e) => { setMethod(parseInt(e.target.value)); safeStorage.setItem('calcMethod', e.target.value); }}
                             className="w-full bg-slate-50 dark:bg-slate-900 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300"
                         >
                             {CALCULATION_METHODS.map(m => (
@@ -916,8 +976,7 @@
 
                     <div className="h-px bg-slate-100 dark:bg-slate-800"></div>
 
-                    {/* Asr Method */}
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center"> 
                          <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs">{t('asrMethod')}</h3>
                          <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
                             <button onClick={() => { setAsrMethod(0); safeStorage.setItem('asrMethod', 0); }} className={`px-2 py-1 rounded-md text-[10px] transition ${asrMethod === 0 ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{t('standard')}</button>
@@ -926,8 +985,21 @@
                     </div>
                 </div>
 
+                 {/* Font Size & Notifications */}
+                 <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                     <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Type size={14} className="mr-1.5 text-emerald-500" /> {t('fontSize')}</h3>
+                        <span className="text-[10px] font-mono text-slate-400">x{fontSize.toFixed(1)}</span>
+                     </div>
+                     <input 
+                        type="range" min="0.8" max="1.5" step="0.1" value={fontSize} 
+                        onChange={(e) => { const v = parseFloat(e.target.value); setFontSize(v); safeStorage.setItem('fontSize', v); }}
+                        className="w-full accent-emerald-600 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                     />
+                 </div>
+
                 {/* Notifications & Language - Grid */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2"> 
                      <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs mb-2"><Bell size={14} className="mr-1.5 text-emerald-500" /> {t('notifications')}</h3>
                         <button onClick={async () => { const granted = await requestNotificationPermission(); if(granted) alert(t('notificationGranted')); }} className="w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 py-1.5 rounded-lg text-[10px] font-medium">{t('enableNotifications')}</button>
@@ -954,9 +1026,9 @@
                             <div key={p} className="flex flex-col items-center">
                                 <label className="text-[8px] text-slate-400 dark:text-slate-500 mb-0.5 capitalize truncate w-full text-center">{t(p).substring(0,3)}</label>
                                 <input 
-                                    type="number" 
-                                    value={offsets[p]} 
-                                    onChange={(e) => setOffsets({...offsets, [p]: e.target.value})}
+                                     type="number" 
+                                     value={offsets[p]} 
+                                     onChange={(e) => setOffsets({...offsets, [p]: e.target.value})}
                                     className="w-full border dark:border-slate-700 rounded p-1 text-[10px] text-center bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 outline-none focus:border-emerald-500"
                                 />
                             </div>
@@ -984,10 +1056,9 @@
             const [activeTab, setActiveTab] = useState('times');
             const [methodId, setMethodId] = useState(13);
             const [isDarkMode, setIsDarkMode] = useState(false);
-            
-            // New State for features
-            const [asrMethod, setAsrMethod] = useState(0); // 0: Standard, 1: Hanafi
+            const [asrMethod, setAsrMethod] = useState(0); 
             const [offsets, setOffsets] = useState({ fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 });
+            const [fontSize, setFontSize] = useState(1.0);
 
             const t = useCallback((k) => TRANSLATIONS[lang][k] || k, [lang]);
             const currentTime = useTime();
@@ -999,12 +1070,9 @@
                     if (event.state && event.state.tab) {
                         setActiveTab(event.state.tab);
                     } else {
-                        // Default back behavior or go to home tab if desired
-                        // For simplicity, if no state, go to times
                         setActiveTab('times');
                     }
                 };
-
                 window.addEventListener('popstate', handlePopState);
                 return () => window.removeEventListener('popstate', handlePopState);
             }, []);
@@ -1024,16 +1092,18 @@
             useEffect(() => { if (isDarkMode) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); }, [isDarkMode]);
             const toggleTheme = () => setIsDarkMode(p => !p);
             
-            // Load saved settings
             useEffect(() => { 
-                const savedM = safeStorage.getItem('calcMethod'); 
-                if (savedM) setMethodId(parseInt(savedM)); 
-                
-                const savedAsr = safeStorage.getItem('asrMethod');
-                if (savedAsr) setAsrMethod(parseInt(savedAsr));
+                 const savedM = safeStorage.getItem('calcMethod');
+                 if (savedM) setMethodId(parseInt(savedM));
+                 
+                 const savedAsr = safeStorage.getItem('asrMethod');
+                 if (savedAsr) setAsrMethod(parseInt(savedAsr));
 
-                const savedOffsets = safeStorage.getItem('timeOffsets');
-                if (savedOffsets) setOffsets(JSON.parse(savedOffsets));
+                 const savedOffsets = safeStorage.getItem('timeOffsets');
+                 if (savedOffsets) setOffsets(JSON.parse(savedOffsets));
+
+                 const savedFS = safeStorage.getItem('fontSize');
+                 if (savedFS) setFontSize(parseFloat(savedFS));
             }, []);
 
             return (
@@ -1041,9 +1111,9 @@
                     <Header currentTime={currentTime} appName={t('appName')} toggleTheme={toggleTheme} isDarkMode={isDarkMode} />
                     <main className="flex-1 p-3 overflow-y-auto no-scrollbar relative z-0">
                         {activeTab === 'times' && <PrayerTimesView prayerData={prayerData.data} loading={prayerData.loading} currentTime={currentTime} locationName={location.locationName} t={t} offsets={offsets} />}
-                        {activeTab === 'tasbeeh' && <TasbeehView t={t} />}
-                        {activeTab === 'quran' && <QuranView t={t} />}
-                        {activeTab === 'settings' && <SettingsView t={t} locationHook={location} setMethod={setMethodId} setLang={setLang} methodId={methodId} lang={lang} asrMethod={asrMethod} setAsrMethod={setAsrMethod} offsets={offsets} setOffsets={setOffsets} />}
+                        {activeTab === 'tasbeeh' && <TasbeehView t={t} fontSize={fontSize} />}
+                        {activeTab === 'quran' && <QuranView t={t} fontSize={fontSize} />}
+                        {activeTab === 'settings' && <SettingsView t={t} locationHook={location} setMethod={setMethodId} setLang={setLang} methodId={methodId} lang={lang} asrMethod={asrMethod} setAsrMethod={setAsrMethod} offsets={offsets} setOffsets={setOffsets} fontSize={fontSize} setFontSize={setFontSize} />}
                     </main>
                     <Navbar active={activeTab} setActive={setActiveTab} t={t} className="shrink-0 z-20" />
                 </div>
