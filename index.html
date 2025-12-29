@@ -1014,6 +1014,9 @@
             const timerRef = useRef(null);
             const searchContainerRef = useRef(null);
             const [showVibHint, setShowVibHint] = useState(false);
+            const [notifPermission, setNotifPermission] = useState(() => 
+                ("Notification" in window) ? Notification.permission : 'default'
+            );
             
             const handleSearchChange = (e) => {
                 const val = e.target.value;
@@ -1030,6 +1033,33 @@
                 StorageService.set(CONFIG.STORAGE_KEYS.COORDS, newCoords);
                 StorageService.set(CONFIG.STORAGE_KEYS.LOC_NAME, name);
                 locationHook.setSuggestions([]); 
+            };
+
+            const handleNotifClick = async () => {
+                if (!("Notification" in window)) {
+                    alert("Bu cihazda bildirimler desteklenmiyor.");
+                    return;
+                }
+
+                if (notifPermission === 'granted') {
+                    alert(t('notificationGranted')); 
+                    return;
+                }
+
+                if (notifPermission === 'denied') {
+                    alert("Bildirim izni daha önce reddedilmiş. Lütfen tarayıcı ayarlarından izinleri sıfırlayın.");
+                    return;
+                }
+
+                try {
+                    const p = await Notification.requestPermission();
+                    setNotifPermission(p);
+                    if (p === 'granted') {
+                        new Notification(t('appName'), { body: t('notificationGranted') });
+                    }
+                } catch (e) {
+                    alert("Hata: " + e.message);
+                }
             };
 
             useEffect(() => {
@@ -1120,7 +1150,16 @@
                 <div className="grid grid-cols-2 gap-1.5"> 
                      <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs mb-2"><Icon path={ICONS.Bell} size={14} className="mr-1.5 text-emerald-500" /> {t('notifications')}</h3>
-                        <button onClick={async () => { if("Notification" in window) { const p = await Notification.requestPermission(); if(p==="granted") alert(t('notificationGranted')); } }} className="w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 py-1.5 rounded-lg text-[10px] font-medium">{t('enableNotifications')}</button>
+                        <button 
+                            onClick={handleNotifClick} 
+                            className={`w-full py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
+                                notifPermission === 'granted' 
+                                ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300' 
+                                : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                            }`}
+                        >
+                            {notifPermission === 'granted' ? t('notificationGranted') : t('enableNotifications')}
+                        </button>
                      </div>
                      <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs mb-2"><Icon path={ICONS.Globe} size={14} className="mr-1.5 text-emerald-500" /> {t('language')}</h3>
