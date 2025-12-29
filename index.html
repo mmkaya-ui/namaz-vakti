@@ -93,6 +93,44 @@
             }
         };
 
+        // Audio Helper for iOS Workaround
+        // Uses Web Audio API to generate synthetic sounds without external files
+        const playSound = (type) => {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                const now = ctx.currentTime;
+                
+                if (type === 'tick') {
+                    // Soft, short "tick" (like a water drop or muffled wood)
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(50, now + 0.05);
+                    gain.gain.setValueAtTime(0.05, now); // Very quiet
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'finish') {
+                    // Soft "ding"
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(300, now + 0.3);
+                    gain.gain.setValueAtTime(0.1, now); // Slightly audible
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+            } catch(e) {}
+        };
+
         // Zikr Database (Full texts restored for all languages)
         const ZIKR_DB = {
             fatiha: { 
@@ -707,23 +745,34 @@
                 let newCount = count;
                 const vibrate = (p) => { if(navigator.vibrate) navigator.vibrate(p); };
 
+                // Play sound regardless of vibration support (iOS workaround)
+                const triggerFeedback = (isFinish) => {
+                    if (isFinish) {
+                        vibrate(400);
+                        playSound('finish');
+                    } else {
+                        vibrate(40);
+                        playSound('tick');
+                    }
+                };
+
                 if (isSpecial) {
                     if (count < current.target - 1) {
                         setCooldown(true); setTimeout(() => setCooldown(false), 500);
                         newCount = count + 1; setCount(newCount);
-                        newCount + 1 >= current.target ? vibrate(400) : vibrate(40);
+                        triggerFeedback(newCount + 1 >= current.target);
                         saveProgress(index, newCount);
                     }
                 } else if (!current.isReading) {
                     if (count < current.target) {
                         newCount = count + 1; setCount(newCount);
-                        newCount === current.target ? vibrate(400) : vibrate(40);
+                        triggerFeedback(newCount === current.target);
                         saveProgress(index, newCount);
                     }
                 } else if (current.type === 'amenarresulu') {
                       if (count < current.target) {
                         newCount = count + 1; setCount(newCount);
-                        newCount === current.target ? vibrate(400) : vibrate(40);
+                        triggerFeedback(newCount === current.target);
                         saveProgress(index, newCount);
                       }
                 }
