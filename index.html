@@ -503,32 +503,42 @@
             const done = count >= current.target;
             return (
                 <div className={`border-2 rounded-2xl p-3 flex flex-col items-center text-center shadow-sm transition-colors duration-300 select-none h-full relative ${done ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500' : 'bg-white dark:bg-slate-850 border-emerald-100 dark:border-slate-700'}`}>
-                    <div className="w-full flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-1 relative z-10">
+                    <div className="w-full flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-1 relative z-10 shrink-0">
                         <span>{t('step')} {index + 1}/{totalLength}</span>
                         <div className="flex items-center gap-2">
                              <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{t('target')}: {current.target}</span>
                              <ResetBtn onClick={resetLocal} t={t} />
                         </div>
                     </div>
-                    <ProgressBar current={count} total={current.target}/>
+                    <div className="w-full shrink-0">
+                        <ProgressBar current={count} total={current.target}/>
+                    </div>
                     
-                    <div className="my-2 flex-1 flex flex-col justify-center w-full cursor-pointer touch-manipulation" onClick={!done ? tap : undefined}>
-                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">{current.title}</h2>
-                        {current.arabic && <p className="text-2xl font-serif text-emerald-600 dark:text-emerald-400 dir-rtl mb-2">{current.arabic}</p>}
-                        <p className="text-slate-500 dark:text-slate-400 leading-relaxed mx-auto max-w-[280px]" style={{ fontSize: `${fontSize * 0.75}rem` }}>{current.text}</p>
+                    <div className="flex-1 w-full flex flex-col cursor-pointer touch-manipulation overflow-hidden" onClick={!done ? tap : undefined}>
+                        {/* Text Section - Flexible Height, pushes circle down */}
+                        <div className="flex-1 flex flex-col justify-center items-center min-h-0 overflow-y-auto py-2">
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">{current.title}</h2>
+                            {current.arabic && <p className="text-2xl font-serif text-emerald-600 dark:text-emerald-400 dir-rtl mb-2">{current.arabic}</p>}
+                            <p className="text-slate-500 dark:text-slate-400 leading-relaxed mx-auto max-w-[280px]" style={{ fontSize: `${fontSize * 0.75}rem` }}>{current.text}</p>
+                        </div>
                         
+                        {/* Circle Section - Fixed Height at Bottom */}
                         {!done && (
-                             <div className="mt-4 mx-auto w-48 h-48 rounded-full border-8 border-slate-100 dark:border-slate-700 flex items-center justify-center bg-emerald-50 dark:bg-slate-800 shadow-inner ripple-effect transition-transform active:scale-95">
-                                <span className="text-6xl font-mono font-bold text-emerald-600 dark:text-emerald-400 select-none">{count}</span>
+                             <div className="h-64 shrink-0 flex flex-col justify-center items-center relative">
+                                <div className="w-48 h-48 rounded-full border-8 border-slate-100 dark:border-slate-700 flex items-center justify-center bg-emerald-50 dark:bg-slate-800 shadow-inner ripple-effect transition-transform active:scale-95">
+                                    <span className="text-6xl font-mono font-bold text-emerald-600 dark:text-emerald-400 select-none">{count}</span>
+                                </div>
+                                <span className="mt-4 text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full font-medium mx-auto">{t('tapToCount')}</span>
                             </div>
                         )}
-                         {!done && <span className="mt-2 text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full font-medium mx-auto">{t('tapToCount')}</span>}
+                        {done && (
+                            <div className="h-64 shrink-0 flex items-center justify-center">
+                                <button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold text-white flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-600 animate-pulse-slow'}`}>
+                                    <span>{t('nextZikr')}</span><Icon path={ICONS.ChevronRight} size={16}/>
+                                </button>
+                            </div>
+                        )}
                     </div>
-                    {done && (
-                        <button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold text-white flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-600 animate-pulse-slow'}`}>
-                            <span>{t('nextZikr')}</span><Icon path={ICONS.ChevronRight} size={16}/>
-                        </button>
-                    )}
                 </div>
             );
         });
@@ -720,7 +730,7 @@
             }, [isFinishedToday, cooldown, current, count, index, saveProgress]);
 
             return (
-                <div className="pb-20 flex flex-col h-full pt-16">
+                <div className="pb-20 flex flex-col h-full pt-14">
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-2 transition-colors duration-300">{['morning', 'ikindi', 'night'].map(m => (
                         <button key={m} onClick={() => { setMode(m); safeStorage.setItem('lastZikrMode', m); }} className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition ${mode===m ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{t(m+'Zikr')}</button>
                     ))}</div>
@@ -925,7 +935,7 @@
         });
 
         const Navbar = memo(({ active, setActive, t, className }) => (
-            <nav className={`fixed bottom-0 left-0 right-0 mx-auto max-w-md bg-white dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 px-4 py-2 flex justify-between items-center z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] pb-6 ${className}`}>
+            <nav className={`fixed bottom-0 left-0 right-0 mx-auto max-w-md bg-white dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 px-4 py-2 flex justify-between items-center z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] pb-3 ${className}`}>
                 {[{ id: 'times', i: ICONS.Clock }, { id: 'tasbeeh', i: ICONS.RefreshCw }, { id: 'quran', i: ICONS.BookOpen }, { id: 'settings', i: ICONS.Menu }].map(b => (
                     <button key={b.id} onClick={() => { if (active !== b.id) { window.history.pushState({ tab: b.id }, '', `#${b.id}`); setActive(b.id); } }} className={`flex flex-col items-center space-y-0.5 transition ${active === b.id ? 'text-emerald-600 dark:text-emerald-400 -translate-y-0.5' : 'text-slate-400 dark:text-slate-600'}`}>
                         <Icon path={b.i} size={18}/>
@@ -948,6 +958,10 @@
             const currentTime = useTime();
             const location = useGeolocation(t);
             const prayerData = usePrayerTimes(location.coords, methodId, asrMethod);
+
+            useEffect(() => {
+                document.title = t('appName');
+            }, [lang, t]);
 
             useEffect(() => {
                 const handlePopState = (e) => setActiveTab(e.state && e.state.tab ? e.state.tab : 'times');
