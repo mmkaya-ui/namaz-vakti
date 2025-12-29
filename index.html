@@ -115,7 +115,6 @@
                     const now = ctx.currentTime;
                     
                     if (type === 'tick') {
-                        // Soft, woody click
                         osc.type = 'sine';
                         osc.frequency.setValueAtTime(400, now);
                         osc.frequency.exponentialRampToValueAtTime(100, now + 0.05);
@@ -124,15 +123,11 @@
                         osc.start(now);
                         osc.stop(now + 0.05);
                     } else if (type === 'finish') {
-                        // Deep, peaceful chime (Not high pitched)
                         osc.type = 'sine';
-                        osc.frequency.setValueAtTime(440, now); // Constant pitch (A4) - No weird effects
-                        
-                        // Gentle volume envelope
+                        osc.frequency.setValueAtTime(440, now); // Constant pitch (A4)
                         gain.gain.setValueAtTime(0, now);
-                        gain.gain.linearRampToValueAtTime(0.1, now + 0.05); // Quick fade in
-                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8); // Smooth fade out
-                        
+                        gain.gain.linearRampToValueAtTime(0.1, now + 0.05); 
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
                         osc.start(now);
                         osc.stop(now + 0.8);
                     }
@@ -213,6 +208,8 @@
                     if (isManual || !state.coords) setDefault();
                     return;
                 }
+                
+                // Show loading only if manual click or no initial data
                 if (isManual || !state.coords) update({ loading: true });
                 
                 try {
@@ -448,7 +445,6 @@
         });
 
         const MultiAyahReadingCard = memo(({ current, next, cooldown, t, fontSize, lang }) => {
-            // Persist the random page using a date-based key
             const [pageNumber] = useState(() => {
                 const today = new Date().toISOString().split('T')[0];
                 const key = `tasbeeh_read_page_${today}`;
@@ -932,9 +928,9 @@
             }, [locationHook]);
 
             return (
-            <div className="space-y-2 pb-20 pt-16">
-                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                    <div className="flex justify-between items-center mb-2">
+            <div className="space-y-1.5 pb-20 pt-14">
+                <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <div className="flex justify-between items-center mb-1">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Icon path={ICONS.MapPin} size={14} className="mr-1.5 text-emerald-500" /> {t('location')}</h3>
                         <span className="text-[9px] text-slate-400 max-w-[120px] truncate">{locationHook.locationName}</span>
                     </div>
@@ -959,14 +955,14 @@
                 </div>
                 
                 {/* Sound & Vibration Settings */}
-                <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <div className="grid grid-cols-2 gap-1.5">
+                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Icon path={ICONS.Volume2} size={14} className="mr-1.5 text-emerald-500" /> {t('sound')}</h3>
-                        <button onClick={() => { setSoundEnabled(!soundEnabled); safeStorage.setItem('soundEnabled', !soundEnabled); }} className={`w-10 h-5 rounded-full p-1 transition-colors ${soundEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}>
-                            <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${soundEnabled ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                        <button onClick={() => { setSoundEnabled(!soundEnabled); safeStorage.setItem('soundEnabled', !soundEnabled); }} className={`w-8 h-4 rounded-full p-0.5 transition-colors ${soundEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                            <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${soundEnabled ? 'translate-x-4' : 'translate-x-0'}`}></div>
                         </button>
                     </div>
-                    <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center overflow-visible relative">
+                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center overflow-visible relative">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs">
                             <Icon path={ICONS.Vibrate} size={14} className="mr-1.5 text-emerald-500" /> {t('vibration')}
                             <div className="relative ml-1 inline-block">
@@ -974,20 +970,20 @@
                                     <Icon path={ICONS.HelpCircle} size={12} />
                                 </button>
                                 {showVibHint && (
-                                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-32 p-2 bg-slate-700 text-white text-[9px] rounded-lg shadow-xl z-50 text-center leading-snug animate-fade-in pointer-events-none">
+                                    <div className="absolute top-full right-[-8px] mt-2 w-32 p-2 bg-slate-700 text-white text-[9px] rounded-lg shadow-xl z-50 text-center leading-snug animate-fade-in pointer-events-none">
                                         {t('iosVibrationWarning')}
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-700"></div>
+                                        <div className="absolute bottom-full right-2 border-4 border-transparent border-b-slate-700"></div>
                                     </div>
                                 )}
                             </div>
                         </h3>
-                        <button onClick={() => { setVibrationEnabled(!vibrationEnabled); safeStorage.setItem('vibrationEnabled', !vibrationEnabled); }} className={`w-10 h-5 rounded-full p-1 transition-colors ${vibrationEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}>
-                            <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${vibrationEnabled ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                        <button onClick={() => { setVibrationEnabled(!vibrationEnabled); safeStorage.setItem('vibrationEnabled', !vibrationEnabled); }} className={`w-8 h-4 rounded-full p-0.5 transition-colors ${vibrationEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                            <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${vibrationEnabled ? 'translate-x-4' : 'translate-x-0'}`}></div>
                         </button>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-3">
+                <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
                     <div className="flex flex-col space-y-1">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Icon path={ICONS.Settings} size={14} className="mr-1.5 text-emerald-500" /> {t('calcMethod')}</h3>
                         <select value={methodId} onChange={(e) => { setMethod(parseInt(e.target.value)); safeStorage.setItem('calcMethod', e.target.value); }} className="w-full bg-slate-50 dark:bg-slate-900 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300">
@@ -1003,19 +999,19 @@
                          </div>
                     </div>
                 </div>
-                 <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                 <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                      <div className="flex justify-between items-center mb-2">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Icon path={ICONS.Type} size={14} className="mr-1.5 text-emerald-500" /> {t('fontSize')}</h3>
                         <span className="text-[10px] font-mono text-slate-400">x{fontSize.toFixed(1)}</span>
                      </div>
                      <input type="range" min="0.8" max="1.5" step="0.1" value={fontSize} onChange={(e) => { const v = parseFloat(e.target.value); setFontSize(v); safeStorage.setItem('fontSize', v); }} className="w-full accent-emerald-600 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer" />
                  </div>
-                <div className="grid grid-cols-2 gap-2"> 
-                     <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
+                <div className="grid grid-cols-2 gap-1.5"> 
+                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs mb-2"><Icon path={ICONS.Bell} size={14} className="mr-1.5 text-emerald-500" /> {t('notifications')}</h3>
                         <button onClick={async () => { if("Notification" in window) { const p = await Notification.requestPermission(); if(p==="granted") alert(t('notificationGranted')); } }} className="w-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 py-1.5 rounded-lg text-[10px] font-medium">{t('enableNotifications')}</button>
                      </div>
-                     <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
+                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs mb-2"><Icon path={ICONS.Globe} size={14} className="mr-1.5 text-emerald-500" /> {t('language')}</h3>
                         <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
                             {['tr', 'en', 'de'].map(l => (
@@ -1024,8 +1020,8 @@
                         </div>
                      </div>
                 </div>
-                <div className="bg-white dark:bg-slate-850 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                    <div className="flex justify-between items-center mb-2">
+                <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <div className="flex justify-between items-center mb-1">
                         <h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs"><Icon path={ICONS.Edit} size={14} className="mr-1.5 text-emerald-500" /> {t('timeAdjustments')}</h3>
                         <button onClick={() => safeStorage.setItem('timeOffsets', JSON.stringify(offsets))} className="text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded">{t('save')}</button>
                     </div>
