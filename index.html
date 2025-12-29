@@ -123,9 +123,9 @@
         // --- 2. DATASETS ---
         const SURAH_NAMES_TR = ["Fatiha", "Bakara", "Ali İmran", "Nisa", "Maide", "En'am", "Araf", "Enfal", "Tevbe", "Yunus", "Hud", "Yusuf", "Ra'd", "İbrahim", "Hicr", "Nahl", "İsra", "Kehf", "Meryem", "Taha", "Enbiya", "Hac", "Mü'minun", "Nur", "Furkan", "Şuara", "Neml", "Kasas", "Ankebut", "Rum", "Lokman", "Secde", "Ahzab", "Sebe", "Fatır", "Yasin", "Saffat", "Sad", "Zümer", "Mü'min", "Fussilet", "Şura", "Zuhruf", "Duhan", "Casiye", "Ahkaf", "Muhammed", "Fetih", "Hucurat", "Kaf", "Zariyat", "Tur", "Necm", "Kamer", "Rahman", "Vakıa", "Hadid", "Mücadele", "Haşr", "Mümtehine", "Saf", "Cuma", "Münafikun", "Tegabun", "Talak", "Tahrim", "Mülk", "Kalem", "Hakka", "Mearic", "Nuh", "Cin", "Müzzemmil", "Müddessir", "Kıyamet", "İnsan", "Mürselat", "Nebe", "Naziat", "Abese", "Tekvir", "İnfitar", "Mutaffifin", "İnşikak", "Buruc", "Tarık", "A'la", "Gaşiye", "Fecr", "Beled", "Şems", "Leyl", "Duha", "İnşirah", "Tin", "Alak", "Kadir", "Beyyine", "Zilzal", "Adiyat", "Karia", "Tekasür", "Asr", "Hümeze", "Fil", "Kureyn", "Maun", "Kevser", "Kafirun", "Nasr", "Tebbet", "İhlas", "Felak", "Nas"];
         const TRANSLATIONS = {
-            tr: { appName: "Namaz ve Zikir", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...", prayerTimes: "Namaz Vakitleri", tasbeeh: "Tesbihat", quran: "Kur'an Oku", settings: "Ayarlar", times: "Vakitler", calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle", asr: "İkindi", maghrib: "Akşam", isha: "Yatsı", midnight: "Gece Yarısı", teheccud: "Vakt-i İcabet", kerahatMorning: "İşrak", kerahatNoon: "İstiva", kerahatEvening: "İsfirar", remaining: "Kalan", loading: "Yükleniyor...", error: "Hata", morningZikr: "Sabah", ikindiZikr: "İkindi", nightZikr: "Yatsı", tapToCount: "Dokun", completed: "Tamamlandı", next: "İleri", nextZikr: "Sonraki", nextAyah: "Sıradaki", reset: "Sıfırla", resetTime: "Başa Dön", areYouSure: "Emin misin?", manualLocation: "Konum", search: "Ara", randomAyahs: "Kur'an'dan bir sayfa", turkishTrans: "Okunuş", turkishMean: "Meal", amenarresulu: "Amenerrasulü", nextPrayer: "Vakit", now: "Şu an", bestTimeTeheccud: "Gece namazı vakti", kerahatHeader: "Kerahat", step: "Adım", target: "Hedef", loadContent: "Yükle", loadBtn: "Getir", readFirst10: "Kehf (İlk 10)", readLast10: "Kehf (Son 10)", read15Random: "1 Sayfa Oku", salavatAdam: "Adem (a.s)", salavatIsa: "İsa (a.s)", salavatMuhammed: "Salavat-ı Şerife", salavatBedr: "Bedir & Kehf Salavatı", tryAgain: "Tekrar Dene", connectionError: "Bağlantı Hatası", pageInfo: "Sayfa", asrMethod: "İkindi Yöntemi", standard: "Standart (Cumhur)", hanafi: "Hanefi (Geç İkindi)", timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet", enableNotifications: "Bildirim İzni Ver", notificationGranted: "Bildirim İzni Verildi", notifications: "Bildirimler", fontSize: "Yazı Boyutu", resetStep: "Sayacı Sıfırla", sound: "Ses Efekti", vibration: "Titreşim", iosVibrationWarning: "iOS güvenlik kısıtlamaları nedeniyle iPhone'larda titreşim çalışmayabilir." },
-            en: { appName: "Prayer & Dhikr", location: "Location", detectLocation: "Find", searchCity: "City...", prayerTimes: "Times", tasbeeh: "Dhikr", quran: "Read Quran", settings: "Settings", times: "Times", calcMethod: "Method", language: "Lang", fajr: "Fajr", sunrise: "Sun", dhuhr: "Dhuhr", asr: "Asr", maghrib: "Maghrib", isha: "Isha", midnight: "Midnight", teheccud: "Time of Acceptance", kerahatMorning: "Ishraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Left", loading: "Loading...", error: "Error", morningZikr: "Morning", ikindiZikr: "Asr", nightZikr: "Night", tapToCount: "Tap", completed: "Done", next: "Next", nextZikr: "Next", nextAyah: "Next", reset: "Reset", resetTime: "Restart", areYouSure: "Are you sure?", manualLocation: "Loc", search: "Go", randomAyahs: "A page in Quran", turkishTrans: "Transliteration", turkishMean: "Meaning", amenarresulu: "Amenarrasul", nextPrayer: "Next", now: "Now", bestTimeTeheccud: "Night prayer", kerahatHeader: "Kerahat", step: "Step", target: "Goal", loadContent: "Load", loadBtn: "Load", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Last 10)", read15Random: "Read 1 Page", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Try Again", connectionError: "Connection Error", pageInfo: "Page", asrMethod: "Asr Method", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Time Adjustments (min)", save: "Save", enableNotifications: "Enable Notifications", notificationGranted: "Notifications Enabled", notifications: "Notifications", fontSize: "Text Size", resetStep: "Reset Counter", sound: "Sound Effect", vibration: "Vibration", iosVibrationWarning: "Vibration may not work on iPhones due to iOS security restrictions." },
-            de: { appName: "Gebet & Dhikr", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...", prayerTimes: "Zeiten", tasbeeh: "Dhikr", quran: "Koran", settings: "Optionen", times: "Zeiten", calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonne", dhuhr: "Dhuhur", asr: "Assr", maghrib: "Maghrib", isha: "Ischa", midnight: "Mitternacht", teheccud: "Zeit der Erhörung", kerahatMorning: "Ischraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Rest", loading: "Laden...", error: "Fehler", morningZikr: "Morgen", ikindiZikr: "Assr", nightZikr: "Nacht", tapToCount: "Tippen", completed: "Fertig", next: "Weiter", nextZikr: "Weiter", nextAyah: "Weiter", reset: "Reset", resetTime: "Neu starten", areYouSure: "Bist du sicher?", manualLocation: "Ort", search: "Suche", randomAyahs: "Eine Seite aus Koran", turkishTrans: "Aussprache", turkishMean: "Bedeutung", amenarresulu: "Amenarrasul", nextPrayer: "Nächstes", now: "Jetzt", bestTimeTeheccud: "Nachtgebet", kerahatHeader: "Kerahat", step: "Schritt", target: "Ziel", loadContent: "Laden", loadBtn: "Laden", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Letzte)", read15Random: "1 Seite Lesen", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Wiederholen", connectionError: "Verbindungsfehler", pageInfo: "Seite", asrMethod: "Assr Methode", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Zeitanpassungen (Min)", save: "Speichern", enableNotifications: "Benachrichtigungen aktivieren", notificationGranted: "Benachrichtigungen aktiviert", notifications: "Benachrichtigungen", fontSize: "Textgröße", resetStep: "Reset", sound: "Soundeffekt", vibration: "Vibration", iosVibrationWarning: "Vibration funktioniert auf iPhones aufgrund von iOS-Sicherheitsbeschränkungen möglicherweise nicht." }
+            tr: { appName: "Namaz ve Zikir", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...", prayerTimes: "Namaz Vakitleri", tasbeeh: "Tesbihat", quran: "Kur'an Oku", settings: "Ayarlar", times: "Vakitler", calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle", asr: "İkindi", maghrib: "Akşam", isha: "Yatsı", midnight: "Gece Yarısı", teheccud: "Vakt-i İcabet", kerahatMorning: "İşrak", kerahatNoon: "İstiva", kerahatEvening: "İsfirar", remaining: "Kalan", loading: "Yükleniyor...", error: "Hata", morningZikr: "Sabah", ikindiZikr: "İkindi", nightZikr: "Yatsı", tapToCount: "Dokun", completed: "Tamamlandı", next: "İleri", nextZikr: "Sonraki", nextAyah: "Sıradaki", reset: "Sıfırla", resetTime: "Başa Dön", areYouSure: "Emin misin?", manualLocation: "Konum", search: "Ara", randomAyahs: "Kur'an'dan bir sayfa", turkishTrans: "Okunuş", turkishMean: "Meal", amenarresulu: "Amenerrasulü", nextPrayer: "Vakit", now: "Şu an", bestTimeTeheccud: "Gece namazı vakti", kerahatHeader: "Kerahat", step: "Adım", target: "Hedef", loadContent: "Yükle", loadBtn: "Getir", readFirst10: "Kehf (İlk 10)", readLast10: "Kehf (Son 10)", read15Random: "1 Sayfa Oku", salavatAdam: "Adem (a.s)", salavatIsa: "İsa (a.s)", salavatMuhammed: "Salavat-ı Şerife", salavatBedr: "Bedir & Kehf Salavatı", tryAgain: "Tekrar Dene", connectionError: "Bağlantı Hatası", pageInfo: "Sayfa", asrMethod: "İkindi Yöntemi", standard: "Standart (Cumhur)", hanafi: "Hanefi (Geç İkindi)", timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet", enableNotifications: "Bildirim İzni Ver", notificationGranted: "Bildirim İzni Verildi", notifications: "Bildirimler", fontSize: "Yazı Boyutu", resetStep: "Sayacı Sıfırla", sound: "Ses Efekti", vibration: "Titreşim", iosVibrationWarning: "iOS güvenlik kısıtlamaları nedeniyle iPhone'larda titreşim çalışmayabilir.", timeTarget: "Süre", unlimited: "Limitsiz" },
+            en: { appName: "Prayer & Dhikr", location: "Location", detectLocation: "Find", searchCity: "City...", prayerTimes: "Times", tasbeeh: "Dhikr", quran: "Read Quran", settings: "Settings", times: "Times", calcMethod: "Method", language: "Lang", fajr: "Fajr", sunrise: "Sun", dhuhr: "Dhuhr", asr: "Asr", maghrib: "Maghrib", isha: "Isha", midnight: "Midnight", teheccud: "Time of Acceptance", kerahatMorning: "Ishraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Left", loading: "Loading...", error: "Error", morningZikr: "Morning", ikindiZikr: "Asr", nightZikr: "Night", tapToCount: "Tap", completed: "Done", next: "Next", nextZikr: "Next", nextAyah: "Next", reset: "Reset", resetTime: "Restart", areYouSure: "Are you sure?", manualLocation: "Loc", search: "Go", randomAyahs: "A page in Quran", turkishTrans: "Transliteration", turkishMean: "Meaning", amenarresulu: "Amenarrasul", nextPrayer: "Next", now: "Now", bestTimeTeheccud: "Night prayer", kerahatHeader: "Kerahat", step: "Step", target: "Goal", loadContent: "Load", loadBtn: "Load", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Last 10)", read15Random: "Read 1 Page", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Try Again", connectionError: "Connection Error", pageInfo: "Page", asrMethod: "Asr Method", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Time Adjustments (min)", save: "Save", enableNotifications: "Enable Notifications", notificationGranted: "Notifications Enabled", notifications: "Notifications", fontSize: "Text Size", resetStep: "Reset Counter", sound: "Sound Effect", vibration: "Vibration", iosVibrationWarning: "Vibration may not work on iPhones due to iOS security restrictions.", timeTarget: "Time", unlimited: "Unlimited" },
+            de: { appName: "Gebet & Dhikr", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...", prayerTimes: "Zeiten", tasbeeh: "Dhikr", quran: "Koran", settings: "Optionen", times: "Zeiten", calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonne", dhuhr: "Dhuhur", asr: "Assr", maghrib: "Maghrib", isha: "Ischa", midnight: "Mitternacht", teheccud: "Zeit der Erhörung", kerahatMorning: "Ischraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Rest", loading: "Laden...", error: "Fehler", morningZikr: "Morgen", ikindiZikr: "Assr", nightZikr: "Nacht", tapToCount: "Tippen", completed: "Fertig", next: "Weiter", nextZikr: "Weiter", nextAyah: "Weiter", reset: "Reset", resetTime: "Neu starten", areYouSure: "Bist du sicher?", manualLocation: "Ort", search: "Suche", randomAyahs: "Eine Seite aus Koran", turkishTrans: "Aussprache", turkishMean: "Bedeutung", amenarresulu: "Amenarrasul", nextPrayer: "Nächstes", now: "Jetzt", bestTimeTeheccud: "Nachtgebet", kerahatHeader: "Kerahat", step: "Schritt", target: "Ziel", loadContent: "Laden", loadBtn: "Laden", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Letzte)", read15Random: "1 Seite Lesen", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Wiederholen", connectionError: "Verbindungsfehler", pageInfo: "Seite", asrMethod: "Assr Methode", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Zeitanpassungen (Min)", save: "Speichern", enableNotifications: "Benachrichtigungen aktivieren", notificationGranted: "Benachrichtigungen aktiviert", notifications: "Benachrichtigungen", fontSize: "Textgröße", resetStep: "Reset", sound: "Soundeffekt", vibration: "Vibration", iosVibrationWarning: "Vibration funktioniert auf iPhones aufgrund von iOS-Sicherheitsbeschränkungen möglicherweise nicht.", timeTarget: "Zeit", unlimited: "Unbegrenzt" }
         };
         const ZIKR_DB = {
             fatiha: { tr: { t: "", m: "Hamd, Alemlerin Rabbi, Rahman, Rahim, din gününün sahibi Allah'a mahsustur..." }, en: { t: "", m: "All praise is due to Allah, Lord of the worlds, The Entirely Merciful, The Especially Merciful..." }, de: { t: "", m: "Alles Lob gebührt Allah, dem Herrn der Welten, dem Allerbarmer, dem Barmherzigen..." } },
@@ -683,20 +683,45 @@
             );
         });
 
-        const CounterCard = memo(({ current, count, next, tap, cooldown, index, totalLength, resetLocal }) => {
+        const CounterCard = memo(({ current, count, next, tap, cooldown, index, totalLength, resetLocal, timeLeft }) => {
             const { t, settings, fs } = useApp();
-            const done = count >= current.target;
+            
+            let done = false;
+            if (current.type === 'timer') done = timeLeft === 0;
+            else if (current.type === 'infinite') done = false; // Never auto-done
+            else done = count >= current.target;
+
+            const formatTime = (s) => {
+                const m = Math.floor(s / 60);
+                const sec = s % 60;
+                return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+            };
+
             return (
                 <div className={`border-2 rounded-2xl p-3 flex flex-col items-center text-center shadow-sm transition-colors duration-300 select-none h-full relative ${done ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500' : 'bg-white dark:bg-slate-850 border-emerald-100 dark:border-slate-700'}`}>
                     <div className="w-full flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-1 relative z-10 shrink-0">
                         <span style={fs(0.65)}>{t('step')} {index + 1}/{totalLength}</span>
                         <div className="flex items-center gap-2">
-                             <span className="text-xs font-bold text-slate-600 dark:text-slate-300" style={fs(0.75)}>{t('target')}: {current.target}</span>
+                             {current.type === 'timer' ? (
+                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300 font-mono" style={fs(0.75)}>{t('timeTarget')}: {formatTime(timeLeft)}</span>
+                             ) : current.type === 'infinite' ? (
+                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300" style={fs(0.75)}>{t('unlimited')}</span>
+                             ) : (
+                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300" style={fs(0.75)}>{t('target')}: {current.target}</span>
+                             )}
                              <ResetBtn onClick={resetLocal} />
                         </div>
                     </div>
                     <div className="w-full shrink-0">
-                        <ProgressBar current={count} total={current.target}/>
+                        {current.type === 'timer' ? (
+                             <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1 transform-gpu">
+                                <div className="bg-emerald-600 h-2 rounded-full transition-all duration-1000 ease-linear will-change-transform" style={{ width: `${Math.min(100, ((current.duration - timeLeft) / current.duration) * 100)}%` }}></div>
+                            </div>
+                        ) : current.type === 'infinite' ? (
+                            <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1"></div>
+                        ) : (
+                            <ProgressBar current={count} total={current.target}/>
+                        )}
                     </div>
                     
                     <div className="flex-1 w-full flex flex-col min-h-0 relative">
@@ -711,8 +736,9 @@
                         <div className="shrink-0 h-56 flex flex-col justify-center items-center w-full touch-manipulation cursor-pointer" onClick={!done ? tap : undefined}>
                             {!done && (
                                 <>
-                                    <div className="w-48 h-48 rounded-full border-8 border-slate-100 dark:border-slate-700 flex items-center justify-center bg-emerald-50 dark:bg-slate-800 shadow-inner ripple-effect transition-transform active:scale-95">
+                                    <div className="w-48 h-48 rounded-full border-8 border-slate-100 dark:border-slate-700 flex items-center justify-center bg-emerald-50 dark:bg-slate-800 shadow-inner ripple-effect transition-transform active:scale-95 relative">
                                         <span className="text-6xl font-mono font-bold text-emerald-600 dark:text-emerald-400 select-none" style={fs(3.75)}>{count}</span>
+                                        {current.type === 'timer' && <span className="absolute bottom-8 text-xs font-mono text-slate-400">{formatTime(timeLeft)}</span>}
                                     </div>
                                     <span className="mt-4 text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full font-medium mx-auto" style={fs(0.65)}>{t('tapToCount')}</span>
                                 </>
@@ -723,6 +749,13 @@
                                         <span style={fs(0.875)}>{t('nextZikr')}</span><Icon path={ICONS.ChevronRight} size={16}/>
                                     </button>
                                 </div>
+                            )}
+                            
+                            {/* Manual Next Button for Infinite Mode or Timer Mode (if user wants to skip) */}
+                            {!done && (current.type === 'infinite' || current.type === 'timer') && (
+                                <button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute bottom-2 right-2 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 p-2 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-600 transition-colors z-20">
+                                     <Icon path={ICONS.ChevronRight} size={20}/>
+                                </button>
                             )}
                         </div>
                     </div>
@@ -830,6 +863,7 @@
             const [isFinishedToday, setIsFinishedToday] = useState(false);
             const [resetKey, setResetKey] = useState(0);
             const [resetConfirm, setResetConfirm] = useState(false);
+            const [timeLeft, setTimeLeft] = useState(0);
 
             useEffect(() => {
                 const today = new Date().toISOString().split('T')[0];
@@ -848,6 +882,51 @@
                 
                 setResetConfirm(false);
             }, [mode, resetKey]);
+
+            const zikrList = useMemo(() => {
+                const db = ZIKR_DB;
+                const getZikr = (key) => (db[key][lang] || db[key]['en']);
+                const common = {
+                    fatiha: { target: 19, title: "Fatiha", text: getZikr('fatiha').t, arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ" },
+                    estag: { type: 'timer', duration: 300, target: 0, title: "Estağfirullah (5 dk)", text: getZikr('estag').t, arabic: "أَسْتَغْفِرُ اللّٰهَ" }, // 5 mins
+                    salavatM: { target: 10, title: t('salavatMuhammed'), text: getZikr('salavatM').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ" },
+                    salavatA: { target: 10, title: t('salavatAdam'), text: getZikr('salavatA').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا آدَمَ" },
+                    salavatI: { target: 10, title: t('salavatIsa'), text: getZikr('salavatI').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا عِيسَى" },
+                    kehf1: { target: 10, title: t('readFirst10'), type: 'kehf_first_10', isReading: true },
+                    kehf2: { target: 10, title: t('readLast10'), type: 'kehf_last_10', isReading: true },
+                    salavatB: { target: 10, title: t('salavatBedr'), text: getZikr('salavatB').t },
+                    kuddus: { type: 'infinite', target: 0, title: "Ya Kuddüs", text: getZikr('kuddus').t, arabic: "يَا قُدُّوسُ" },
+                    random: { target: 1, title: t('read15Random'), type: 'random15', isReading: true },
+                    amena: { target: 11, title: t('amenarresulu'), type: 'amenarresulu' }
+                };
+                if(mode === 'morning') return [common.fatiha, common.estag, common.salavatA, common.salavatI, common.salavatM, common.kehf1, common.salavatB];
+                if(mode === 'ikindi') return [{...common.fatiha, target: 21}, {...common.salavatM, target: 11}, common.kuddus, common.kehf2, common.random];
+                return [common.amena];
+            }, [mode, t, lang]);
+
+            const current = zikrList[index] || zikrList[0];
+
+            useEffect(() => {
+                if (current.type === 'timer') setTimeLeft(current.duration);
+                else setTimeLeft(0);
+            }, [current]);
+
+            useEffect(() => {
+                let interval;
+                if (current.type === 'timer' && timeLeft > 0 && !isFinishedToday) {
+                    interval = setInterval(() => {
+                        setTimeLeft((prev) => {
+                            if (prev <= 1) {
+                                if (settings.vibrationEnabled) navigator.vibrate([200, 100, 200]);
+                                if (settings.soundEnabled) AudioService.play('finish');
+                                return 0;
+                            }
+                            return prev - 1;
+                        });
+                    }, 1000);
+                }
+                return () => clearInterval(interval);
+            }, [current.type, timeLeft, settings, isFinishedToday]);
 
             const saveProgress = useCallback((idx, cnt) => { 
                 const today = new Date().toISOString().split('T')[0];
@@ -886,29 +965,6 @@
             
             const resetLocal = useCallback(() => { setCount(0); saveProgress(index, 0); }, [index, saveProgress]);
 
-            const zikrList = useMemo(() => {
-                const db = ZIKR_DB;
-                const getZikr = (key) => (db[key][lang] || db[key]['en']);
-                const common = {
-                    fatiha: { target: 19, title: "Fatiha", text: getZikr('fatiha').t, arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ" },
-                    estag: { target: 100, title: "Estağfirullah", text: getZikr('estag').t, arabic: "أَسْتَغْفِرُ اللّٰهَ" },
-                    salavatM: { target: 10, title: t('salavatMuhammed'), text: getZikr('salavatM').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ" },
-                    salavatA: { target: 10, title: t('salavatAdam'), text: getZikr('salavatA').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا آدَمَ" },
-                    salavatI: { target: 10, title: t('salavatIsa'), text: getZikr('salavatI').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا عِيسَى" },
-                    kehf1: { target: 10, title: t('readFirst10'), type: 'kehf_first_10', isReading: true },
-                    kehf2: { target: 10, title: t('readLast10'), type: 'kehf_last_10', isReading: true },
-                    salavatB: { target: 10, title: t('salavatBedr'), text: getZikr('salavatB').t },
-                    kuddus: { target: 40, title: "Ya Kuddüs", text: getZikr('kuddus').t, arabic: "يَا قُدُّوسُ" },
-                    random: { target: 1, title: t('read15Random'), type: 'random15', isReading: true },
-                    amena: { target: 11, title: t('amenarresulu'), type: 'amenarresulu' }
-                };
-                if(mode === 'morning') return [common.fatiha, common.estag, common.salavatA, common.salavatI, common.salavatM, common.kehf1, common.salavatB];
-                if(mode === 'ikindi') return [{...common.fatiha, target: 21}, {...common.salavatM, target: 11}, common.kuddus, common.kehf2, common.random];
-                return [common.amena];
-            }, [mode, t, lang]);
-
-            const current = zikrList[index] || zikrList[0];
-
             const next = useCallback(() => {
                 setCooldown(true); setTimeout(() => setCooldown(false), 500);
                 if (index < zikrList.length - 1) { const newIdx = index + 1; setIndex(newIdx); setCount(0); saveProgress(newIdx, 0); } 
@@ -946,9 +1002,12 @@
                         saveProgress(index, newCount);
                     }
                 } else if (!current.isReading) {
-                    if (count < current.target) {
+                    // Standard, Timer or Infinite
+                    if (current.type === 'infinite' || current.type === 'timer' || count < current.target) {
                         newCount = count + 1; setCount(newCount);
-                        triggerFeedback(newCount === current.target);
+                        // Trigger feedback on every tap for infinite/timer, or on completion for standard
+                        const isDone = (current.type !== 'infinite' && current.type !== 'timer' && newCount === current.target);
+                        triggerFeedback(isDone);
                         saveProgress(index, newCount);
                     }
                 } else if (current.type === 'amenarresulu') {
@@ -984,7 +1043,7 @@
                                 <FetchableZikrCard key={`${resetKey}_fetchable`} current={current} count={count} next={next} tap={tap} cooldown={cooldown} resetLocal={resetLocal} /> : 
                               current.type === 'random15' ? <MultiAyahReadingCard key={`${resetKey}_multi`} current={current} next={next} cooldown={cooldown} /> : 
                               (current.isReading ? <ReadingCard current={current} next={next} cooldown={cooldown} /> : 
-                               <CounterCard key={`${resetKey}_counter`} current={current} count={count} next={next} tap={tap} cooldown={cooldown} index={index} totalLength={zikrList.length} resetLocal={resetLocal} />)}
+                               <CounterCard key={`${resetKey}_counter`} current={current} count={count} next={next} tap={tap} cooldown={cooldown} index={index} totalLength={zikrList.length} resetLocal={resetLocal} timeLeft={timeLeft} />)}
                         </div>
                     )}
                 </div>
