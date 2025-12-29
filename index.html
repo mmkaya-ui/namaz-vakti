@@ -9,14 +9,18 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Namaz ve Zikir</title>
     
+    <!-- Network Optimization -->
     <link rel="preconnect" href="https://api.aladhan.com">
     <link rel="preconnect" href="https://api.alquran.cloud">
     <link rel="dns-prefetch" href="https://nominatim.openstreetmap.org">
 
+    <!-- PWA Manifest -->
     <link id="app-manifest" rel="manifest" href="">
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/5533/5533023.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5533/5533023.png">
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -31,6 +35,7 @@
         }
     </script>
     
+    <!-- React Dependencies -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -119,7 +124,7 @@
         const SURAH_NAMES_TR = ["Fatiha", "Bakara", "Ali İmran", "Nisa", "Maide", "En'am", "Araf", "Enfal", "Tevbe", "Yunus", "Hud", "Yusuf", "Ra'd", "İbrahim", "Hicr", "Nahl", "İsra", "Kehf", "Meryem", "Taha", "Enbiya", "Hac", "Mü'minun", "Nur", "Furkan", "Şuara", "Neml", "Kasas", "Ankebut", "Rum", "Lokman", "Secde", "Ahzab", "Sebe", "Fatır", "Yasin", "Saffat", "Sad", "Zümer", "Mü'min", "Fussilet", "Şura", "Zuhruf", "Duhan", "Casiye", "Ahkaf", "Muhammed", "Fetih", "Hucurat", "Kaf", "Zariyat", "Tur", "Necm", "Kamer", "Rahman", "Vakıa", "Hadid", "Mücadele", "Haşr", "Mümtehine", "Saf", "Cuma", "Münafikun", "Tegabun", "Talak", "Tahrim", "Mülk", "Kalem", "Hakka", "Mearic", "Nuh", "Cin", "Müzzemmil", "Müddessir", "Kıyamet", "İnsan", "Mürselat", "Nebe", "Naziat", "Abese", "Tekvir", "İnfitar", "Mutaffifin", "İnşikak", "Buruc", "Tarık", "A'la", "Gaşiye", "Fecr", "Beled", "Şems", "Leyl", "Duha", "İnşirah", "Tin", "Alak", "Kadir", "Beyyine", "Zilzal", "Adiyat", "Karia", "Tekasür", "Asr", "Hümeze", "Fil", "Kureyn", "Maun", "Kevser", "Kafirun", "Nasr", "Tebbet", "İhlas", "Felak", "Nas"];
         
         const TRANSLATIONS = {
-            tr: { appName: "Namaz ve Zikir", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...", prayerTimes: "Namaz Vakitleri", tasbeeh: "Tesbihat", quran: "Kur'an", settings: "Ayarlar", times: "Vakitler", calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle", asr: "İkindi", maghrib: "Akşam", isha: "Yatsı", midnight: "Gece Yarısı", teheccud: "Vakt-i İcabet", kerahatMorning: "İşrak", kerahatNoon: "İstiva", kerahatEvening: "İsfirar", remaining: "Kalan", loading: "Yükleniyor...", error: "Hata", morningZikr: "Sabah", ikindiZikr: "İkindi", nightZikr: "Yatsı", ekZikr: "Günlük Ödevler", tapToCount: "Dokun", completed: "Tamamlandı", next: "İleri", nextZikr: "Sonraki", nextAyah: "Sıradaki", reset: "Sıfırla", resetTime: "Başa Dön", areYouSure: "Emin misin?", manualLocation: "Konum", search: "Ara", randomAyahs: "Kur'an'dan bir sayfa", turkishTrans: "Okunuş", turkishMean: "Meal", amenarresulu: "Amenerrasulü", nextPrayer: "Vakit", now: "Şu an", bestTimeTeheccud: "Gece namazı vakti", kerahatHeader: "Kerahat", step: "Adım", target: "Hedef", loadContent: "Yükle", loadBtn: "Getir", readFirst10: "Kehf (İlk 10)", readLast10: "Kehf (Son 10)", read15Random: "1 Sayfa Oku", salavatAdam: "Adem (a.s)", salavatIsa: "İsa (a.s)", salavatMuhammed: "Salavat-ı Şerife", salavatBedr: "Bedir & Kehf Salavatı", tryAgain: "Tekrar Dene", connectionError: "Bağlantı Hatası", pageInfo: "Sayfa", asrMethod: "İkindi Yöntemi", standard: "Standart (Cumhur)", hanafi: "Hanefi (Geç İkindi)", timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet", enableNotifications: "Bildirim İzni Ver", notificationGranted: "Bildirim İzni Verildi", notifications: "Bildirimler", fontSize: "Yazı Boyutu", resetStep: "Sayacı Sıfırla", sound: "Ses Efekti", vibration: "Titreşim", iosVibrationWarning: "iOS güvenlik kısıtlamaları nedeniyle iPhone'larda titreşim çalışmayabilir.", timeTarget: "Süre", unlimited: "Limitsiz", minTarget: "Min", ekHeader: "Günlük Görevler", kafnunTitle: "Kaf ve Nun", besmeleTitle: "Besmele Zikri" },
+            tr: { appName: "Namaz ve Zikir", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...", prayerTimes: "Namaz Vakitleri", tasbeeh: "Tesbihat", quran: "Kur'an", settings: "Ayarlar", times: "Vakitler", calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle", asr: "İkindi", maghrib: "Akşam", isha: "Yatsı", midnight: "Gece Yarısı", teheccud: "Vakt-i İcabet", kerahatMorning: "İşrak", kerahatNoon: "İstiva", kerahatEvening: "İsfirar", remaining: "Kalan", loading: "Yükleniyor...", error: "Hata", morningZikr: "Sabah", ikindiZikr: "İkindi", nightZikr: "Yatsı", ekZikr: "Günlük Ödevler", tapToCount: "Dokun", completed: "Tamamlandı", next: "İleri", nextZikr: "Sonraki", nextAyah: "Sıradaki", reset: "Sıfırla", resetTime: "Başa Dön", areYouSure: "Emin misin?", manualLocation: "Konum", search: "Ara", randomAyahs: "Kur'an'dan bir sayfa", turkishTrans: "Okunuş", turkishMean: "Meal", amenarresulu: "Amenerrasulü", nextPrayer: "Vakit", now: "Şu an", bestTimeTeheccud: "Gece namazı vakti", kerahatHeader: "Kerahat", step: "Adım", target: "Hedef", loadContent: "Yükle", loadBtn: "Getir", readFirst10: "Kehf (İlk 10)", readLast10: "Kehf (Son 10)", read15Random: "1 Sayfa Oku", salavatAdam: "Adem (a.s)", salavatIsa: "İsa (a.s)", salavatMuhammed: "Salavat-ı Şerife", salavatBedr: "Bedir & Kehf Salavatı", tryAgain: "Tekrar Dene", connectionError: "Bağlantı Hatası", pageInfo: "Sayfa", asrMethod: "İkindi Yöntemi", standard: "Standart (Cumhur)", hanafi: "Hanefi (Geç İkindi)", timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet", enableNotifications: "Bildirim İzni Ver", notificationGranted: "Bildirim İzni Verildi", notifications: "Bildirimler", fontSize: "Yazı Boyutu", resetStep: "Sayacı Sıfırla", sound: "Ses Efekti", vibration: "Titreşim", iosVibrationWarning: "iOS güvenlik kısıtlamaları nedeniyle iPhone'larda titreşim çalışmayabilir.", timeTarget: "Süre", unlimited: "Limitsiz", minTarget: "Min", ekHeader: "Günlük Ödevler", kafnunTitle: "Kaf ve Nun", besmeleTitle: "Besmele Zikri" },
             en: { appName: "Prayer & Dhikr", location: "Location", detectLocation: "Find", searchCity: "City...", prayerTimes: "Times", tasbeeh: "Dhikr", quran: "Quran", settings: "Settings", times: "Times", calcMethod: "Method", language: "Lang", fajr: "Fajr", sunrise: "Sun", dhuhr: "Dhuhr", asr: "Asr", maghrib: "Maghrib", isha: "Isha", midnight: "Midnight", teheccud: "Time of Acceptance", kerahatMorning: "Ishraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Left", loading: "Loading...", error: "Error", morningZikr: "Morning", ikindiZikr: "Asr", nightZikr: "Night", ekZikr: "Daily Tasks", tapToCount: "Tap", completed: "Done", next: "Next", nextZikr: "Next", nextAyah: "Next", reset: "Reset", resetTime: "Restart", areYouSure: "Are you sure?", manualLocation: "Loc", search: "Go", randomAyahs: "A page in Quran", turkishTrans: "Transliteration", turkishMean: "Meaning", amenarresulu: "Amenarrasul", nextPrayer: "Next", now: "Now", bestTimeTeheccud: "Night prayer", kerahatHeader: "Kerahat", step: "Step", target: "Goal", loadContent: "Load", loadBtn: "Load", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Last 10)", read15Random: "Read 1 Page", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Try Again", connectionError: "Connection Error", pageInfo: "Page", asrMethod: "Asr Method", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Time Adjustments (min)", save: "Save", enableNotifications: "Enable Notifications", notificationGranted: "Notifications Enabled", notifications: "Notifications", fontSize: "Text Size", resetStep: "Reset Counter", sound: "Sound Effect", vibration: "Vibration", iosVibrationWarning: "Vibration may not work on iPhones due to iOS security restrictions.", timeTarget: "Time", unlimited: "Unlimited", minTarget: "Min", ekHeader: "Daily Tasks", kafnunTitle: "Qaf and Nun", besmeleTitle: "Basmala Dhikr" },
             de: { appName: "Gebet & Dhikr", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...", prayerTimes: "Zeiten", tasbeeh: "Dhikr", quran: "Koran", settings: "Optionen", times: "Zeiten", calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonne", dhuhr: "Dhuhur", asr: "Assr", maghrib: "Maghrib", isha: "Ischa", midnight: "Mitternacht", teheccud: "Zeit der Erhörung", kerahatMorning: "Ischraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Rest", loading: "Laden...", error: "Fehler", morningZikr: "Morgen", ikindiZikr: "Assr", nightZikr: "Nacht", ekZikr: "Tägliche Aufgaben", tapToCount: "Tippen", completed: "Fertig", next: "Weiter", nextZikr: "Weiter", nextAyah: "Weiter", reset: "Reset", resetTime: "Neu starten", areYouSure: "Bist du sicher?", manualLocation: "Ort", search: "Suche", randomAyahs: "Eine Seite aus Koran", turkishTrans: "Aussprache", turkishMean: "Bedeutung", amenarresulu: "Amenarrasul", nextPrayer: "Nächstes", now: "Jetzt", bestTimeTeheccud: "Nachtgebet", kerahatHeader: "Kerahat", step: "Schritt", target: "Ziel", loadContent: "Laden", loadBtn: "Laden", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Letzte)", read15Random: "1 Seite Lesen", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Wiederholen", connectionError: "Verbindungsfehler", pageInfo: "Seite", asrMethod: "Assr Methode", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Zeitanpassungen (Min)", save: "Speichern", enableNotifications: "Benachrichtigungen aktivieren", notificationGranted: "Benachrichtigungen aktiviert", notifications: "Benachrichtigungen", fontSize: "Textgröße", resetStep: "Reset", sound: "Soundeffekt", vibration: "Vibration", iosVibrationWarning: "Vibration funktioniert auf iPhones aufgrund von iOS-Sicherheitsbeschränkungen möglicherweise nicht.", timeTarget: "Zeit", unlimited: "Unbegrenzt", minTarget: "Min", ekHeader: "Tägliche Aufgaben", kafnunTitle: "Qaf und Nun", besmeleTitle: "Basmala Dhikr" }
         };
@@ -369,25 +374,44 @@
 
             const getUserLocation = useCallback(async (isManual = false) => {
                 if (!navigator.geolocation) return;
-                if (isManual || !state.coords) update({ loading: true });
+                
+                // Yükleniyor durumunu hemen başlat
+                update({ loading: true });
                 
                 try {
+                    // 1. Koordinatları Al (Donanım)
                     const pos = await new Promise((resolve, reject) => 
-                        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 })
+                        navigator.geolocation.getCurrentPosition(resolve, reject, { 
+                            timeout: 10000, 
+                            maximumAge: 0, 
+                            enableHighAccuracy: false // Hız için false (Wifi/Cell)
+                        })
                     );
                     const newCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                     StorageService.set(CONFIG.STORAGE_KEYS.COORDS, newCoords);
                     
+                    // ÖNEMLİ: Koordinatlar gelir gelmez vakitleri hesaplatmak için state'i güncelle (İsim beklemene gerek yok)
+                    update({ coords: newCoords }); 
+                    
+                    // 2. Şehir İsmini Bul (Ağ İsteği - Yavaş Kısım)
                     let name = t('location');
                     try {
                         const data = await ApiService.fetchJson(`${CONFIG.API.NOMINATIM}/reverse?format=json&lat=${newCoords.lat}&lon=${newCoords.lng}`);
-                        name = data.address.city || data.address.town || data.address.suburb || "Loc";
+                        // Daha detaylı adres eşleşmesi
+                        name = data.address.city || data.address.town || data.address.district || data.address.suburb || data.address.village || data.address.province || "Konum";
                         StorageService.set(CONFIG.STORAGE_KEYS.LOC_NAME, name);
-                    } catch(e) {}
+                    } catch(e) {
+                        console.warn("Reverse geocoding error", e);
+                        // Hata olursa koordinatları isim gibi göster
+                        name = `${newCoords.lat.toFixed(2)}, ${newCoords.lng.toFixed(2)}`;
+                    }
                     
-                    update({ coords: newCoords, locationName: name, loading: false });
+                    // Yükleme bitti, ismi güncelle
+                    update({ locationName: name, loading: false });
+
                 } catch (e) {
                     update({ loading: false });
+                    if (isManual) alert(t('error') + ": " + (e.message || "GPS Hatası"));
                     if (!state.coords) update({ coords: CONFIG.DEFAULTS.COORDS, locationName: CONFIG.DEFAULTS.LOC_NAME });
                 }
             }, [state.coords, t, update]);
@@ -484,7 +508,7 @@
                         </div>
                         <div className="flex items-center space-x-2">
                             <div className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded" style={fs(0.875)}>
-                                {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                             </div>
                             <button onClick={toggleTheme} className="text-slate-500 dark:text-slate-400 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                                 <Icon path={isDarkMode ? ICONS.Sun : ICONS.Moon} size={18} />
@@ -892,7 +916,7 @@
             const diff = nextT - now;
             const diffH = Math.floor(diff / 3600000);
             const diffM = Math.floor((diff % 3600000) / 60000);
-            const fmt = (d) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            const fmt = (d) => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12: false});
 
             return (
                 <div className="space-y-1.5 animate-fade-in">
@@ -1313,7 +1337,9 @@
                         <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex space-x-1">
                             <input name="q" placeholder={t('searchCity')} onChange={handleSearchChange} autoComplete="off" className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-w-0" style={fs(0.75)}/>
                             <button type="submit" className="bg-slate-800 dark:bg-slate-700 text-white px-2 rounded-lg"><Icon path={ICONS.RefreshCw} size={14}/></button>
-                            <button type="button" onClick={() => locationHook.getUserLocation(true)} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 rounded-lg flex items-center justify-center"><Icon path={ICONS.Navigation} size={14}/></button>
+                            <button type="button" onClick={() => locationHook.getUserLocation(true)} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 rounded-lg flex items-center justify-center">
+                                <Icon path={ICONS.Navigation} size={14} className={locationHook.loading ? "animate-spin" : ""} />
+                            </button>
                         </form>
                         {locationHook.suggestions.length > 0 && (
                             <ul className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-xl max-h-40 overflow-y-auto z-50">
