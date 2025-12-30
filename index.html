@@ -1139,16 +1139,15 @@
                         // Trigger feedback on every tap for infinite/timer, or on completion for standard
                         const isDone = (current.type !== 'infinite' && current.type !== 'timer' && newCount === current.target);
                         triggerFeedback(isDone);
-                        saveProgress(index, newCount);
+                        
+                        if (isDone) {
+                            setTimeout(() => next(), 200);
+                        } else {
+                            saveProgress(index, newCount);
+                        }
                     }
-                } else if (current.type === 'amenarresulu') {   
-                    if (count < current.target) {
-                        newCount = count + 1; setCount(newCount);
-                        triggerFeedback(newCount === current.target);
-                        saveProgress(index, newCount);
-                      }
                 }
-            }, [isFinishedToday, cooldown, current, count, index, saveProgress, settings.soundEnabled, settings.vibrationEnabled]);
+            }, [isFinishedToday, cooldown, current, count, index, saveProgress, settings, next]);
 
             return (
                 <div className="flex flex-col h-full">
