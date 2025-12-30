@@ -723,7 +723,7 @@
             useEffect(() => { const handleClickOutside = (event) => { if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) locationHook.setSuggestions([]); }; document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside); }, [locationHook]);
 
             return (
-                <div className="space-y-1.5">
+                <div className="h-full overflow-y-auto no-scrollbar space-y-1.5 pb-4">
                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                         <div className="flex justify-between items-center mb-1"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.MapPin} size={14} className="mr-1.5 text-emerald-500" /> {t('location')}</h3><span className="text-[9px] text-slate-400 max-w-[120px] truncate" style={fs(0.65)}>{locationHook.locationName}</span></div>
                         <div className="relative z-50" ref={searchContainerRef}>
