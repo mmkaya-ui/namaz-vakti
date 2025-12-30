@@ -603,7 +603,7 @@
             const diff = nextT - now, diffH = Math.floor(diff / 3600000), diffM = Math.floor((diff % 3600000) / 60000), fmt = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
             return (
-                <div className="space-y-1.5 animate-fade-in">
+                <div className="h-full overflow-y-auto no-scrollbar space-y-1.5 pb-4 animate-fade-in">
                     <div className="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-2xl p-3 min-h-[100px] text-white shadow-lg relative overflow-hidden transition-colors duration-300">
                         <div className="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4"><Icon path={ICONS.Moon} size={100} /></div>
                         <div className="relative z-10 flex justify-between items-start mb-2"><div><h2 className="text-emerald-100 text-xs font-medium uppercase tracking-wider" style={fs(0.75)}>{t('nextPrayer')}</h2><h1 className="text-2xl font-bold mt-1" style={fs(1.5)}>{nextP}</h1></div><div className="text-right"><p className="text-emerald-100 text-xs" style={fs(0.75)}>{t('remaining')}</p><p className="text-2xl font-mono font-semibold mt-1" style={fs(1.5)}>{diffH > 0 ? `${diffH}h ` : ''}{diffM}m</p></div></div>
