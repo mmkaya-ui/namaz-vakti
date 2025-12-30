@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#059669">
     <meta name="description" content="Namaz Vakitleri, Tesbihat ve Kuran Okuma Uygulaması">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -41,6 +41,14 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
+        /* iOS PWA Fixes */
+        body {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            min-height: 100vh;
+            overscroll-behavior-y: none; /* Disables pull-to-refresh effect */
+        }
+    
         /* Performance Optimizations */
         .will-change-transform { will-change: transform; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
