@@ -180,6 +180,48 @@
             return `data:application/manifest+json;base64,${btoa(JSON.stringify(manifest))}`;
         };
 
+        // --- SERVICE WORKER REGISTRATION ---
+        const registerServiceWorker = async () => {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const swCode = `self.addEventListener('install', (event) => self.skipWaiting()); self.addEventListener('activate', (event) => self.clients.claim());`;
+                    const blob = new Blob([swCode], {type: 'text/javascript'});
+                    await navigator.serviceWorker.register(URL.createObjectURL(blob));
+                } catch (e) {
+                    console.log('SW Register Error:', e);
+                }
+            }
+        };
+
+        // --- NOTIFICATION HELPER ---
+        const sendNotification = async (title, options = {}) => {
+            if (!("Notification" in window) || Notification.permission !== "granted") return;
+            
+            // Add default icon if not provided
+            const notifOptions = { 
+                icon: 'https://cdn-icons-png.flaticon.com/512/5533/5533023.png',
+                ...options 
+            };
+
+            try {
+                // Try Service Worker method first (Required for Android PWA)
+                if ('serviceWorker' in navigator) {
+                    const reg = await navigator.serviceWorker.getRegistration();
+                    if (reg) {
+                        await reg.showNotification(title, notifOptions);
+                        return;
+                    }
+                }
+                // Fallback to classic API
+                new Notification(title, notifOptions);
+            } catch (e) {
+                // Last resort fallback
+                console.warn("Notification Error:", e);
+                // Try classic API one more time if SW failed with Illegal Constructor (rare edge case)
+                try { new Notification(title, notifOptions); } catch(e2){}
+            }
+        };
+
         // --- 1. CONFIGURATION & CONSTANTS ---
         const CONFIG = Object.freeze({
             API: {
@@ -259,6 +301,11 @@
             const [lang, setLang] = useState(() => StorageService.get(CONFIG.STORAGE_KEYS.LANG, CONFIG.DEFAULTS.LANG));
             const [isDarkMode, setIsDarkMode] = useState(false);
             const [settings, setSettings] = useState(() => ({ methodId: 13, asrMethod: 0, offsets: { fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }, fontSize: 1.0, soundEnabled: true, vibrationEnabled: true, ...StorageService.get(CONFIG.STORAGE_KEYS.SETTINGS, {}) }));
+
+            // Register SW on mount
+            useEffect(() => {
+                registerServiceWorker();
+            }, []);
 
             useEffect(() => { StorageService.set(CONFIG.STORAGE_KEYS.SETTINGS, settings); }, [settings]);
             useEffect(() => {
@@ -370,7 +417,7 @@
                         const isDone = status && status.date === new Date().toISOString().split('T')[0] && status.finished;
                         
                         if (!isDone && notifSentFor !== modeKey) {
-                            new Notification("Vakit Yaklaşıyor", { body: `${zikrName} zikrini tamamlamayı unutma.` });
+                            sendNotification("Vakit Yaklaşıyor", { body: `${zikrName} zikrini tamamlamayı unutma.` });
                             setNotifSentFor(modeKey); // Lock so we don't spam
                         }
                     }
@@ -671,7 +718,7 @@
             if (mode === 'morning') StorageService.remove(`timer_estag_${today}`);
             if (mode === 'ikindi') { StorageService.remove(`tasbeeh_read_page_${today}`); StorageService.remove(`tasbeeh_read_index_${today}`); } setIsFinishedToday(false); setIndex(0); setCount(0); setCooldown(false); setResetKey(prev => prev + 1); setResetConfirm(false); }, [mode, resetConfirm]);
             const resetLocal = useCallback(() => { setCount(0); saveProgress(index, 0); }, [index, saveProgress]);
-            const next = useCallback(() => { setCooldown(true); setTimeout(() => setCooldown(false), 500); if (index < zikrList.length - 1) { const newIdx = index + 1; setIndex(newIdx); setCount(0); saveProgress(newIdx, 0); } else { const today = new Date().toISOString().split('T')[0]; StorageService.set(`tasbeeh_status_${mode}`, { date: today, finished: true }); StorageService.remove(`tasbeeh_progress_${mode}`); if ("Notification" in window && Notification.permission === "granted") new Notification("Tesbihat Tamamlandı", { body: `${t(mode + 'Zikr')} tamamlandı.` }); setIsFinishedToday(true); } }, [index, zikrList.length, saveProgress, mode, t]);
+            const next = useCallback(() => { sendNotification(t('completed'), { body: `${t(mode + 'Zikr')} tamamlandı.` }); setCooldown(true); setTimeout(() => setCooldown(false), 500); if (index < zikrList.length - 1) { const newIdx = index + 1; setIndex(newIdx); setCount(0); saveProgress(newIdx, 0); } else { const today = new Date().toISOString().split('T')[0]; StorageService.set(`tasbeeh_status_${mode}`, { date: today, finished: true }); StorageService.remove(`tasbeeh_progress_${mode}`); setIsFinishedToday(true); } }, [index, zikrList.length, saveProgress, mode, t]);
             const tap = useCallback(() => { if (isFinishedToday || cooldown || !current) return; const isSpecial = current.type?.includes('kehf') || current.type === 'amenarresulu'; let newCount = count; const vibrate = (p) => { if (navigator.vibrate && settings.vibrationEnabled) navigator.vibrate(p); }; const triggerFeedback = (isFinish) => { const isReadingNav = current.type?.includes('kehf') || current.isReading; if (isFinish) { vibrate(400); if (settings.soundEnabled) AudioService.play('finish'); } else { vibrate(40); if (settings.soundEnabled && !isReadingNav) AudioService.play('tick'); } }; if (isSpecial) { if (count < current.target - 1) { setCooldown(true); setTimeout(() => setCooldown(false), 500); newCount = count + 1; setCount(newCount); triggerFeedback(newCount + 1 >= current.target); saveProgress(index, newCount); } } else if (!current.isReading && current.type !== 'checklist') { if (current.type === 'infinite' || current.type === 'timer' || count < current.target) { newCount = count + 1; setCount(newCount); const isDone = (current.type !== 'infinite' && current.type !== 'timer' && newCount === current.target); triggerFeedback(isDone); if (isDone) { setTimeout(() => next(), 200); } else { saveProgress(index, newCount); } } } }, [isFinishedToday, cooldown, current, count, index, saveProgress, settings, next]);
 
             if (!current) return <LoadingView />;
@@ -739,7 +786,7 @@
             const [showVibHint, setShowVibHint] = useState(false), [notifPermission, setNotifPermission] = useState(() => ("Notification" in window) ? Notification.permission : 'default');
             const handleSearchChange = (e) => { const val = e.target.value; if (timerRef.current) clearTimeout(timerRef.current); timerRef.current = setTimeout(() => { locationHook.liveSearch(val); }, 500); };
             const selectCity = (item) => { const newCoords = { lat: parseFloat(item.lat), lng: parseFloat(item.lon) }, name = item.display_name.split(',')[0]; locationHook.update({ coords: newCoords, locationName: name, loading: false }); StorageService.set(CONFIG.STORAGE_KEYS.COORDS, newCoords); StorageService.set(CONFIG.STORAGE_KEYS.LOC_NAME, name); locationHook.setSuggestions([]); };
-            const handleNotifClick = async () => { if (!("Notification" in window)) { alert("Bu cihazda bildirimler desteklenmiyor."); return; } if (notifPermission === 'granted') { alert(t('notificationGranted')); return; } if (notifPermission === 'denied') { alert("Bildirim izni daha önce reddedilmiş. Lütfen tarayıcı ayarlarından izinleri sıfırlayın."); return; } try { const p = await Notification.requestPermission(); setNotifPermission(p); if (p === 'granted') new Notification(t('appName'), { body: t('notificationGranted') }); } catch (e) { alert("Hata: " + e.message); } };
+            const handleNotifClick = async () => { if (!("Notification" in window)) { alert("Bu cihazda bildirimler desteklenmiyor."); return; } if (notifPermission === 'granted') { alert(t('notificationGranted')); return; } if (notifPermission === 'denied') { alert("Bildirim izni daha önce reddedilmiş. Lütfen tarayıcı ayarlarından izinleri sıfırlayın."); return; } try { const p = await Notification.requestPermission(); setNotifPermission(p); if (p === 'granted') sendNotification(t('appName'), { body: t('notificationGranted') }); } catch (e) { alert("Hata: " + e.message); } };
             useEffect(() => { const handleClickOutside = (event) => { if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) locationHook.setSuggestions([]); }; document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside); }, [locationHook]);
 
             return (
