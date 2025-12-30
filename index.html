@@ -75,8 +75,8 @@
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         
         .main-layout {
-            padding-top: calc(env(safe-area-inset-top) + 64px);
-            padding-bottom: calc(env(safe-area-inset-bottom) + 65px);
+            padding-top: calc(env(safe-area-inset-top) + 72px); /* Header için boşluk */
+            padding-bottom: calc(env(safe-area-inset-bottom) + 65px); /* Navbar için boşluk */
         }
 
         /* Utilities */
@@ -105,43 +105,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // --- 0. HELPER UTILS ---
-        
-        const getSecureRandomNumber = (min, max) => {
-            const range = max - min + 1;
-            const array = new Uint32Array(1);
-            window.crypto.getRandomValues(array);
-            return min + (array[0] % range);
-        };
-
-        const generateManifest = (appName) => {
-            const manifest = {
-                name: appName,
-                short_name: appName,
-                start_url: ".",
-                display: "standalone",
-                background_color: "#ffffff",
-                theme_color: "#059669",
-                orientation: "portrait",
-                icons: [{ src: "https://cdn-icons-png.flaticon.com/512/5533/5533023.png", sizes: "512x512", type: "image/png" }]
-            };
-            return `data:application/manifest+json;base64,${btoa(JSON.stringify(manifest))}`;
-        };
-
-        // --- 1. CONFIGURATION & CONSTANTS ---
-        const CONFIG = Object.freeze({
-            API: {
-                ALADHAN: 'https://api.aladhan.com/v1',
-                QURAN: 'https://api.alquran.cloud/v1',
-                NOMINATIM: 'https://nominatim.openstreetmap.org'
-            },
-            STORAGE_KEYS: { LANG: 'appLang', COORDS: 'coords', LOC_NAME: 'locName', THEME: 'isDarkMode', SETTINGS: 'appSettings' },
-            DEFAULTS: { COORDS: { lat: 41.0082, lng: 28.9784 }, LOC_NAME: "İstanbul", LANG: 'tr' }
-        });
-
-        // --- 2. DATASETS ---
+        // --- DATA DEFINITIONS (MOVED TO TOP FOR SAFETY) ---
         const SURAH_NAMES_TR = ["Fatiha", "Bakara", "Ali İmran", "Nisa", "Maide", "En'am", "Araf", "Enfal", "Tevbe", "Yunus", "Hud", "Yusuf", "Ra'd", "İbrahim", "Hicr", "Nahl", "İsra", "Kehf", "Meryem", "Taha", "Enbiya", "Hac", "Mü'minun", "Nur", "Furkan", "Şuara", "Neml", "Kasas", "Ankebut", "Rum", "Lokman", "Secde", "Ahzab", "Sebe", "Fatır", "Yasin", "Saffat", "Sad", "Zümer", "Mü'min", "Fussilet", "Şura", "Zuhruf", "Duhan", "Casiye", "Ahkaf", "Muhammed", "Fetih", "Hucurat", "Kaf", "Zariyat", "Tur", "Necm", "Kamer", "Rahman", "Vakıa", "Hadid", "Mücadele", "Haşr", "Mümtehine", "Saf", "Cuma", "Münafikun", "Tegabun", "Talak", "Tahrim", "Mülk", "Kalem", "Hakka", "Mearic", "Nuh", "Cin", "Müzzemmil", "Müddessir", "Kıyamet", "İnsan", "Mürselat", "Nebe", "Naziat", "Abese", "Tekvir", "İnfitar", "Mutaffifin", "İnşikak", "Buruc", "Tarık", "A'la", "Gaşiye", "Fecr", "Beled", "Şems", "Leyl", "Duha", "İnşirah", "Tin", "Alak", "Kadir", "Beyyine", "Zilzal", "Adiyat", "Karia", "Tekasür", "Asr", "Hümeze", "Fil", "Kureyn", "Maun", "Kevser", "Kafirun", "Nasr", "Tebbet", "İhlas", "Felak", "Nas"];
-        
+
         const TRANSLATIONS = {
             tr: { appName: "Namaz ve Zikir", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...", prayerTimes: "Namaz Vakitleri", tasbeeh: "Tesbihat", quran: "Kur'an", settings: "Ayarlar", times: "Vakitler", calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle", asr: "İkindi", maghrib: "Akşam", isha: "Yatsı", midnight: "Gece Yarısı", teheccud: "Vakt-i İcabet", kerahatMorning: "İşrak", kerahatNoon: "İstiva", kerahatEvening: "İsfirar", remaining: "Kalan", loading: "Yükleniyor...", error: "Hata", morningZikr: "Sabah", ikindiZikr: "İkindi", nightZikr: "Yatsı", ekZikr: "Günlük", tapToCount: "Dokun", completed: "Tamamlandı", next: "İleri", nextZikr: "Sonraki", nextAyah: "Sıradaki", reset: "Sıfırla", resetTime: "Başa Dön", areYouSure: "Emin misin?", manualLocation: "Konum", search: "Ara", randomAyahs: "Kur'an'dan bir sayfa", turkishTrans: "Okunuş", turkishMean: "Meal", amenarresulu: "Amenerrasulü", nextPrayer: "Vakit", now: "Şu an", bestTimeTeheccud: "Gece namazı vakti", kerahatHeader: "Kerahat", step: "Adım", target: "Hedef", loadContent: "Yükle", loadBtn: "Getir", readFirst10: "Kehf (İlk 10)", readLast10: "Kehf (Son 10)", read15Random: "1 Sayfa Oku", salavatAdam: "Adem (a.s)", salavatIsa: "İsa (a.s)", salavatMuhammed: "Salavat-ı Şerife", salavatBedr: "Bedir & Kehf Salavatı", tryAgain: "Tekrar Dene", connectionError: "Bağlantı Hatası", pageInfo: "Sayfa", asrMethod: "İkindi Yöntemi", standard: "Standart (Cumhur)", hanafi: "Hanefi (Geç İkindi)", timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet", enableNotifications: "Bildirim İzni Ver", notificationGranted: "Bildirim İzni Verildi", notifications: "Bildirimler", fontSize: "Yazı Boyutu", resetStep: "Sayacı Sıfırla", sound: "Ses Efekti", vibration: "Titreşim", iosVibrationWarning: "iOS güvenlik kısıtlamaları nedeniyle iPhone'larda titreşim çalışmayabilir.", timeTarget: "Süre", unlimited: "Limitsiz", minTarget: "Min", ekHeader: "Günlük Ödevler", kafnunTitle: "Kaf ve Nun", besmeleTitle: "Besmele Zikri" },
             en: { appName: "Prayer & Dhikr", location: "Location", detectLocation: "Find", searchCity: "City...", prayerTimes: "Times", tasbeeh: "Dhikr", quran: "Quran", settings: "Settings", times: "Times", calcMethod: "Method", language: "Lang", fajr: "Fajr", sunrise: "Sun", dhuhr: "Dhuhr", asr: "Asr", maghrib: "Maghrib", isha: "Isha", midnight: "Midnight", teheccud: "Time of Acceptance", kerahatMorning: "Ishraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Left", loading: "Loading...", error: "Error", morningZikr: "Morning", ikindiZikr: "Asr", nightZikr: "Night", ekZikr: "Daily", tapToCount: "Tap", completed: "Done", next: "Next", nextZikr: "Next", nextAyah: "Next", reset: "Reset", resetTime: "Restart", areYouSure: "Are you sure?", manualLocation: "Loc", search: "Go", randomAyahs: "A page in Quran", turkishTrans: "Transliteration", turkishMean: "Meaning", amenarresulu: "Amenarrasul", nextPrayer: "Next", now: "Now", bestTimeTeheccud: "Night prayer", kerahatHeader: "Kerahat", step: "Step", target: "Goal", loadContent: "Load", loadBtn: "Load", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Last 10)", read15Random: "Read 1 Page", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Try Again", connectionError: "Connection Error", pageInfo: "Page", asrMethod: "Asr Method", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Time Adjustments (min)", save: "Save", enableNotifications: "Enable Notifications", notificationGranted: "Notifications Enabled", notifications: "Notifications", fontSize: "Text Size", resetStep: "Reset Counter", sound: "Sound Effect", vibration: "Vibration", iosVibrationWarning: "Vibration may not work on iPhones due to iOS security restrictions.", timeTarget: "Time", unlimited: "Unlimited", minTarget: "Min", ekHeader: "Daily Tasks", kafnunTitle: "Qaf and Nun", besmeleTitle: "Basmala Dhikr" },
@@ -190,6 +156,40 @@
                 de: [ { id: 'kafnun', text: 'Schreibe "Kaf" "Nun" 51 mal', sub: "", arabic: "ق ن" }, { id: 'besmele_full', text: "Basmala Dhikr (10 Minuten)", sub: "Bismillah - Bismirrahman - Bismirrahim - Bismillahirrahman - Bismillahirrahim - Bismirrahmanirrahim - Bismillahirrahmanirrahim" } ]
             }
         };
+
+        // --- 0. HELPER UTILS ---
+        
+        const getSecureRandomNumber = (min, max) => {
+            const range = max - min + 1;
+            const array = new Uint32Array(1);
+            window.crypto.getRandomValues(array);
+            return min + (array[0] % range);
+        };
+
+        const generateManifest = (appName) => {
+            const manifest = {
+                name: appName,
+                short_name: appName,
+                start_url: ".",
+                display: "standalone",
+                background_color: "#ffffff",
+                theme_color: "#059669",
+                orientation: "portrait",
+                icons: [{ src: "https://cdn-icons-png.flaticon.com/512/5533/5533023.png", sizes: "512x512", type: "image/png" }]
+            };
+            return `data:application/manifest+json;base64,${btoa(JSON.stringify(manifest))}`;
+        };
+
+        // --- 1. CONFIGURATION & CONSTANTS ---
+        const CONFIG = Object.freeze({
+            API: {
+                ALADHAN: 'https://api.aladhan.com/v1',
+                QURAN: 'https://api.alquran.cloud/v1',
+                NOMINATIM: 'https://nominatim.openstreetmap.org'
+            },
+            STORAGE_KEYS: { LANG: 'appLang', COORDS: 'coords', LOC_NAME: 'locName', THEME: 'isDarkMode', SETTINGS: 'appSettings' },
+            DEFAULTS: { COORDS: { lat: 41.0082, lng: 28.9784 }, LOC_NAME: "İstanbul", LANG: 'tr' }
+        });
 
         const Icon = ({ path, size = 20, className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{path}</svg>;
         const ICONS = {
@@ -350,8 +350,8 @@
         const Header = memo(({ currentTime }) => {
             const { t, isDarkMode, toggleTheme, fs } = useApp();
             return (
-                <header className="fixed top-0 left-0 right-0 mx-auto max-w-md bg-white dark:bg-slate-850 z-50 border-b border-slate-50 dark:border-slate-800 transition-colors duration-300 pt-safe">
-                    <div className="px-4 py-2 flex justify-between items-center h-16">
+                <header className="fixed top-0 left-0 right-0 mx-auto max-w-md z-50 pt-safe transition-colors duration-300">
+                    <div className="mx-4 mt-2 h-14 bg-white dark:bg-slate-850 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center px-4 transition-colors duration-300">
                         <div className="flex items-center space-x-2"><div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white"><Icon path={ICONS.Moon} size={18} /></div><span className="font-bold text-base tracking-tight text-slate-800 dark:text-slate-100" style={fs(1)}>{t('appName')}</span></div>
                         <div className="flex items-center space-x-2">
                             <div className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded" style={fs(0.875)}>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
@@ -566,17 +566,19 @@
             const [index, setIndex] = useState(0), [count, setCount] = useState(0), [cooldown, setCooldown] = useState(false), [isFinishedToday, setIsFinishedToday] = useState(false), [resetKey, setResetKey] = useState(0), [resetConfirm, setResetConfirm] = useState(false), [timeLeft, setTimeLeft] = useState(0);
             const [checklistState, setChecklistState] = useState(() => { const today = new Date().toISOString().split('T')[0]; return StorageService.get(`checklist_${mode}_${today}`) || {}; });
             useEffect(() => { const today = new Date().toISOString().split('T')[0], s = StorageService.get(`tasbeeh_status_${mode}`), p = StorageService.get(`tasbeeh_progress_${mode}`), cl = StorageService.get(`checklist_${mode}_${today}`); setChecklistState(cl || {}); if (s) { setIsFinishedToday(s.date === today && s.finished); } else setIsFinishedToday(false); if (p) { setIndex(p.idx || 0); setCount(p.cnt || 0); } else { setIndex(0); setCount(0); } setResetConfirm(false); }, [mode, resetKey]);
-            const zikrList = useMemo(() => { const db = ZIKR_DB, g = (k) => (db[k][lang] || db[k]['en']); const common = { fatiha: { target: 19, title: "Fatiha", text: g('fatiha').t, arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ" }, estag: { type: 'timer', duration: 300, target: 0, title: "Estağfirullah (5 dk)", text: g('estag').t, arabic: "أَسْتَغْفِرُ اللّٰهَ" }, salavatM: { target: 10, title: t('salavatMuhammed'), text: g('salavatM').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ" }, salavatA: { target: 10, title: t('salavatAdam'), text: g('salavatA').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا آدَمَ" }, salavatI: { target: 10, title: t('salavatIsa'), text: g('salavatI').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا عِيسَى" }, kehf1: { target: 10, title: t('readFirst10'), type: 'kehf_first_10', isReading: true }, kehf2: { target: 10, title: t('readLast10'), type: 'kehf_last_10', isReading: true }, salavatB: { type: 'infinite', target: 3, minTarget: 3, title: t('salavatBedr'), text: g('salavatB').t }, kuddus: { type: 'infinite', target: 3, minTarget: 3, title: "Ya Kuddüs", text: g('kuddus').t, arabic: "يَا قُدُّوسُ" }, random: { target: 1, title: t('read15Random'), type: 'random15', isReading: true }, amena: { target: 11, title: t('amenarresulu'), type: 'amenarresulu' }, ek_tasks: { type: 'checklist', title: t('ekHeader'), list: db.ek_list[lang] || db.ek_list['en'] } }; if (mode === 'morning') return [common.fatiha, common.estag, common.salavatA, common.salavatI, common.salavatM, common.kehf1, common.salavatB]; if (mode === 'ikindi') return [{ ...common.fatiha, target: 21 }, { ...common.salavatM, target: 11 }, common.kuddus, common.kehf2, common.random]; if (mode === 'ek') return [common.ek_tasks]; return [common.amena]; }, [mode, t, lang]);
+            const zikrList = useMemo(() => { const db = ZIKR_DB; if (!db) return []; const g = (k) => (db[k][lang] || db[k]['en']); const common = { fatiha: { target: 19, title: "Fatiha", text: g('fatiha').t, arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ" }, estag: { type: 'timer', duration: 300, target: 0, title: "Estağfirullah (5 dk)", text: g('estag').t, arabic: "أَسْتَغْفِرُ اللّٰهَ" }, salavatM: { target: 10, title: t('salavatMuhammed'), text: g('salavatM').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ" }, salavatA: { target: 10, title: t('salavatAdam'), text: g('salavatA').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا آدَمَ" }, salavatI: { target: 10, title: t('salavatIsa'), text: g('salavatI').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا عِيسَى" }, kehf1: { target: 10, title: t('readFirst10'), type: 'kehf_first_10', isReading: true }, kehf2: { target: 10, title: t('readLast10'), type: 'kehf_last_10', isReading: true }, salavatB: { type: 'infinite', target: 3, minTarget: 3, title: t('salavatBedr'), text: g('salavatB').t }, kuddus: { type: 'infinite', target: 3, minTarget: 3, title: "Ya Kuddüs", text: g('kuddus').t, arabic: "يَا قُدُّوسُ" }, random: { target: 1, title: t('read15Random'), type: 'random15', isReading: true }, amena: { target: 11, title: t('amenarresulu'), type: 'amenarresulu' }, ek_tasks: { type: 'checklist', title: t('ekHeader'), list: db.ek_list[lang] || db.ek_list['en'] } }; if (mode === 'morning') return [common.fatiha, common.estag, common.salavatA, common.salavatI, common.salavatM, common.kehf1, common.salavatB]; if (mode === 'ikindi') return [{ ...common.fatiha, target: 21 }, { ...common.salavatM, target: 11 }, common.kuddus, common.kehf2, common.random]; if (mode === 'ek') return [common.ek_tasks]; return [common.amena]; }, [mode, t, lang]);
             const current = zikrList[index] || zikrList[0];
-            useEffect(() => { if (current.type === 'timer') setTimeLeft(current.duration); else setTimeLeft(0); }, [current]);
-            useEffect(() => { let interval; if (current.type === 'timer' && timeLeft > 0 && !isFinishedToday) { interval = setInterval(() => { setTimeLeft((prev) => { if (prev <= 1) { if (settings.vibrationEnabled) navigator.vibrate([200, 100, 200]); if (settings.soundEnabled) AudioService.play('finish'); return 0; } return prev - 1; }); }, 1000); } return () => clearInterval(interval); }, [current.type, timeLeft, settings, isFinishedToday]);
+            useEffect(() => { if (current && current.type === 'timer') setTimeLeft(current.duration); else setTimeLeft(0); }, [current]);
+            useEffect(() => { let interval; if (current && current.type === 'timer' && timeLeft > 0 && !isFinishedToday) { interval = setInterval(() => { setTimeLeft((prev) => { if (prev <= 1) { if (settings.vibrationEnabled) navigator.vibrate([200, 100, 200]); if (settings.soundEnabled) AudioService.play('finish'); return 0; } return prev - 1; }); }, 1000); } return () => clearInterval(interval); }, [current, timeLeft, settings, isFinishedToday]);
             const saveProgress = useCallback((idx, cnt) => { const today = new Date().toISOString().split('T')[0]; StorageService.set(`tasbeeh_progress_${mode}`, { date: today, idx, cnt }); }, [mode]);
             const toggleChecklistItem = useCallback((itemIndex) => { const today = new Date().toISOString().split('T')[0], key = `checklist_${mode}_${today}`, currentState = StorageService.get(key) || {}, newState = { ...currentState, [itemIndex]: !currentState[itemIndex] }; setChecklistState(newState); StorageService.set(key, newState); if (newState[itemIndex] && settings.soundEnabled) AudioService.play('tick'); }, [mode, settings]);
             const reset = useCallback(() => { StorageService.remove(`tasbeeh_status_${mode}`); StorageService.remove(`tasbeeh_progress_${mode}`); const today = new Date().toISOString().split('T')[0]; StorageService.remove(`checklist_${mode}_${today}`); setChecklistState({}); setIsFinishedToday(false); setIndex(0); setCount(0); setCooldown(false); }, [mode]);
             const resetTime = useCallback(() => { if (!resetConfirm) { setResetConfirm(true); setTimeout(() => setResetConfirm(false), 3000); return; } const today = new Date().toISOString().split('T')[0]; StorageService.remove(`tasbeeh_status_${mode}`); StorageService.remove(`tasbeeh_progress_${mode}`); StorageService.remove(`checklist_${mode}_${today}`); setChecklistState({}); if (mode === 'ikindi') { StorageService.remove(`tasbeeh_read_page_${today}`); StorageService.remove(`tasbeeh_read_index_${today}`); } setIsFinishedToday(false); setIndex(0); setCount(0); setCooldown(false); setResetKey(prev => prev + 1); setResetConfirm(false); }, [mode, resetConfirm]);
             const resetLocal = useCallback(() => { setCount(0); saveProgress(index, 0); }, [index, saveProgress]);
             const next = useCallback(() => { setCooldown(true); setTimeout(() => setCooldown(false), 500); if (index < zikrList.length - 1) { const newIdx = index + 1; setIndex(newIdx); setCount(0); saveProgress(newIdx, 0); } else { const today = new Date().toISOString().split('T')[0]; StorageService.set(`tasbeeh_status_${mode}`, { date: today, finished: true }); StorageService.remove(`tasbeeh_progress_${mode}`); if ("Notification" in window && Notification.permission === "granted") new Notification("Tesbihat Tamamlandı", { body: `${t(mode + 'Zikr')} tamamlandı.` }); setIsFinishedToday(true); } }, [index, zikrList.length, saveProgress, mode, t]);
-            const tap = useCallback(() => { if (isFinishedToday || cooldown) return; const isSpecial = current.type?.includes('kehf') || current.type === 'amenarresulu'; let newCount = count; const vibrate = (p) => { if (navigator.vibrate && settings.vibrationEnabled) navigator.vibrate(p); }; const triggerFeedback = (isFinish) => { const isReadingNav = current.type?.includes('kehf') || current.isReading; if (isFinish) { vibrate(400); if (settings.soundEnabled) AudioService.play('finish'); } else { vibrate(40); if (settings.soundEnabled && !isReadingNav) AudioService.play('tick'); } }; if (isSpecial) { if (count < current.target - 1) { setCooldown(true); setTimeout(() => setCooldown(false), 500); newCount = count + 1; setCount(newCount); triggerFeedback(newCount + 1 >= current.target); saveProgress(index, newCount); } } else if (!current.isReading && current.type !== 'checklist') { if (current.type === 'infinite' || current.type === 'timer' || count < current.target) { newCount = count + 1; setCount(newCount); const isDone = (current.type !== 'infinite' && current.type !== 'timer' && newCount === current.target); triggerFeedback(isDone); if (isDone) { setTimeout(() => next(), 200); } else { saveProgress(index, newCount); } } } }, [isFinishedToday, cooldown, current, count, index, saveProgress, settings, next]);
+            const tap = useCallback(() => { if (isFinishedToday || cooldown || !current) return; const isSpecial = current.type?.includes('kehf') || current.type === 'amenarresulu'; let newCount = count; const vibrate = (p) => { if (navigator.vibrate && settings.vibrationEnabled) navigator.vibrate(p); }; const triggerFeedback = (isFinish) => { const isReadingNav = current.type?.includes('kehf') || current.isReading; if (isFinish) { vibrate(400); if (settings.soundEnabled) AudioService.play('finish'); } else { vibrate(40); if (settings.soundEnabled && !isReadingNav) AudioService.play('tick'); } }; if (isSpecial) { if (count < current.target - 1) { setCooldown(true); setTimeout(() => setCooldown(false), 500); newCount = count + 1; setCount(newCount); triggerFeedback(newCount + 1 >= current.target); saveProgress(index, newCount); } } else if (!current.isReading && current.type !== 'checklist') { if (current.type === 'infinite' || current.type === 'timer' || count < current.target) { newCount = count + 1; setCount(newCount); const isDone = (current.type !== 'infinite' && current.type !== 'timer' && newCount === current.target); triggerFeedback(isDone); if (isDone) { setTimeout(() => next(), 200); } else { saveProgress(index, newCount); } } } }, [isFinishedToday, cooldown, current, count, index, saveProgress, settings, next]);
+
+            if (!current) return <LoadingView />;
 
             return (
                 <div className="flex flex-col h-full">
