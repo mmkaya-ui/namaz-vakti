@@ -1,15 +1,3 @@
-iOS cihazlarında (özellikle çentikli iPhone modellerinde) durum çubuğu (status bar) ve alt kısımdaki "Home Indicator" (ana ekran çizgisi) alanlarını doğru yönetmek için CSS'teki `env(safe-area-inset-...)` değerlerini doğru elementlere uygulamamız gerekiyor.
-
-Şu anki sorunun sebebi, `body`'ye padding verilmiş olsa da, `fixed` (sabit) pozisyondaki Header ve Navbar'ın bu güvenli alanları (safe areas) hesaba katmamasıdır.
-
-Aşağıdaki kodda şu kritik düzeltmeleri yaptım:
-1.  **Header:** `top: 0` yerine `top: env(safe-area-inset-top)` eklendi ve `padding-top` artırıldı.
-2.  **Navbar:** `bottom: 0` yerine `padding-bottom: env(safe-area-inset-bottom)` eklendi ve arka plan rengi bu boşluğu dolduracak şekilde ayarlandı.
-3.  **Main İçerik:** Header ve Navbar'ın yeni yüksekliklerine göre `padding-top` ve `padding-bottom` değerleri dinamik hale getirildi.
-
-İşte tüm cihazlarda (çentikli iPhone'lar dahil) düzgün hizalanacak **tam ve düzeltilmiş kod**:
-
-```html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -622,8 +610,3 @@ Aşağıdaki kodda şu kritik düzeltmeleri yaptım:
     </script>
 </body>
 </html>
-```
-
-[1](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11692820/3975127b-ef8d-46a7-b1e8-274981bb5c47/paste.txt)
-[2](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11692820/5429812c-11a0-4aee-abf8-9d79ee94062c/paste.txt)
-[3](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/11692820/3972a4b9-bb0f-4e24-9992-474ff1912f4d/paste-2.txt)
