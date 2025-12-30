@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -69,8 +68,6 @@
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         
         /* Ana içerik için dinamik boşluk hesaplama */
-        /* Header yüksekliği (yaklaşık 60px) + Çentik payı */
-        /* Footer yüksekliği (yaklaşık 65px) + Home bar payı + biraz tampon */
         .main-content-padding {
             padding-top: calc(env(safe-area-inset-top) + 65px);
             padding-bottom: calc(env(safe-area-inset-bottom) + 80px); 
@@ -330,9 +327,28 @@
             );
         });
 
+        const Navbar = memo(({ active, setActive }) => {
+            const { t, fs } = useApp();
+            return (
+                <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] pb-safe transition-colors duration-300">
+                    <div className="grid grid-cols-4 w-full h-16 max-w-md mx-auto">
+                        {[{ id: 'times', i: ICONS.Clock }, { id: 'tasbeeh', i: ICONS.RefreshCw }, { id: 'quran', i: ICONS.BookOpen }, { id: 'settings', i: ICONS.Menu }].map(b => (
+                            <button key={b.id} onClick={() => { if (active !== b.id) { window.history.pushState({ tab: b.id }, '', `#${b.id}`); setActive(b.id); } }} className={`flex flex-col items-center justify-center space-y-0.5 transition w-full h-full ${active === b.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-600'}`}>
+                                <div className={`transition-transform duration-200 ${active === b.id ? '-translate-y-1' : ''}`}><Icon path={b.i} size={20}/></div>
+                                <span className="text-[9px] font-medium max-w-[50px] truncate" style={fs(0.6)}>{t(b.label || b.id)}</span>
+                            </button>
+                        ))}
+                    </div>
+                </nav>
+            );
+        });
+
         const ProgressBar = memo(({ current, total }) => (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1 transform-gpu"><div className="bg-emerald-600 h-2 rounded-full transition-all duration-300 ease-out will-change-transform" style={{ width: `${Math.min(100, (current / total) * 100)}%` }}></div></div>));
         const ResetBtn = memo(({ onClick }) => { const { t, fs } = useApp(); return (<button onClick={(e) => { e.stopPropagation(); onClick(); }} className="px-2 py-1 rounded-md bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition flex items-center space-x-1 border border-orange-100 dark:border-orange-900/30" title={t('resetStep')}><Icon path={ICONS.RotateCcw} size={14} /><span className="text-xs font-bold" style={fs(0.75)}>{t('reset')}</span></button>); });
 
+        // ============================================
+        // FIX: FetchableZikrCard - Fixed Control Area
+        // ============================================
         const FetchableZikrCard = memo(({ current, count, next, tap, cooldown, resetLocal }) => {
             const { t, lang, settings, fs } = useApp();
             const [data, setData] = useState(null); const [loading, setLoading] = useState(true); const [error, setError] = useState(false);
@@ -355,12 +371,22 @@
             const idx = Math.min(count, data.length - 1), item = data[idx], isLast = count >= current.target - 1;
             return (
                 <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col transition-colors duration-300 h-full">
-                    <div className="flex justify-between items-center mb-2 text-xs shrink-0"><div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.BookOpen} size={16}/><span style={fs(1)}>{current.title}</span></div><div className="flex items-center space-x-2"><span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono" style={fs(0.75)}>{Math.min(count + 1, current.target)}/{current.target}</span><ResetBtn onClick={resetLocal} /></div></div>
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-2 text-xs shrink-0">
+                        <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.BookOpen} size={16}/><span style={fs(1)}>{current.title}</span></div>
+                        <div className="flex items-center space-x-2"><span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono" style={fs(0.75)}>{Math.min(count + 1, current.target)}/{current.target}</span><ResetBtn onClick={resetLocal} /></div>
+                    </div>
+                    
+                    {/* Content (Flex-1, Scrollable) */}
                     <div className="flex-1 overflow-y-auto mb-2 no-scrollbar">
                         {current.type === 'amenarresulu' ? (<div className="space-y-4 p-2"><div className="text-right font-serif text-xl text-emerald-800 dark:text-emerald-400 mb-2 leading-loose" dir="rtl" style={fs(1.5)}>{data.map((d, i) => <span key={i}>{d.arabic} <span className="text-sm border border-current rounded-full w-6 h-6 inline-flex items-center justify-center mx-1">{d.number}</span></span>)}</div><div className="text-slate-800 dark:text-slate-200 font-medium text-base mb-1 leading-relaxed"><h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1 uppercase tracking-wider" style={fs(0.75)}>{t('turkishTrans')}</h4><p style={fs(1)}>{data.map(d => d.trans).join(' ')}</p></div><div className="text-slate-600 dark:text-slate-400 text-base italic leading-relaxed"><h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1 uppercase tracking-wider" style={fs(0.75)}>{t('turkishMean')}</h4><p style={fs(1)}>{data.map(d => d.mean).join(' ')}</p></div></div>) 
                         : (<><p className="text-right font-serif text-2xl text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl" style={fs(1.5)}>{item.arabic}</p><p className="text-slate-800 dark:text-slate-200 font-semibold text-sm mb-1 leading-relaxed" style={fs(0.875)}>{item.trans}</p><p className="text-slate-600 dark:text-slate-400 italic text-xs" style={fs(0.75)}>{item.mean}</p></>)}
                     </div>
-                    <button onClick={isLast ? next : tap} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold flex justify-center items-center space-x-1 transition text-sm shrink-0 ${cooldown ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500' : 'bg-emerald-600 text-white active:scale-95'}`}>{cooldown ? <Icon path={ICONS.Lock} size={16}/> : <span style={fs(0.875)}>{isLast ? t('completed') : (current.type === 'amenarresulu' ? t('tapToCount') : t('nextAyah'))}</span>}</button>
+                    
+                    {/* Fixed Button Area (h-14) */}
+                    <div className="shrink-0 h-14 flex items-center justify-center">
+                        <button onClick={isLast ? next : tap} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500' : 'bg-emerald-600 text-white active:scale-95'}`}>{cooldown ? <Icon path={ICONS.Lock} size={16}/> : <span style={fs(0.875)}>{isLast ? t('completed') : (current.type === 'amenarresulu' ? t('tapToCount') : t('nextAyah'))}</span>}</button>
+                    </div>
                 </div>
             );
         });
@@ -377,28 +403,79 @@
             if (loading || !ayahs) return <LoadingView />;
             return (
                 <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col h-full transition-colors duration-300">
+                    {/* Header */}
                     <div className="flex justify-between items-center mb-2 text-xs shrink-0"><div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.BookOpen} size={16}/><span style={fs(1)}>{current.title}</span></div><span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono" style={fs(0.75)}>{t('pageInfo')} {pageNumber}</span></div>
+                    
+                    {/* Content */}
                     <div className="flex-1 relative overflow-hidden mb-2"><div className="h-full overflow-y-auto no-scrollbar space-y-4 pr-1 pb-6">{ayahs.map((currentAyah, index) => (<div key={index} className="border-b border-slate-50 dark:border-slate-800 pb-3 last:border-0"><div className="mb-1 text-[10px] text-emerald-600 dark:text-emerald-500 font-bold uppercase tracking-wider" style={fs(0.65)}>{currentAyah.info}</div><p className="text-right font-serif text-2xl text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl" style={fs(1.5)}>{currentAyah.arabic}</p><p className="text-slate-800 dark:text-slate-200 font-medium mb-1 text-xs" style={fs(0.75)}>{currentAyah.trans}</p><p className="text-slate-500 dark:text-slate-400 italic text-xxs" style={fs(0.65)}>{currentAyah.text}</p></div>))}</div><div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-slate-850 to-transparent pointer-events-none flex justify-center items-end pb-1"><div className="animate-bounce text-emerald-500/30 dark:text-emerald-400/30"><Icon path={ICONS.ChevronRight} className="rotate-90" size={16}/></div></div></div>
-                    <button onClick={next} className="w-full py-2.5 rounded-lg font-bold bg-emerald-600 text-white active:scale-95 transition text-sm shrink-0"><span style={fs(0.875)}>{t('completed')}</span></button>
+                    
+                    {/* Fixed Button Area (h-14) */}
+                    <div className="shrink-0 h-14 flex items-center justify-center">
+                        <button onClick={next} className="w-full py-2.5 rounded-lg font-bold bg-emerald-600 text-white active:scale-95 transition text-sm"><span style={fs(0.875)}>{t('completed')}</span></button>
+                    </div>
                 </div>
             );
         });
 
+        // ============================================
+        // FIX: CounterCard - Fixed Circle/Button Area (h-64)
+        // ============================================
         const CounterCard = memo(({ current, count, next, tap, cooldown, index, totalLength, resetLocal, timeLeft }) => {
             const { t, settings, fs } = useApp();
             let done = false; if (current.type === 'timer') done = timeLeft === 0; else if (current.type === 'infinite') done = false; else done = count >= current.target;
             const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60) < 10 ? '0' : ''}${s % 60}`;
             return (
                 <div className={`border-2 rounded-2xl p-3 flex flex-col items-center text-center shadow-sm transition-colors duration-300 select-none h-full relative ${done ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500' : 'bg-white dark:bg-slate-850 border-emerald-100 dark:border-slate-700'}`}>
-                    <div className="w-full flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-1 relative z-10 shrink-0"><span style={fs(0.65)}>{t('step')} {index + 1}/{totalLength}</span><div className="flex items-center gap-2">{current.type === 'timer' ? (<span className="text-xs font-bold text-slate-600 dark:text-slate-300 font-mono" style={fs(0.75)}>{t('timeTarget')}: {formatTime(timeLeft)}</span>) : current.type === 'infinite' ? (<div className="flex items-center space-x-1"><span className="text-xs font-bold text-slate-600 dark:text-slate-300" style={fs(0.75)}>{t('unlimited')}</span>{current.minTarget > 0 && <span className="text-[9px] bg-slate-100 dark:bg-slate-700 px-1 rounded text-slate-500">Min: {current.minTarget}</span>}</div>) : (<span className="text-xs font-bold text-slate-600 dark:text-slate-300" style={fs(0.75)}>{t('target')}: {current.target}</span>)}<ResetBtn onClick={resetLocal} /></div></div>
-                    <div className="w-full shrink-0">{current.type === 'timer' ? (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1 transform-gpu"><div className="bg-emerald-600 h-2 rounded-full transition-all duration-1000 ease-linear will-change-transform" style={{ width: `${Math.min(100, ((current.duration - timeLeft) / current.duration) * 100)}%` }}></div></div>) : current.type === 'infinite' ? (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1">{current.minTarget > 0 && (<div className="bg-emerald-600 h-2 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (count / current.minTarget) * 100)}%` }}></div>)}</div>) : (<ProgressBar current={count} total={current.target}/>)}</div>
-                    <div className="flex-1 w-full flex flex-col min-h-0 relative">
-                        <div className="flex-1 overflow-y-auto no-scrollbar py-2 px-1 flex flex-col items-center justify-start text-center"><div className="w-full mt-1"><h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1" style={fs(1.125)}>{current.title}</h2>{current.arabic && <p className="text-2xl font-serif text-emerald-600 dark:text-emerald-400 dir-rtl mb-2 leading-relaxed" style={fs(1.5)}>{current.arabic}</p>}<p className="text-slate-500 dark:text-slate-400 leading-relaxed mx-auto max-w-[280px] text-xs" style={fs(0.75)}>{current.text}</p></div></div>
-                        <div className="shrink-0 h-56 flex flex-col justify-center items-center w-full touch-manipulation cursor-pointer" onClick={!done ? tap : undefined}>
-                            {!done && (<><div className="w-48 h-48 rounded-full border-8 border-slate-100 dark:border-slate-700 flex items-center justify-center bg-emerald-50 dark:bg-slate-800 shadow-inner ripple-effect transition-transform active:scale-95 relative"><span className="text-6xl font-mono font-bold text-emerald-600 dark:text-emerald-400 select-none" style={fs(3.75)}>{count}</span>{current.type === 'timer' && <span className="absolute bottom-8 text-xs font-mono text-slate-400">{formatTime(timeLeft)}</span>}</div><span className="mt-4 text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full font-medium mx-auto" style={fs(0.65)}>{t('tapToCount')}</span></>)}
-                            {done && (<div className="h-full flex items-center justify-center w-full"><button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold text-white flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-600 animate-pulse-slow'}`}><span style={fs(0.875)}>{t('nextZikr')}</span><Icon path={ICONS.ChevronRight} size={16}/></button></div>)}
-                            {!done && (current.type === 'infinite' || current.type === 'timer') && ((current.type !== 'infinite' || count >= (current.minTarget || 0)) ? (<button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute bottom-2 right-2 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 p-2 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-600 transition-colors z-20"><Icon path={ICONS.ChevronRight} size={20}/></button>) : (<button disabled className="absolute bottom-2 right-2 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 p-2 rounded-full cursor-not-allowed z-20 border border-slate-100 dark:border-slate-700"><Icon path={ICONS.Lock} size={20}/></button>))}
+                    {/* Top Info */}
+                    <div className="w-full flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-1 relative z-10 shrink-0">
+                        <span style={fs(0.65)}>{t('step')} {index + 1}/{totalLength}</span>
+                        <div className="flex items-center gap-2">
+                            {current.type === 'timer' ? (<span className="text-xs font-bold text-slate-600 dark:text-slate-300 font-mono" style={fs(0.75)}>{t('timeTarget')}: {formatTime(timeLeft)}</span>) : current.type === 'infinite' ? (<div className="flex items-center space-x-1"><span className="text-xs font-bold text-slate-600 dark:text-slate-300" style={fs(0.75)}>{t('unlimited')}</span>{current.minTarget > 0 && <span className="text-[9px] bg-slate-100 dark:bg-slate-700 px-1 rounded text-slate-500">Min: {current.minTarget}</span>}</div>) : (<span className="text-xs font-bold text-slate-600 dark:text-slate-300" style={fs(0.75)}>{t('target')}: {current.target}</span>)}
+                            <ResetBtn onClick={resetLocal} />
                         </div>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full shrink-0">{current.type === 'timer' ? (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1 transform-gpu"><div className="bg-emerald-600 h-2 rounded-full transition-all duration-1000 ease-linear will-change-transform" style={{ width: `${Math.min(100, ((current.duration - timeLeft) / current.duration) * 100)}%` }}></div></div>) : current.type === 'infinite' ? (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1">{current.minTarget > 0 && (<div className="bg-emerald-600 h-2 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (count / current.minTarget) * 100)}%` }}></div>)}</div>) : (<ProgressBar current={count} total={current.target}/>)}</div>
+                    
+                    {/* Text Area (Flex-1, Scrollable) */}
+                    <div className="flex-1 w-full flex flex-col min-h-0 relative overflow-y-auto no-scrollbar py-2 px-1">
+                        <div className="w-full mt-1">
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1" style={fs(1.125)}>{current.title}</h2>
+                            {current.arabic && <p className="text-2xl font-serif text-emerald-600 dark:text-emerald-400 dir-rtl mb-2 leading-relaxed" style={fs(1.5)}>{current.arabic}</p>}
+                            <p className="text-slate-500 dark:text-slate-400 leading-relaxed mx-auto max-w-[280px] text-xs" style={fs(0.75)}>{current.text}</p>
+                        </div>
+                    </div>
+                    
+                    {/* Control Area: FIXED HEIGHT h-64 (256px) - Circle & Button always centered here */}
+                    <div className="shrink-0 h-64 flex flex-col justify-center items-center w-full touch-manipulation cursor-pointer relative" onClick={!done ? tap : undefined}>
+                        {!done && (
+                            <>
+                                <div className="w-48 h-48 rounded-full border-8 border-slate-100 dark:border-slate-700 flex items-center justify-center bg-emerald-50 dark:bg-slate-800 shadow-inner ripple-effect transition-transform active:scale-95 relative">
+                                    <span className="text-6xl font-mono font-bold text-emerald-600 dark:text-emerald-400 select-none" style={fs(3.75)}>{count}</span>
+                                    {current.type === 'timer' && <span className="absolute bottom-8 text-xs font-mono text-slate-400">{formatTime(timeLeft)}</span>}
+                                </div>
+                                <span className="mt-4 text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full font-medium mx-auto" style={fs(0.65)}>{t('tapToCount')}</span>
+                            </>
+                        )}
+                        {done && (
+                            <div className="h-full flex items-center justify-center w-full">
+                                <button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold text-white flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-600 animate-pulse-slow'}`}>
+                                    <span style={fs(0.875)}>{t('nextZikr')}</span><Icon path={ICONS.ChevronRight} size={16}/>
+                                </button>
+                            </div>
+                        )}
+                        {!done && (current.type === 'infinite' || current.type === 'timer') && (
+                            (current.type !== 'infinite' || count >= (current.minTarget || 0)) ? (
+                                <button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute bottom-2 right-2 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 p-2 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-600 transition-colors z-20">
+                                    <Icon path={ICONS.ChevronRight} size={20}/>
+                                </button>
+                            ) : (
+                                <button disabled className="absolute bottom-2 right-2 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 p-2 rounded-full cursor-not-allowed z-20 border border-slate-100 dark:border-slate-700">
+                                    <Icon path={ICONS.Lock} size={20}/>
+                                </button>
+                            )
+                        )}
                     </div>
                 </div>
             );
@@ -502,7 +579,7 @@
                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                         <div className="flex justify-between items-center mb-1"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.MapPin} size={14} className="mr-1.5 text-emerald-500" /> {t('location')}</h3><span className="text-[9px] text-slate-400 max-w-[120px] truncate" style={fs(0.65)}>{locationHook.locationName}</span></div>
                         <div className="relative z-50" ref={searchContainerRef}>
-                            <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex space-x-1"><input name="q" placeholder={t('searchCity')} onChange={handleSearchChange} autoComplete="off" className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-w-0" style={fs(0.75)} /><button type="submit" className="bg-slate-800 dark:bg-slate-700 text-white px-2 rounded-lg"><Icon path={ICONS.RefreshCw} size={14} /></button><button type="button" onClick={() => locationHook.getUserLocation(true)} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 rounded-lg flex items-center justify-center"><Icon path={ICONS.Navigation} size={14} className={locationHook.loading ? "animate-spin" : ""} /></button></form>
+                            <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex space-x-1"><input name="q" placeholder={t('searchCity')} onChange={handleSearchChange} autoComplete="off" className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-w-0" style={fs(0.75)}/><button type="submit" className="bg-slate-800 dark:bg-slate-700 text-white px-2 rounded-lg"><Icon path={ICONS.RefreshCw} size={14}/></button><button type="button" onClick={() => locationHook.getUserLocation(true)} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 rounded-lg flex items-center justify-center"><Icon path={ICONS.Navigation} size={14} className={locationHook.loading ? "animate-spin" : ""} /></button></form>
                             {locationHook.suggestions.length > 0 && (<ul className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-xl max-h-40 overflow-y-auto z-50">{locationHook.suggestions.map((item, idx) => (<li key={idx} onClick={() => selectCity(item)} className="px-3 py-2 text-xs border-b dark:border-slate-700 last:border-0 hover:bg-emerald-50 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-200 flex justify-between items-center"><span style={fs(0.75)}>{item.display_name.split(',')[0]}</span><span className="text-[9px] text-slate-400" style={fs(0.65)}>{item.display_name.split(',').slice(1, 2).join('')}</span></li>))}</ul>)}
                         </div>
                     </div>
@@ -511,31 +588,19 @@
                         <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center overflow-visible relative"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><div className="flex items-center"><Icon path={ICONS.Vibrate} size={14} className="mr-1.5 text-emerald-500" /> {t('vibration')}<div className="relative ml-1 inline-block"><button onClick={(e) => { e.stopPropagation(); setShowVibHint(!showVibHint); }} className="text-slate-400 hover:text-emerald-500 focus:outline-none flex"><Icon path={ICONS.HelpCircle} size={12} /></button>{showVibHint && (<div className="absolute top-full right-[-8px] mt-2 w-32 p-2 bg-slate-700 text-white text-[9px] rounded-lg shadow-xl z-50 text-center leading-snug animate-fade-in pointer-events-none" style={fs(0.65)}>{t('iosVibrationWarning')}<div className="absolute bottom-full right-2 border-4 border-transparent border-b-slate-700"></div></div>)}</div></div></h3><button onClick={() => updateSetting('vibrationEnabled', !settings.vibrationEnabled)} className={`w-8 h-4 rounded-full p-0.5 transition-colors ${settings.vibrationEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}><div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${settings.vibrationEnabled ? 'translate-x-4' : 'translate-x-0'}`}></div></button></div>
                     </div>
                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
-                        <div className="flex flex-col space-y-1"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Settings} size={14} className="mr-1.5 text-emerald-500" /> {t('calcMethod')}</h3><select value={settings.methodId} onChange={(e) => updateSetting('methodId', parseInt(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-900 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300" style={fs(0.75)}>{[{ id: 13, name: 'Diyanet' }, { id: 3, name: 'Muslim World League' }, { id: 2, name: 'ISNA' }, { id: 5, name: 'Egypt' }].map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></div>
+                        <div className="flex flex-col space-y-1"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Settings} size={14} className="mr-1.5 text-emerald-500" /> {t('calcMethod')}</h3><select value={settings.methodId} onChange={(e) => updateSetting('methodId', parseInt(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-900 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300" style={fs(0.75)}>{[ { id: 13, name: 'Diyanet' }, { id: 3, name: 'Muslim World League' }, { id: 2, name: 'ISNA' }, { id: 5, name: 'Egypt' } ].map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></div>
                         <div className="h-px bg-slate-100 dark:bg-slate-800"></div>
                         <div className="flex justify-between items-center"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}>{t('asrMethod')}</h3><div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg"><button onClick={() => updateSetting('asrMethod', 0)} className={`px-2 py-1 rounded-md text-[10px] transition ${settings.asrMethod === 0 ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>{t('standard')}</button><button onClick={() => updateSetting('asrMethod', 1)} className={`px-2 py-1 rounded-md text-[10px] transition ${settings.asrMethod === 1 ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>{t('hanafi')}</button></div></div>
                     </div>
-                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><div className="flex justify-between items-center mb-2"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Type} size={14} className="mr-1.5 text-emerald-500" /> {t('fontSize')}</h3><span className="text-[10px] font-mono text-slate-400" style={fs(0.65)}>x{settings.fontSize.toFixed(1)}</span></div><input type="range" min="0.5" max="2.0" step="0.1" value={settings.fontSize} onChange={(e) => updateSetting('fontSize', parseFloat(e.target.value))} className="w-full accent-emerald-600 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer" /></div>
+                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><div className="flex justify-between items-center mb-2"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Edit} size={14} className="mr-1.5 text-emerald-500" /> {t('timeAdjustments')}</h3><button onClick={() => updateSetting('offsets', { fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 })} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline" style={fs(0.65)}>{t('reset')}</button></div><div className="grid grid-cols-3 gap-2">{['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'].map(k => (<div key={k} className="flex flex-col"><label className="text-[9px] text-slate-500 dark:text-slate-400 mb-0.5 capitalize" style={fs(0.65)}>{t(k)}</label><input type="number" value={settings.offsets[k]} onChange={(e) => updateSetting('offsets', { ...settings.offsets, [k]: parseInt(e.target.value) || 0 })} className="w-full bg-slate-50 dark:bg-slate-900 border dark:border-slate-700 rounded px-1.5 py-1 text-xs text-center outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300" style={fs(0.75)} /></div>))}</div></div>
                     <div className="grid grid-cols-2 gap-1.5">
-                        <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs mb-2" style={fs(0.75)}><Icon path={ICONS.Bell} size={14} className="mr-1.5 text-emerald-500" /> {t('notifications')}</h3><button onClick={handleNotifClick} className={`w-full py-1.5 rounded-lg text-[10px] font-medium transition-colors ${notifPermission === 'granted' ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300' : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'}`} style={fs(0.65)}>{notifPermission === 'granted' ? t('notificationGranted') : t('enableNotifications')}</button></div>
-                        <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs mb-2" style={fs(0.75)}><Icon path={ICONS.Globe} size={14} className="mr-1.5 text-emerald-500" /> {t('language')}</h3><div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">{['tr', 'en', 'de'].map(l => (<button key={l} onClick={() => setLang(l)} className={`flex-1 py-1 text-[10px] rounded uppercase ${lang === l ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>{l}</button>))}</div></div>
+                        <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><h3 className="font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Globe} size={14} className="mr-1.5 text-emerald-500" /> {t('language')}</h3><div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg"><button onClick={() => setLang('tr')} className={`flex-1 py-1 rounded-md text-[10px] uppercase font-bold transition ${lang === 'tr' ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>TR</button><button onClick={() => setLang('en')} className={`flex-1 py-1 rounded-md text-[10px] uppercase font-bold transition ${lang === 'en' ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>EN</button><button onClick={() => setLang('de')} className={`flex-1 py-1 rounded-md text-[10px] uppercase font-bold transition ${lang === 'de' ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>DE</button></div></div>
+                        <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><h3 className="font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Type} size={14} className="mr-1.5 text-emerald-500" /> {t('fontSize')}</h3><input type="range" min="0.8" max="1.4" step="0.1" value={settings.fontSize} onChange={(e) => updateSetting('fontSize', parseFloat(e.target.value))} className="w-full accent-emerald-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer" /></div>
                     </div>
-                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                        <div className="flex justify-between items-center mb-1"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Edit} size={14} className="mr-1.5 text-emerald-500" /> {t('timeAdjustments')}</h3></div>
-                        <div className="grid grid-cols-6 gap-1">{['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'].map(p => (<div key={p} className="flex flex-col items-center"><label className="text-[8px] text-slate-400 dark:text-slate-500 mb-0.5 capitalize truncate w-full text-center" style={fs(0.5)}>{t(p).substring(0, 3)}</label><input type="number" value={settings.offsets[p]} onChange={(e) => updateSetting('offsets', { ...settings.offsets, [p]: e.target.value })} className="w-full border dark:border-slate-700 rounded p-1 text-[10px] text-center bg-slate-50 dark:bg-slate-900 outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300" style={fs(0.75)} /></div>))}</div>
-                    </div>
-                    <div className="text-center mt-4"><p className="text-[10px] text-slate-300 dark:text-slate-600 font-mono" style={fs(0.65)}>v2.4.0 • {t('appName')}</p></div>
+                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><button onClick={handleNotifClick} className="w-full flex items-center justify-between"><div className="flex items-center"><Icon path={ICONS.Bell} size={14} className="mr-2 text-emerald-500" /><span className="text-xs font-semibold text-slate-700 dark:text-slate-300" style={fs(0.75)}>{t('enableNotifications')}</span></div><div className={`px-2 py-0.5 rounded text-[9px] font-bold ${notifPermission === 'granted' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{notifPermission === 'granted' ? 'ON' : 'OFF'}</div></button></div>
+                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><button onClick={() => { if (confirm(t('areYouSure'))) { localStorage.clear(); window.location.reload(); } }} className="w-full flex items-center justify-center space-x-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors"><Icon path={ICONS.Trash2} size={16} /><span className="font-bold text-xs" style={fs(0.75)}>{t('reset')} (All Data)</span></button></div>
+                    <div className="text-center pb-2"><p className="text-[9px] text-slate-400 dark:text-slate-600" style={fs(0.65)}>v2.4.0 • {t('appName')}</p></div>
                 </div>
-            );
-        });
-
-        const Navbar = memo(({ active, setActive }) => {
-            const { t, fs } = useApp();
-            const buttons = [{ id: 'times', i: ICONS.Clock, label: 'times' }, { id: 'tasbeeh', i: ICONS.RefreshCw, label: 'tasbeeh' }, { id: 'quran', i: ICONS.BookOpen, label: 'quran' }, { id: 'settings', i: ICONS.Menu, label: 'settings' }];
-            return (
-                <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] pb-safe transition-colors duration-300">
-                    <div className="grid grid-cols-4 w-full h-16 max-w-md mx-auto">{buttons.map(b => (<button key={b.id} onClick={() => { if (active !== b.id) { window.history.pushState({ tab: b.id }, '', `#${b.id}`); setActive(b.id); } }} className={`flex flex-col items-center justify-center space-y-0.5 transition w-full h-full ${active === b.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-600 hover:text-slate-600 dark:hover:text-slate-400'}`}><div className={`transition-transform duration-200 ${active === b.id ? '-translate-y-1' : ''}`}><Icon path={b.i} size={20} /></div><span className="text-[9px] font-medium max-w-[50px] truncate" style={fs(0.6)}>{t(b.label)}</span></button>))}</div>
-                </nav>
             );
         });
 
@@ -546,8 +611,30 @@
             const { data: prayerData, loading: prayerLoading } = usePrayerTimes(locationHook.coords);
             const [activeTab, setActiveTab] = useState(() => { const hash = window.location.hash.replace('#', ''); return ['times', 'tasbeeh', 'quran', 'settings'].includes(hash) ? hash : 'times'; });
             useEffect(() => { const handlePopState = (event) => { if (event.state && event.state.tab) { setActiveTab(event.state.tab); } else { const hash = window.location.hash.replace('#', ''); if (['times', 'tasbeeh', 'quran', 'settings'].includes(hash)) setActiveTab(hash); } }; window.addEventListener('popstate', handlePopState); return () => window.removeEventListener('popstate', handlePopState); }, []);
-            const renderContent = () => { switch (activeTab) { case 'times': return <PrayerTimesView prayerData={prayerData} loading={prayerLoading || locationHook.loading} currentTime={currentTime} locationName={locationHook.locationName} />; case 'tasbeeh': return <TasbeehView />; case 'quran': return <QuranView />; case 'settings': return <SettingsView locationHook={locationHook} />; default: return null; } };
-            return (<><Header currentTime={currentTime} /><main className="main-content-padding px-4 max-w-md mx-auto min-h-screen relative pb-4"><ErrorBoundary>{renderContent()}</ErrorBoundary></main><Navbar active={activeTab} setActive={setActiveTab} /></>);
+
+            const renderContent = () => {
+                switch (activeTab) {
+                    case 'times': return <PrayerTimesView prayerData={prayerData} loading={prayerLoading || locationHook.loading} currentTime={currentTime} locationName={locationHook.locationName} />;
+                    case 'tasbeeh': return <TasbeehView />;
+                    case 'quran': return <QuranView />;
+                    case 'settings': return <SettingsView locationHook={locationHook} />;
+                    default: return null;
+                }
+            };
+
+            return (
+                <>
+                    <Header currentTime={currentTime} />
+                    <main className="main-content-padding px-4 max-w-md mx-auto h-full relative overflow-hidden flex flex-col">
+                        <ErrorBoundary>
+                            <div className="flex-1 h-full overflow-hidden"> 
+                                {renderContent()}
+                            </div>
+                        </ErrorBoundary>
+                    </main>
+                    <Navbar active={activeTab} setActive={setActiveTab} />
+                </>
+            );
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
