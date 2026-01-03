@@ -100,6 +100,9 @@
         
         /* Modal Overlay */
         .modal-overlay { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+
+        /* Offline Banner */
+        .offline-banner { background-color: #ef4444; color: white; text-align: center; font-size: 0.75rem; padding: 2px 0; position: fixed; top: 0; left: 0; right: 0; z-index: 100; font-weight: bold; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-emerald-200 dark:selection:bg-emerald-800 transition-colors duration-300 antialiased">
@@ -110,9 +113,9 @@
         const SURAH_NAMES_TR = ["Fatiha", "Bakara", "Ali İmran", "Nisa", "Maide", "En'am", "Araf", "Enfal", "Tevbe", "Yunus", "Hud", "Yusuf", "Ra'd", "İbrahim", "Hicr", "Nahl", "İsra", "Kehf", "Meryem", "Taha", "Enbiya", "Hac", "Mü'minun", "Nur", "Furkan", "Şuara", "Neml", "Kasas", "Ankebut", "Rum", "Lokman", "Secde", "Ahzab", "Sebe", "Fatır", "Yasin", "Saffat", "Sad", "Zümer", "Mü'min", "Fussilet", "Şura", "Zuhruf", "Duhan", "Casiye", "Ahkaf", "Muhammed", "Fetih", "Hucurat", "Kaf", "Zariyat", "Tur", "Necm", "Kamer", "Rahman", "Vakıa", "Hadid", "Mücadele", "Haşr", "Mümtehine", "Saf", "Cuma", "Münafikun", "Tegabun", "Talak", "Tahrim", "Mülk", "Kalem", "Hakka", "Mearic", "Nuh", "Cin", "Müzzemmil", "Müddessir", "Kıyamet", "İnsan", "Mürselat", "Nebe", "Naziat", "Abese", "Tekvir", "İnfitar", "Mutaffifin", "İnşikak", "Buruc", "Tarık", "A'la", "Gaşiye", "Fecr", "Beled", "Şems", "Leyl", "Duha", "İnşirah", "Tin", "Alak", "Kadir", "Beyyine", "Zilzal", "Adiyat", "Karia", "Tekasür", "Asr", "Hümeze", "Fil", "Kureyn", "Maun", "Kevser", "Kafirun", "Nasr", "Tebbet", "İhlas", "Felak", "Nas"];
 
         const TRANSLATIONS = {
-            tr: { appName: "Namaz ve Zikir", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...", prayerTimes: "Namaz Vakitleri", tasbeeh: "Tesbihat", quran: "Kur'an", settings: "Ayarlar", times: "Vakitler", calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle", asr: "İkindi", maghrib: "Akşam", isha: "Yatsı", midnight: "Gece Yarısı", teheccud: "Vakt-i İcabet", kerahatMorning: "İşrak", kerahatNoon: "İstiva", kerahatEvening: "İsfirar", remaining: "Kalan", loading: "Yükleniyor...", error: "Hata", morningZikr: "Sabah", ikindiZikr: "İkindi", nightZikr: "Yatsı", ekZikr: "Günlük", personalZikr: "Kişisel", tapToCount: "Dokun", completed: "Tamamlandı", next: "İleri", nextZikr: "Sonraki", nextAyah: "Sıradaki", reset: "Sıfırla", resetTime: "Başa Dön", areYouSure: "Emin misin?", manualLocation: "Konum", search: "Ara", randomAyahs: "Kur'an'dan bir sayfa", turkishTrans: "Okunuş", turkishMean: "Meal", amenarresulu: "Amenerrasulü", nextPrayer: "Vakit", now: "Şu an", bestTimeTeheccud: "Gece namazı vakti", kerahatHeader: "Kerahat", step: "Adım", target: "Hedef", loadContent: "Yükle", loadBtn: "Getir", readFirst10: "Kehf (İlk 10)", readLast10: "Kehf (Son 10)", read15Random: "1 Sayfa Oku", salavatAdam: "Adem (a.s)", salavatIsa: "İsa (a.s)", salavatMuhammed: "Salavat-ı Şerife", salavatBedr: "Bedir & Kehf Salavatı", tryAgain: "Tekrar Dene", connectionError: "Bağlantı Hatası", pageInfo: "Sayfa", asrMethod: "İkindi Yöntemi", standard: "Standart", hanafi: "Hanefi", timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet", enableNotifications: "Bildirim İzni Ver", notificationGranted: "Bildirim İzni Verildi", notifications: "Bildirimler", fontSize: "Yazı Boyutu", resetStep: "Sayacı Sıfırla", sound: "Ses Efekti", vibration: "Titreşim", iosVibrationWarning: "iOS güvenlik kısıtlamaları nedeniyle iPhone'larda titreşim çalışmayabilir.", timeTarget: "Süre", unlimited: "Limitsiz", minTarget: "Min", ekHeader: "Günlük Ödevler", kafnunTitle: "Kaf ve Nun", besmeleTitle: "Besmele Zikri", addZikr: "Zikir Ekle", title: "Başlık", type: "Tür", fixedCount: "Sayılı", timeBased: "Süreli", timeMin: "Süre + Min Sayı", minutes: "Dakika", delete: "Sil", emptyPersonal: "Henüz kişisel zikir eklenmedi.", notifTimeLeft: "vaktine 30 dk kaldı", notifUnfinished: "Tesbihat bitmedi.", downloadOffline: "Çevrimdışı İçerik İndir", downloading: "İndiriliyor...", downloadComplete: "İndirme Tamamlandı", offlineReady: "Çevrimdışı Kullanıma Hazır" },
-            en: { appName: "Prayer & Dhikr", location: "Location", detectLocation: "Find", searchCity: "City...", prayerTimes: "Times", tasbeeh: "Dhikr", quran: "Quran", settings: "Settings", times: "Times", calcMethod: "Method", language: "Lang", fajr: "Fajr", sunrise: "Sun", dhuhr: "Dhuhr", asr: "Asr", maghrib: "Maghrib", isha: "Isha", midnight: "Midnight", teheccud: "Time of Acceptance", kerahatMorning: "Ishraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Left", loading: "Loading...", error: "Error", morningZikr: "Morning", ikindiZikr: "Asr", nightZikr: "Night", ekZikr: "Daily", personalZikr: "Personal", tapToCount: "Tap", completed: "Done", next: "Next", nextZikr: "Next", nextAyah: "Next", reset: "Reset", resetTime: "Restart", areYouSure: "Are you sure?", manualLocation: "Loc", search: "Go", randomAyahs: "A page in Quran", turkishTrans: "Transliteration", turkishMean: "Meaning", amenarresulu: "Amenarrasul", nextPrayer: "Next", now: "Now", bestTimeTeheccud: "Night prayer", kerahatHeader: "Kerahat", step: "Step", target: "Goal", loadContent: "Load", loadBtn: "Load", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Last 10)", read15Random: "Read 1 Page", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Try Again", connectionError: "Connection Error", pageInfo: "Page", asrMethod: "Asr Method", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Time Adjustments (min)", save: "Save", enableNotifications: "Enable Notifications", notificationGranted: "Notifications Enabled", notifications: "Notifications", fontSize: "Text Size", resetStep: "Reset Counter", sound: "Sound Effect", vibration: "Vibration", iosVibrationWarning: "Vibration may not work on iPhones due to iOS security restrictions.", timeTarget: "Time", unlimited: "Unlimited", minTarget: "Min", ekHeader: "Daily Tasks", kafnunTitle: "Qaf and Nun", besmeleTitle: "Basmala Dhikr", addZikr: "Add Dhikr", title: "Title", type: "Type", fixedCount: "Fixed Count", timeBased: "Timed", timeMin: "Time + Min Count", minutes: "Minutes", delete: "Delete", emptyPersonal: "No personal dhikrs yet.", notifTimeLeft: "30 min left to", notifUnfinished: "Dhikr not finished.", downloadOffline: "Download Offline Content", downloading: "Downloading...", downloadComplete: "Download Complete", offlineReady: "Ready for Offline Use" },
-            de: { appName: "Gebet & Dhikr", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...", prayerTimes: "Zeiten", tasbeeh: "Dhikr", quran: "Koran", settings: "Optionen", times: "Zeiten", calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonne", dhuhr: "Dhuhur", asr: "Assr", maghrib: "Maghrib", isha: "Ischa", midnight: "Mitternacht", teheccud: "Zeit der Erhörung", kerahatMorning: "Ischraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Rest", loading: "Laden...", error: "Fehler", morningZikr: "Morgen", ikindiZikr: "Assr", nightZikr: "Nacht", ekZikr: "Täglich", personalZikr: "Persönlich", tapToCount: "Tippen", completed: "Fertig", next: "Weiter", nextZikr: "Weiter", nextAyah: "Weiter", reset: "Reset", resetTime: "Neu starten", areYouSure: "Bist du sicher?", manualLocation: "Ort", search: "Suche", randomAyahs: "Eine Seite aus Koran", turkishTrans: "Aussprache", turkishMean: "Bedeutung", amenarresulu: "Amenarrasul", nextPrayer: "Nächstes", now: "Jetzt", bestTimeTeheccud: "Nachtgebet", kerahatHeader: "Kerahat", step: "Schritt", target: "Ziel", loadContent: "Laden", loadBtn: "Laden", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Letzte)", read15Random: "1 Seite Lesen", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Wiederholen", connectionError: "Verbindungsfehler", pageInfo: "Seite", asrMethod: "Assr Methode", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Zeitanpassungen (Min)", save: "Speichern", enableNotifications: "Benachrichtigungen aktivieren", notificationGranted: "Benachrichtigungen aktiviert", notifications: "Benachrichtigungen", fontSize: "Textgröße", resetStep: "Reset", sound: "Soundeffekt", vibration: "Vibration", iosVibrationWarning: "Vibration funktioniert auf iPhones aufgrund von iOS-Sicherheitsbeschränkungen möglicherweise nicht.", timeTarget: "Zeit", unlimited: "Unbegrenzt", minTarget: "Min", ekHeader: "Tägliche Aufgaben", kafnunTitle: "Qaf und Nun", besmeleTitle: "Basmala Dhikr", addZikr: "Dhikr hinzufügen", title: "Titel", type: "Typ", fixedCount: "Anzahl", timeBased: "Zeit", timeMin: "Zeit + Min", minutes: "Minuten", delete: "Löschen", emptyPersonal: "Noch keine persönlichen Dhikrs.", notifTimeLeft: "30 Min bis", notifUnfinished: "Dhikr nicht beendet.", downloadOffline: "Offline-Inhalte herunterladen", downloading: "Herunterladen...", downloadComplete: "Download abgeschlossen", offlineReady: "Bereit für die Offline-Nutzung" }
+            tr: { appName: "Namaz ve Zikir", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...", prayerTimes: "Namaz Vakitleri", tasbeeh: "Tesbihat", quran: "Kur'an", settings: "Ayarlar", times: "Vakitler", calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle", asr: "İkindi", maghrib: "Akşam", isha: "Yatsı", midnight: "Gece Yarısı", teheccud: "Vakt-i İcabet", kerahatMorning: "İşrak", kerahatNoon: "İstiva", kerahatEvening: "İsfirar", remaining: "Kalan", loading: "Yükleniyor...", error: "Hata", morningZikr: "Sabah", ikindiZikr: "İkindi", nightZikr: "Yatsı", ekZikr: "Günlük", personalZikr: "Kişisel", tapToCount: "Dokun", completed: "Tamamlandı", next: "İleri", nextZikr: "Sonraki", nextAyah: "Sıradaki", reset: "Sıfırla", resetTime: "Başa Dön", areYouSure: "Emin misin?", manualLocation: "Konum", search: "Ara", randomAyahs: "Kur'an'dan bir sayfa", turkishTrans: "Okunuş", turkishMean: "Meal", amenarresulu: "Amenerrasulü", nextPrayer: "Vakit", now: "Şu an", bestTimeTeheccud: "Gece namazı vakti", kerahatHeader: "Kerahat", step: "Adım", target: "Hedef", loadContent: "Yükle", loadBtn: "Getir", readFirst10: "Kehf (İlk 10)", readLast10: "Kehf (Son 10)", read15Random: "1 Sayfa Oku", salavatAdam: "Adem (a.s)", salavatIsa: "İsa (a.s)", salavatMuhammed: "Salavat-ı Şerife", salavatBedr: "Bedir & Kehf Salavatı", tryAgain: "Tekrar Dene", connectionError: "Bağlantı Hatası", pageInfo: "Sayfa", asrMethod: "İkindi Yöntemi", standard: "Standart", hanafi: "Hanefi", timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet", enableNotifications: "Bildirim İzni Ver", notificationGranted: "Bildirim İzni Verildi", notifications: "Bildirimler", fontSize: "Yazı Boyutu", resetStep: "Sayacı Sıfırla", sound: "Ses Efekti", vibration: "Titreşim", iosVibrationWarning: "iOS güvenlik kısıtlamaları nedeniyle iPhone'larda titreşim çalışmayabilir.", timeTarget: "Süre", unlimited: "Limitsiz", minTarget: "Min", ekHeader: "Günlük Ödevler", kafnunTitle: "Kaf ve Nun", besmeleTitle: "Besmele Zikri", addZikr: "Zikir Ekle", title: "Başlık", type: "Tür", fixedCount: "Sayılı", timeBased: "Süreli", timeMin: "Süre + Min Sayı", minutes: "Dakika", delete: "Sil", emptyPersonal: "Henüz kişisel zikir eklenmedi.", notifTimeLeft: "vaktine 30 dk kaldı", notifUnfinished: "Tesbihat bitmedi.", downloadOffline: "Çevrimdışı İçerik İndir", downloading: "İndiriliyor...", downloadComplete: "İndirme Tamamlandı", offlineReady: "Çevrimdışı Kullanıma Hazır", offlineMode: "Çevrimdışı Mod" },
+            en: { appName: "Prayer & Dhikr", location: "Location", detectLocation: "Find", searchCity: "City...", prayerTimes: "Times", tasbeeh: "Dhikr", quran: "Quran", settings: "Settings", times: "Times", calcMethod: "Method", language: "Lang", fajr: "Fajr", sunrise: "Sun", dhuhr: "Dhuhr", asr: "Asr", maghrib: "Maghrib", isha: "Isha", midnight: "Midnight", teheccud: "Time of Acceptance", kerahatMorning: "Ishraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Left", loading: "Loading...", error: "Error", morningZikr: "Morning", ikindiZikr: "Asr", nightZikr: "Night", ekZikr: "Daily", personalZikr: "Personal", tapToCount: "Tap", completed: "Done", next: "Next", nextZikr: "Next", nextAyah: "Next", reset: "Reset", resetTime: "Restart", areYouSure: "Are you sure?", manualLocation: "Loc", search: "Go", randomAyahs: "A page in Quran", turkishTrans: "Transliteration", turkishMean: "Meaning", amenarresulu: "Amenarrasul", nextPrayer: "Next", now: "Now", bestTimeTeheccud: "Night prayer", kerahatHeader: "Kerahat", step: "Step", target: "Goal", loadContent: "Load", loadBtn: "Load", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Last 10)", read15Random: "Read 1 Page", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Try Again", connectionError: "Connection Error", pageInfo: "Page", asrMethod: "Asr Method", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Time Adjustments (min)", save: "Save", enableNotifications: "Enable Notifications", notificationGranted: "Notifications Enabled", notifications: "Notifications", fontSize: "Text Size", resetStep: "Reset Counter", sound: "Sound Effect", vibration: "Vibration", iosVibrationWarning: "Vibration may not work on iPhones due to iOS security restrictions.", timeTarget: "Time", unlimited: "Unlimited", minTarget: "Min", ekHeader: "Daily Tasks", kafnunTitle: "Qaf and Nun", besmeleTitle: "Basmala Dhikr", addZikr: "Add Dhikr", title: "Title", type: "Type", fixedCount: "Fixed Count", timeBased: "Timed", timeMin: "Time + Min Count", minutes: "Minutes", delete: "Delete", emptyPersonal: "No personal dhikrs yet.", notifTimeLeft: "30 min left to", notifUnfinished: "Dhikr not finished.", downloadOffline: "Download Offline Content", downloading: "Downloading...", downloadComplete: "Download Complete", offlineReady: "Ready for Offline Use", offlineMode: "Offline Mode" },
+            de: { appName: "Gebet & Dhikr", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...", prayerTimes: "Zeiten", tasbeeh: "Dhikr", quran: "Koran", settings: "Optionen", times: "Zeiten", calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonne", dhuhr: "Dhuhur", asr: "Assr", maghrib: "Maghrib", isha: "Ischa", midnight: "Mitternacht", teheccud: "Zeit der Erhörung", kerahatMorning: "Ischraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Rest", loading: "Laden...", error: "Fehler", morningZikr: "Morgen", ikindiZikr: "Assr", nightZikr: "Nacht", ekZikr: "Täglich", personalZikr: "Persönlich", tapToCount: "Tippen", completed: "Fertig", next: "Weiter", nextZikr: "Weiter", nextAyah: "Weiter", reset: "Reset", resetTime: "Neu starten", areYouSure: "Bist du sicher?", manualLocation: "Ort", search: "Suche", randomAyahs: "Eine Seite aus Koran", turkishTrans: "Aussprache", turkishMean: "Bedeutung", amenarresulu: "Amenarrasul", nextPrayer: "Nächstes", now: "Jetzt", bestTimeTeheccud: "Nachtgebet", kerahatHeader: "Kerahat", step: "Schritt", target: "Ziel", loadContent: "Laden", loadBtn: "Laden", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Letzte)", read15Random: "1 Seite Lesen", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Wiederholen", connectionError: "Verbindungsfehler", pageInfo: "Seite", asrMethod: "Assr Methode", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Zeitanpassungen (Min)", save: "Speichern", enableNotifications: "Benachrichtigungen aktivieren", notificationGranted: "Benachrichtigungen aktiviert", notifications: "Benachrichtigungen", fontSize: "Textgröße", resetStep: "Reset", sound: "Soundeffekt", vibration: "Vibration", iosVibrationWarning: "Vibration funktioniert auf iPhones aufgrund von iOS-Sicherheitsbeschränkungen möglicherweise nicht.", timeTarget: "Zeit", unlimited: "Unbegrenzt", minTarget: "Min", ekHeader: "Tägliche Aufgaben", kafnunTitle: "Qaf und Nun", besmeleTitle: "Basmala Dhikr", addZikr: "Dhikr hinzufügen", title: "Titel", type: "Typ", fixedCount: "Anzahl", timeBased: "Zeit", timeMin: "Zeit + Min", minutes: "Minuten", delete: "Löschen", emptyPersonal: "Noch keine persönlichen Dhikrs.", notifTimeLeft: "30 Min bis", notifUnfinished: "Dhikr nicht beendet.", downloadOffline: "Offline-Inhalte herunterladen", downloading: "Herunterladen...", downloadComplete: "Download abgeschlossen", offlineReady: "Bereit für die Offline-Nutzung", offlineMode: "Offline-Modus" }
         };
 
         const ZIKR_DB = {
@@ -177,50 +180,6 @@
                 icons: [{ src: "https://cdn-icons-png.flaticon.com/512/5533/5533023.png", sizes: "512x512", type: "image/png" }]
             };
             return `data:application/manifest+json;base64,${btoa(JSON.stringify(manifest))}`;
-        };
-
-        const registerServiceWorker = async () => {
-            if ('serviceWorker' in navigator) {
-                try {
-                    // Expanded SW to cache common assets
-                    const swCode = `
-                        const CACHE_NAME = 'namaz-v4-static';
-                        const ASSETS = [
-                            'https://cdn.tailwindcss.com',
-                            'https://unpkg.com/react@18/umd/react.production.min.js',
-                            'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
-                            'https://unpkg.com/@babel/standalone/babel.min.js',
-                            'https://cdn-icons-png.flaticon.com/512/5533/5533023.png'
-                        ];
-                        self.addEventListener('install', (event) => {
-                            self.skipWaiting();
-                            event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
-                        });
-                        self.addEventListener('activate', (event) => self.clients.claim());
-                        self.addEventListener('fetch', (event) => {
-                            event.respondWith(
-                                caches.match(event.request).then(response => {
-                                    return response || fetch(event.request).then(networkResponse => {
-                                        // Cache new static assets dynamically
-                                        if (event.request.url.startsWith('http') && (event.request.url.includes('cdn') || event.request.url.includes('unpkg'))) {
-                                            const clone = networkResponse.clone();
-                                            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-                                        }
-                                        return networkResponse;
-                                    });
-                                }).catch(() => null)
-                            );
-                        });
-                    `;
-                    const blob = new Blob([swCode], {type: 'text/javascript'});
-                    const url = URL.createObjectURL(blob);
-                    await navigator.serviceWorker.register(url).catch(err => {
-                         console.warn("Service Worker registration failed (common in preview/iframe):", err.message);
-                    });
-                } catch (e) {
-                    console.warn('SW Setup Error:', e);
-                }
-            }
         };
 
         const sendNotification = async (title, options = {}) => {
@@ -329,7 +288,6 @@
                     }
                     StorageService.set(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL, newPool);
                 }
-                registerServiceWorker();
             }, []);
 
             useEffect(() => { StorageService.set(CONFIG.STORAGE_KEYS.SETTINGS, settings); }, [settings]);
@@ -377,7 +335,7 @@
                                 { timeout: 10000 }
                             );
                         } catch (err) {
-                            resolve(null); // Catch sync errors from overridden APIs
+                            resolve(null);
                         }
                     });
 
@@ -574,8 +532,22 @@
         
         const Header = memo(({ currentTime }) => {
             const { t, isDarkMode, toggleTheme, fs } = useApp();
+            const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+            useEffect(() => {
+                const handleOnline = () => setIsOffline(false);
+                const handleOffline = () => setIsOffline(true);
+                window.addEventListener('online', handleOnline);
+                window.addEventListener('offline', handleOffline);
+                return () => {
+                    window.removeEventListener('online', handleOnline);
+                    window.removeEventListener('offline', handleOffline);
+                };
+            }, []);
+
             return (
                 <header className="fixed top-0 left-0 right-0 mx-auto max-w-md z-50 pt-safe transition-colors duration-300">
+                    {isOffline && <div className="offline-banner">{t('offlineMode')}</div>}
                     <div className="mx-4 mt-2 h-14 bg-white dark:bg-slate-850 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center px-4 transition-colors duration-300">
                         <div className="flex items-center space-x-2"><div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white"><Icon path={ICONS.Moon} size={18} /></div><span className="font-bold text-base tracking-tight text-slate-800 dark:text-slate-100" style={fs(1)}>{t('appName')}</span></div>
                         <div className="flex items-center space-x-2">
