@@ -102,7 +102,7 @@
         .modal-overlay { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
 
         /* Offline Banner */
-        .offline-banner { background-color: #ef4444; color: white; text-align: center; font-size: 0.75rem; padding: 2px 0; position: fixed; top: 0; left: 0; right: 0; z-index: 100; font-weight: bold; }
+        .offline-banner { background-color: #fed7aa; color: #7c2d12; text-align: center; font-size: 0.65rem; padding: 1px 0; position: fixed; top: 0; left: 0; right: 0; z-index: 100; font-weight: 600; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-emerald-200 dark:selection:bg-emerald-800 transition-colors duration-300 antialiased">
@@ -180,6 +180,47 @@
                 icons: [{ src: "https://cdn-icons-png.flaticon.com/512/5533/5533023.png", sizes: "512x512", type: "image/png" }]
             };
             return `data:application/manifest+json;base64,${btoa(JSON.stringify(manifest))}`;
+        };
+
+        const registerServiceWorker = async () => {
+            if ('serviceWorker' in navigator) {
+                try {
+                    // Expanded SW to cache common assets
+                    const swCode = `
+                        const CACHE_NAME = 'namaz-v4-static';
+                        const ASSETS = [
+                            'https://cdn.tailwindcss.com',
+                            'https://unpkg.com/react@18/umd/react.production.min.js',
+                            'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
+                            'https://unpkg.com/@babel/standalone/babel.min.js',
+                            'https://cdn-icons-png.flaticon.com/512/5533/5533023.png'
+                        ];
+                        self.addEventListener('install', (event) => {
+                            self.skipWaiting();
+                            event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
+                        });
+                        self.addEventListener('activate', (event) => self.clients.claim());
+                        self.addEventListener('fetch', (event) => {
+                            event.respondWith(
+                                caches.match(event.request).then(response => {
+                                    return response || fetch(event.request).then(networkResponse => {
+                                        // Cache new static assets dynamically
+                                        if (event.request.url.startsWith('http') && (event.request.url.includes('cdn') || event.request.url.includes('unpkg'))) {
+                                            const clone = networkResponse.clone();
+                                            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                                        }
+                                        return networkResponse;
+                                    });
+                                }).catch(() => null)
+                            );
+                        });
+                    `;
+                    const blob = new Blob([swCode], {type: 'text/javascript'});
+                    await navigator.serviceWorker.register(URL.createObjectURL(blob));
+                } catch (e) {
+                    console.log('SW Register Error:', e);
+                }
+            }
         };
 
         const sendNotification = async (title, options = {}) => {
@@ -288,6 +329,7 @@
                     }
                     StorageService.set(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL, newPool);
                 }
+                registerServiceWorker();
             }, []);
 
             useEffect(() => { StorageService.set(CONFIG.STORAGE_KEYS.SETTINGS, settings); }, [settings]);
