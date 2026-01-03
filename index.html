@@ -509,6 +509,44 @@
                     setProgress(`${count}/50`);
                 }
             };
+            
+            // NEW: Function to download Kahf verses (First 10 and Last 10) for all languages
+            const downloadKahf = async () => {
+                const languages = ['tr', 'en', 'de'];
+                const types = [
+                    { id: 'kehf_first_10', offset: 0, limit: 10 },
+                    { id: 'kehf_last_10', offset: 100, limit: 10 }
+                ];
+
+                for (const l of languages) {
+                    const edition = ApiService.getTranslationEdition(l);
+                    const transEdition = ApiService.getTransliterationEdition(l);
+
+                    for (const t of types) {
+                        const cacheKey = `zikr_data_${t.id}_${l}`;
+                        // Skip if already cached
+                        if (CacheService.get(cacheKey)) continue;
+
+                        try {
+                            // Using the same URL structure as FetchableZikrCard
+                            const url = `${CONFIG.API.QURAN}/surah/18/editions/quran-uthmani,${edition},${transEdition}?offset=${t.offset}&limit=${t.limit}`;
+                            const json = await ApiService.fetchJson(url);
+                            if (json.code === 200) {
+                                const processed = json.data[0].ayahs.map((a, i) => ({
+                                    arabic: a.text,
+                                    mean: json.data[1].ayahs[i].text,
+                                    trans: json.data[2].ayahs[i].text,
+                                    number: a.numberInSurah
+                                }));
+                                CacheService.set(cacheKey, processed, null); // No expiry
+                            }
+                        } catch (e) {
+                            console.warn(`Error downloading Kahf (${t.id}) for ${l}`, e);
+                        }
+                    }
+                }
+            };
+
 
             const refreshContent = async (isAuto = false) => {
                 if (!navigator.onLine) return;
@@ -529,8 +567,11 @@
                 StorageService.set(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL, newPool);
                 StorageService.set(CONFIG.STORAGE_KEYS.LAST_POOL_UPDATE, today); // Mark as updated today
 
-                // 3. Download
-                await downloadPages(newPool); 
+                // 3. Download Quran Pages
+                await downloadPages(newPool);
+                
+                // NEW: Download Kahf Verses
+                await downloadKahf();
                 
                 // 4. Download Prayer Times (Current Month + Next Month)
                 if (locationHook.coords) {
@@ -717,6 +758,7 @@
 
         const MultiAyahReadingCard = memo(({ current, next, cooldown }) => {
             const { t, lang, fs } = useApp();
+            const [showHint, setShowHint] = useState(true);
             const [pageNumber, setPageNumber] = useState(() => {
                 const today = new Date().toISOString().split('T')[0];
                 const key = `tasbeeh_read_page_${today}`;
@@ -736,16 +778,32 @@
                 return rnd;
             });
             const [ayahs, setAyahs] = useState(null); const [loading, setLoading] = useState(true); const [error, setError] = useState(false);
+            
+            const handleScroll = (e) => {
+                const { scrollTop, scrollHeight, clientHeight } = e.target;
+                if (scrollHeight - scrollTop <= clientHeight + 20) { // Small buffer
+                    setShowHint(false);
+                } else {
+                    setShowHint(true);
+                }
+            };
+
             useEffect(() => {
                 let isMounted = true;
                 const fetchSequential = async () => { try { const edition = ApiService.getTranslationEdition(lang), transEdition = ApiService.getTransliterationEdition(lang), cacheKey = `page_${pageNumber}_${lang}`, cached = CacheService.get(cacheKey); if (cached) { setAyahs(cached); setLoading(false); return; } const [p1, p2, p3] = await Promise.all([ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${pageNumber}/quran-uthmani`), ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${pageNumber}/${edition}`), ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${pageNumber}/${transEdition}`)]); if (isMounted && p1.code === 200) { const combined = p1.data.ayahs.map((ayah, i) => ({ arabic: ayah.text, text: p2.data.ayahs[i] ? p2.data.ayahs[i].text : '', trans: p3.data.ayahs[i] ? p3.data.ayahs[i].text : '', info: `${ApiService.getSurahNameTR(ayah.surah.number)} : ${ayah.numberInSurah}` })); setAyahs(combined); CacheService.set(cacheKey, combined, null); setLoading(false); } else setError(true); } catch (e) { if (isMounted) { setError(true); setLoading(false); } } }; fetchSequential(); return () => { isMounted = false; };
             }, [lang, pageNumber]);
+            
             if (error) return <div className="bg-white dark:bg-slate-850 border border-red-200 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-full"><p className="text-red-500 mb-2 text-xs">{t('connectionError')}</p><button onClick={next} className="bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded text-xs text-slate-600 dark:text-slate-300">{t('next')}</button></div>;
             if (loading || !ayahs) return <LoadingView />;
             return (
                 <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col h-full transition-colors duration-300">
                     <div className="flex justify-between items-center mb-2 text-xs shrink-0"><div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.BookOpen} size={16}/><span style={fs(1)}>{current.title}</span></div><span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono" style={fs(0.75)}>{t('pageInfo')} {pageNumber}</span></div>
-                    <div className="flex-1 relative overflow-hidden mb-2"><div className="h-full overflow-y-auto no-scrollbar space-y-4 pr-1 pb-6">{ayahs.map((currentAyah, index) => (<div key={index} className="border-b border-slate-50 dark:border-slate-800 pb-3 last:border-0"><div className="mb-1 text-[10px] text-emerald-600 dark:text-emerald-500 font-bold uppercase tracking-wider" style={fs(0.65)}>{currentAyah.info}</div><p className="text-right font-serif text-2xl text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl" style={fs(1.5)}>{currentAyah.arabic}</p><p className="text-slate-800 dark:text-slate-200 font-medium mb-1 text-xs" style={fs(0.75)}>{currentAyah.trans}</p><p className="text-slate-500 dark:text-slate-400 italic text-xxs" style={fs(0.65)}>{currentAyah.text}</p></div>))}</div><div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-slate-850 to-transparent pointer-events-none flex justify-center items-end pb-1"><div className="animate-bounce text-emerald-500/30 dark:text-emerald-400/30"><Icon path={ICONS.ChevronRight} className="rotate-90" size={16}/></div></div></div>
+                    <div className="flex-1 relative overflow-hidden mb-2">
+                        <div className="h-full overflow-y-auto no-scrollbar space-y-4 pr-1 pb-6" onScroll={handleScroll}>
+                            {ayahs.map((currentAyah, index) => (<div key={index} className="border-b border-slate-50 dark:border-slate-800 pb-3 last:border-0"><div className="mb-1 text-[10px] text-emerald-600 dark:text-emerald-500 font-bold uppercase tracking-wider" style={fs(0.65)}>{currentAyah.info}</div><p className="text-right font-serif text-2xl text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl" style={fs(1.5)}>{currentAyah.arabic}</p><p className="text-slate-800 dark:text-slate-200 font-medium mb-1 text-xs" style={fs(0.75)}>{currentAyah.trans}</p><p className="text-slate-500 dark:text-slate-400 italic text-xxs" style={fs(0.65)}>{currentAyah.text}</p></div>))}
+                        </div>
+                        {showHint && <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-slate-850 to-transparent pointer-events-none flex justify-center items-end pb-1"><div className="animate-bounce text-emerald-500/30 dark:text-emerald-400/30"><Icon path={ICONS.ChevronRight} className="rotate-90" size={16}/></div></div>}
+                    </div>
                     <div className="shrink-0 h-16 flex items-center justify-center border-t border-slate-100 dark:border-slate-800 pt-2">
                         <button onClick={next} className="w-full py-2.5 rounded-lg font-bold bg-emerald-600 text-white active:scale-95 transition text-sm"><span style={fs(0.875)}>{t('completed')}</span></button>
                     </div>
@@ -1105,8 +1163,18 @@
 
         const QuranView = memo(() => {
             const { t, lang, fs } = useApp();
+            const [showHint, setShowHint] = useState(true);
             const [ayahs, setAyahs] = useState([]); const [loading, setLoading] = useState(false);
             const [pageInfo, setPageInfo] = useState(() => { const saved = StorageService.get('last_quran_page'); return saved ? parseInt(saved) : 0; });
+            
+            const handleScroll = (e) => {
+                const { scrollTop, scrollHeight, clientHeight } = e.target;
+                if (scrollHeight - scrollTop <= clientHeight + 20) {
+                    setShowHint(false);
+                } else {
+                    setShowHint(true);
+                }
+            };
             
             const load = useCallback(async (existingPage = null) => { 
                 setLoading(true); 
@@ -1159,7 +1227,7 @@
                             </div>
                         ) : loading ? <LoadingView /> : (
                             <>
-                                <div className="h-full overflow-y-auto no-scrollbar space-y-3 pb-12 pr-1">
+                                <div className="h-full overflow-y-auto no-scrollbar space-y-3 pb-12 pr-1" onScroll={handleScroll}>
                                     {ayahs.map((a, i) => (
                                         <div key={i} className="bg-white dark:bg-slate-850 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                                             <div className="mb-2 border-b border-slate-50 dark:border-slate-800 pb-2 flex justify-between items-center"><span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded" style={fs(0.65)}>{a.info}</span></div>
@@ -1169,9 +1237,9 @@
                                         </div>
                                     ))}
                                 </div>
-                                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 via-slate-50/80 to-transparent dark:from-slate-900 dark:via-slate-900/80 pointer-events-none flex justify-center items-end pb-2">
+                                {showHint && <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 via-slate-50/80 to-transparent dark:from-slate-900 dark:via-slate-900/80 pointer-events-none flex justify-center items-end pb-2">
                                     <div className="animate-bounce text-emerald-500/50 dark:text-emerald-400/50"><Icon path={ICONS.ChevronRight} className="rotate-90" size={20}/></div>
-                                </div>
+                                </div>}
                             </>
                         )}
                     </div>
@@ -1228,7 +1296,6 @@
             );
         });
 
-        // --- 8. APP COMPONENT ---
         const App = () => {
             const { lang, t } = useApp();
             const currentTime = useTime();
