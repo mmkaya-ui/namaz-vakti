@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -601,7 +603,8 @@
                 
                 // 4. Download Prayer Times (Current Month + Next Month)
                 if (locationHook.coords) {
-                    const sP = "&method=13&school=0"; // Default method/school for caching
+                    const settings = StorageService.get(CONFIG.STORAGE_KEYS.SETTINGS) || { methodId: 13, asrMethod: 0 };
+                    const sP = `&method=${settings.methodId}&school=${settings.asrMethod}`;
                     const date = new Date();
                     const year = date.getFullYear();
                     const month = date.getMonth() + 1;
@@ -611,14 +614,6 @@
                         const url1 = `${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${locationHook.coords.lat}&longitude=${locationHook.coords.lng}${sP}`;
                         const json1 = await ApiService.fetchJson(url1);
                         if (json1.code === 200 && Array.isArray(json1.data)) {
-                             const cacheKey1 = `prayer_calendar_${year}/${month}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_13_0`; // Note: using hardcoded method 13/0 for offline base
-                             // Actually better to respect current settings if possible, but for offline robustness we'll save it. 
-                             // To keep it simple and aligned with usePrayerTimes, let's just fetch without saving manual cache key here, relying on usePrayerTimes logic? 
-                             // No, usePrayerTimes logic saves on view. Here we want to PRE-SAVE.
-                             // Let's reuse the cache key format from usePrayerTimes:
-                             // `prayer_calendar_${year}_${month}_${coords.lat}_${coords.lng}_${settings.methodId}_${settings.asrMethod}`
-                             // We need to access settings here or just save default. Let's try to access current settings from localStorage if available.
-                             const settings = StorageService.get(CONFIG.STORAGE_KEYS.SETTINGS) || { methodId: 13, asrMethod: 0 };
                              const specificCacheKey1 = `prayer_calendar_${year}_${month}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
                              CacheService.set(specificCacheKey1, json1.data, 60*24*30);
                         }
@@ -629,7 +624,6 @@
                         const url2 = `${CONFIG.API.ALADHAN}/calendar/${nextYear}/${nextMonth}?latitude=${locationHook.coords.lat}&longitude=${locationHook.coords.lng}${sP}`;
                         const json2 = await ApiService.fetchJson(url2);
                         if (json2.code === 200 && Array.isArray(json2.data)) {
-                             const settings = StorageService.get(CONFIG.STORAGE_KEYS.SETTINGS) || { methodId: 13, asrMethod: 0 };
                              const specificCacheKey2 = `prayer_calendar_${nextYear}_${nextMonth}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
                              CacheService.set(specificCacheKey2, json2.data, 60*24*30);
                         }
