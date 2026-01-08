@@ -102,7 +102,7 @@
         .modal-overlay { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
 
         /* Offline Banner */
-        .offline-banner { background-color: #fed7aa; color: #7c2d12; text-align: center; font-size: 0.65rem; padding: 1px 0; position: fixed; top: 0; left: 0; right: 0; z-index: 100; font-weight: 600; }
+        .offline-banner { background-color: #fed7aa; color: #7c2d12; text-align: center; font-size: 0.65rem; padding: 4px 0; width: 100%; font-weight: 600; border-bottom: 1px solid #fdba74; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-emerald-200 dark:selection:bg-emerald-800 transition-colors duration-300 antialiased">
@@ -836,50 +836,87 @@
         const MultiAyahReadingCard = memo(({ current, next, cooldown }) => {
             const { t, lang, fs } = useApp();
             const [showHint, setShowHint] = useState(true);
-            const [pageNumber, setPageNumber] = useState(() => {
-                const today = new Date().toISOString().split('T')[0];
-                const key = `tasbeeh_read_page_${today}`;
-                let saved = StorageService.get(key);
-                
-                // Consistency Check for Offline
-                if (!navigator.onLine && saved) {
-                     // Check if this saved page is actually cached (check TR as proxy)
-                     if (!CacheService.get(`page_${saved}_${lang}`)) {
-                         saved = null; // invalid for offline, force re-selection
-                     }
-                }
+            const [ayahs, setAyahs] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(false);
+            const [pageNumber, setPageNumber] = useState(0);
+            
+            const load = useCallback(async () => {
+                setLoading(true); setError(false);
+                try {
+                    const today = new Date().toISOString().split('T')[0];
+                    const key = `tasbeeh_read_page_${today}`;
+                    let targetPage = StorageService.get(key);
+                    
+                    // Offline consistency check
+                    if (!navigator.onLine && targetPage) {
+                        if (!CacheService.get(`page_${targetPage}_${lang}`)) {
+                            targetPage = null; // force re-pick from pool
+                        }
+                    }
 
-                if (saved) return parseInt(saved);
-                
-                // NEW: Use random page if online, pool if offline
-                let rnd;
-                if (navigator.onLine) {
-                    rnd = getSecureRandomNumber(1, 604);
-                } else {
-                    const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
-                    rnd = pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : getSecureRandomNumber(1, 604);
+                    if (!targetPage) {
+                        if (navigator.onLine) {
+                            targetPage = getSecureRandomNumber(1, 604);
+                        } else {
+                            const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
+                            // Avoid repeating the last picked page if possible
+                            const lastPage = StorageService.get('last_picked_asr_page');
+                            const available = pool.filter(p => p !== lastPage);
+                            const effectivePool = available.length > 0 ? available : pool;
+                            targetPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
+                        }
+                        StorageService.set(key, targetPage);
+                        StorageService.set('last_picked_asr_page', targetPage);
+                    }
+
+                    setPageNumber(targetPage);
+                    const cacheKey = `page_${targetPage}_${lang}`;
+                    const cached = CacheService.get(cacheKey);
+                    
+                    if (cached) {
+                        setAyahs(cached);
+                        setLoading(false);
+                        return;
+                    }
+
+                    if (!navigator.onLine) throw new Error("Offline and not cached");
+
+                    const edition = ApiService.getTranslationEdition(lang);
+                    const transEdition = ApiService.getTransliterationEdition(lang);
+                    const [p1, p2, p3] = await Promise.all([
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/quran-uthmani`),
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${edition}`),
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${transEdition}`)
+                    ]);
+
+                    if (p1.code === 200) {
+                        const combined = p1.data.ayahs.map((ayah, i) => ({
+                            arabic: ayah.text,
+                            text: p2.data.ayahs[i] ? p2.data.ayahs[i].text : '',
+                            trans: p3.data.ayahs[i] ? p3.data.ayahs[i].text : '',
+                            info: `${ApiService.getSurahNameTR(ayah.surah.number)} : ${ayah.numberInSurah}`
+                        }));
+                        setAyahs(combined);
+                        CacheService.set(cacheKey, combined, null);
+                    } else {
+                        setError(true);
+                    }
+                } catch (e) {
+                    setError(true);
+                } finally {
+                    setLoading(false);
                 }
-                
-                StorageService.set(key, rnd);
-                return rnd;
-            });
-            const [ayahs, setAyahs] = useState(null); const [loading, setLoading] = useState(true); const [error, setError] = useState(false);
+            }, [lang]);
+
+            useEffect(() => { load(); }, [load]);
             
             const handleScroll = (e) => {
                 const { scrollTop, scrollHeight, clientHeight } = e.target;
-                if (scrollHeight - scrollTop <= clientHeight + 20) { // Small buffer
-                    setShowHint(false);
-                } else {
-                    setShowHint(true);
-                }
+                setShowHint(scrollHeight - scrollTop > clientHeight + 20);
             };
-
-            useEffect(() => {
-                let isMounted = true;
-                const fetchSequential = async () => { try { const edition = ApiService.getTranslationEdition(lang), transEdition = ApiService.getTransliterationEdition(lang), cacheKey = `page_${pageNumber}_${lang}`, cached = CacheService.get(cacheKey); if (cached) { setAyahs(cached); setLoading(false); return; } const [p1, p2, p3] = await Promise.all([ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${pageNumber}/quran-uthmani`), ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${pageNumber}/${edition}`), ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${pageNumber}/${transEdition}`)]); if (isMounted && p1.code === 200) { const combined = p1.data.ayahs.map((ayah, i) => ({ arabic: ayah.text, text: p2.data.ayahs[i] ? p2.data.ayahs[i].text : '', trans: p3.data.ayahs[i] ? p3.data.ayahs[i].text : '', info: `${ApiService.getSurahNameTR(ayah.surah.number)} : ${ayah.numberInSurah}` })); setAyahs(combined); CacheService.set(cacheKey, combined, null); setLoading(false); } else setError(true); } catch (e) { if (isMounted) { setError(true); setLoading(false); } } }; fetchSequential(); return () => { isMounted = false; };
-            }, [lang, pageNumber]);
             
-            if (error) return <div className="bg-white dark:bg-slate-850 border border-red-200 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-full"><p className="text-red-500 mb-2 text-xs">{t('connectionError')}</p><button onClick={next} className="bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded text-xs text-slate-600 dark:text-slate-300">{t('next')}</button></div>;
+            if (error) return <div className="bg-white dark:bg-slate-850 border border-red-200 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-full"><p className="text-red-500 mb-2 text-xs">{t('connectionError')}</p><button onClick={load} className="bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded text-xs text-slate-600 dark:text-slate-300">{t('tryAgain')}</button></div>;
             if (loading || !ayahs) return <LoadingView />;
             return (
                 <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col h-full transition-colors duration-300">
@@ -1268,14 +1305,16 @@
                     let targetPage = existingPage; 
                     if (!targetPage) { 
                         // NEW LOGIC: Use random page if online, pool if offline
-                        let rnd;
                         if (navigator.onLine) {
-                             rnd = getSecureRandomNumber(1, 604);
+                             targetPage = getSecureRandomNumber(1, 604);
                         } else {
                              const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
-                             rnd = pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : getSecureRandomNumber(1, 604);
+                             // Avoid immediate repeat
+                             const lastPage = StorageService.get('last_picked_quran_page');
+                             const available = pool.filter(p => p !== lastPage);
+                             const effectivePool = available.length > 0 ? available : pool;
+                             targetPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
                         }
-                        targetPage = rnd;
                     } 
                     
                     const edition = ApiService.getTranslationEdition(lang), transEdition = ApiService.getTransliterationEdition(lang), cacheKey = `page_${targetPage}_${lang}`;
@@ -1285,10 +1324,17 @@
                         setAyahs(cached); 
                         setPageInfo(targetPage); 
                         StorageService.set('last_quran_page', targetPage);
+                        StorageService.set('last_picked_quran_page', targetPage);
                         setLoading(false); 
                         return; 
                     } 
                     
+                    if (!navigator.onLine) {
+                        alert(t('connectionError') + " / Offline Content Missing");
+                        setLoading(false);
+                        return;
+                    }
+
                     const [p1, p2, p3] = await Promise.all([
                         ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/quran-uthmani`), 
                         ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${edition}`), 
@@ -1300,6 +1346,7 @@
                         setAyahs(combined); 
                         setPageInfo(targetPage); 
                         StorageService.set('last_quran_page', targetPage);
+                        StorageService.set('last_picked_quran_page', targetPage);
                         // Cache indefinitely since this is a user-visited page
                         CacheService.set(cacheKey, combined, null); 
                     } 
