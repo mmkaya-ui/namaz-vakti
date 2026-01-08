@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -255,13 +254,26 @@
         const sendNotification = async (title, options = {}) => {
             if (!("Notification" in window) || Notification.permission !== "granted") return;
             const notifOptions = { icon: 'https://cdn-icons-png.flaticon.com/512/5533/5533023.png', ...options };
+            
             try {
+                // Try Service Worker first (better for mobile)
                 if ('serviceWorker' in navigator) {
                     const reg = await navigator.serviceWorker.getRegistration();
-                    if (reg) { await reg.showNotification(title, notifOptions); return; }
+                    if (reg && reg.active) { 
+                        await reg.showNotification(title, notifOptions); 
+                        return; 
+                    }
                 }
-                new Notification(title, notifOptions);
-            } catch (e) { try { new Notification(title, notifOptions); } catch(e2){} }
+            } catch (e) {
+                // console.warn("SW notification failed, trying fallback", e);
+            }
+
+            // Fallback to standard Notification API
+            try { 
+                new Notification(title, notifOptions); 
+            } catch(e2) {
+                // console.warn("Notification API failed", e2);
+            }
         };
 
         // --- 1. CONFIGURATION & CONSTANTS ---
@@ -468,8 +480,13 @@
                 const fetchTimes = async () => { 
                     setLoading(true); 
                     try { 
+                        const mId = settings.methodId;
                         const sP = settings.asrMethod === 1 ? '&school=1' : '&school=0';
-                        const json = await ApiService.fetchJson(`${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${coords.lat}&longitude=${coords.lng}&method=${settings.methodId}${sP}`); 
+                        // Fix: Aladhan ignores school=1 for method=13 (Diyanet). 
+                        // Use Method 3 (MWL) as proxy for Diyanet angles when Hanafi is selected.
+                        const effectiveMethod = (mId === 13 && settings.asrMethod === 1) ? 3 : mId;
+                        
+                        const json = await ApiService.fetchJson(`${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${coords.lat}&longitude=${coords.lng}&method=${effectiveMethod}${sP}`); 
                         if (json.code === 200 && Array.isArray(json.data)) { 
                             CacheService.set(cacheKey, json.data, 60*24*30);
                             const todayDay = date.getDate();
@@ -490,7 +507,7 @@
 
             const generatePool = (preserve = []) => {
                 const newPool = [...preserve];
-                while(newPool.length < 50) { // Changed to 50
+                while(newPool.length < 50) {
                     const r = getSecureRandomNumber(1, 604);
                     if(!newPool.includes(r)) newPool.push(r);
                 }
@@ -502,11 +519,8 @@
                 let count = 0;
                 
                 for (const pageNum of pool) {
-                    // Optimization: Fetch Arabic once if possible, but structure relies on simple Promise.all
-                    // We will just loop languages to keep logic simple and robust
                     for (const l of languages) {
                          const cacheKey = `page_${pageNum}_${l}`;
-                         // Skip if already cached
                          if (CacheService.get(cacheKey)) continue;
 
                          const edition = ApiService.getTranslationEdition(l);
@@ -537,12 +551,14 @@
                 }
             };
             
-            // NEW: Function to download Kahf verses (First 10 and Last 10) for all languages
-            const downloadKahf = async () => {
+            const downloadSpecialReadings = async () => {
                 const languages = ['tr', 'en', 'de'];
                 const types = [
-                    { id: 'kehf_first_10', offset: 0, limit: 10 },
-                    { id: 'kehf_last_10', offset: 100, limit: 10 }
+                    { id: 'kehf_first_10', surah: 18, offset: 0, limit: 10 },
+                    { id: 'kehf_last_10', surah: 18, offset: 100, limit: 10 },
+                    { id: 'qaf_first_10', surah: 50, offset: 0, limit: 10 },
+                    { id: 'qaf_last_10', surah: 50, offset: 35, limit: 10 },
+                    { id: 'amenarresulu', surah: 2, offset: 284, limit: 2 }
                 ];
 
                 for (const l of languages) {
@@ -551,12 +567,10 @@
 
                     for (const t of types) {
                         const cacheKey = `zikr_data_${t.id}_${l}`;
-                        // Skip if already cached
                         if (CacheService.get(cacheKey)) continue;
 
                         try {
-                            // Using the same URL structure as FetchableZikrCard
-                            const url = `${CONFIG.API.QURAN}/surah/18/editions/quran-uthmani,${edition},${transEdition}?offset=${t.offset}&limit=${t.limit}`;
+                            const url = `${CONFIG.API.QURAN}/surah/${t.surah}/editions/quran-uthmani,${edition},${transEdition}?offset=${t.offset}&limit=${t.limit}`;
                             const json = await ApiService.fetchJson(url);
                             if (json.code === 200) {
                                 const processed = json.data[0].ayahs.map((a, i) => ({
@@ -565,22 +579,49 @@
                                     trans: json.data[2].ayahs[i].text,
                                     number: a.numberInSurah
                                 }));
-                                CacheService.set(cacheKey, processed, null); // No expiry
+                                CacheService.set(cacheKey, processed, null);
                             }
                         } catch (e) {
-                            console.warn(`Error downloading Kahf (${t.id}) for ${l}`, e);
+                            console.warn(`Error downloading ${t.id} for ${l}`, e);
                         }
                     }
                 }
             };
 
+            const downloadPrayerTimes = async () => {
+                if (!locationHook.coords) return;
+                const settings = StorageService.get(CONFIG.STORAGE_KEYS.SETTINGS) || { methodId: 13, asrMethod: 0 };
+                const mId = settings.methodId;
+                const sP = settings.asrMethod === 1 ? '&school=1' : '&school=0';
+                const effectiveMethod = (mId === 13 && settings.asrMethod === 1) ? 3 : mId;
+                const queryParams = `&method=${effectiveMethod}${sP}`;
+                const date = new Date();
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                
+                try {
+                    const url1 = `${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${locationHook.coords.lat}&longitude=${locationHook.coords.lng}${queryParams}`;
+                    const json1 = await ApiService.fetchJson(url1);
+                    if (json1.code === 200 && Array.isArray(json1.data)) {
+                         const specificCacheKey1 = `prayer_calendar_${year}_${month}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
+                         CacheService.set(specificCacheKey1, json1.data, 60*24*30);
+                    }
+
+                    const nextMonth = month === 12 ? 1 : month + 1;
+                    const nextYear = month === 12 ? year + 1 : year;
+                    const url2 = `${CONFIG.API.ALADHAN}/calendar/${nextYear}/${nextMonth}?latitude=${locationHook.coords.lat}&longitude=${locationHook.coords.lng}${queryParams}`;
+                    const json2 = await ApiService.fetchJson(url2);
+                    if (json2.code === 200 && Array.isArray(json2.data)) {
+                         const specificCacheKey2 = `prayer_calendar_${nextYear}_${nextMonth}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
+                         CacheService.set(specificCacheKey2, json2.data, 60*24*30);
+                    }
+                } catch(e) { console.warn("Prayer times download failed", e); }
+            };
 
             const refreshContent = async (isAuto = false) => {
                 if (!navigator.onLine) return;
-                if(isAuto) console.log("Auto-refreshing offline content...");
                 setDownloading(true);
                 
-                // 1. Identify pages to keep
                 const today = new Date().toISOString().split('T')[0];
                 const activeIkindiPage = StorageService.get(`tasbeeh_read_page_${today}`);
                 const activeQuranPage = StorageService.get('last_quran_page');
@@ -589,82 +630,76 @@
                 if (activeIkindiPage) preserve.push(parseInt(activeIkindiPage));
                 if (activeQuranPage) preserve.push(parseInt(activeQuranPage));
                 
-                // 2. Generate new pool
                 const newPool = generatePool(preserve);
                 StorageService.set(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL, newPool);
-                StorageService.set(CONFIG.STORAGE_KEYS.LAST_POOL_UPDATE, today); // Mark as updated today
+                StorageService.set(CONFIG.STORAGE_KEYS.LAST_POOL_UPDATE, today);
 
-                // 3. Download
                 await downloadPages(newPool); 
-                
-                // NEW: Download Kahf Verses
-                await downloadKahf();
-                
-                // 4. Download Prayer Times (Current Month + Next Month)
-                if (locationHook.coords) {
-                    const settings = StorageService.get(CONFIG.STORAGE_KEYS.SETTINGS) || { methodId: 13, asrMethod: 0 };
-                    const sP = `&method=${settings.methodId}&school=${settings.asrMethod}`;
-                    const date = new Date();
-                    const year = date.getFullYear();
-                    const month = date.getMonth() + 1;
-                    
-                    try {
-                        // Current Month
-                        const url1 = `${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${locationHook.coords.lat}&longitude=${locationHook.coords.lng}${sP}`;
-                        const json1 = await ApiService.fetchJson(url1);
-                        if (json1.code === 200 && Array.isArray(json1.data)) {
-                             const specificCacheKey1 = `prayer_calendar_${year}_${month}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
-                             CacheService.set(specificCacheKey1, json1.data, 60*24*30);
-                        }
-
-                        // Next Month
-                        const nextMonth = month === 12 ? 1 : month + 1;
-                        const nextYear = month === 12 ? year + 1 : year;
-                        const url2 = `${CONFIG.API.ALADHAN}/calendar/${nextYear}/${nextMonth}?latitude=${locationHook.coords.lat}&longitude=${locationHook.coords.lng}${sP}`;
-                        const json2 = await ApiService.fetchJson(url2);
-                        if (json2.code === 200 && Array.isArray(json2.data)) {
-                             const specificCacheKey2 = `prayer_calendar_${nextYear}_${nextMonth}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
-                             CacheService.set(specificCacheKey2, json2.data, 60*24*30);
-                        }
-                    } catch(e) { console.warn("Prayer times download failed", e); }
-                }
+                await downloadSpecialReadings();
+                await downloadPrayerTimes();
 
                 if(!isAuto) alert("İndirme Tamamlandı / Download Complete");
                 setDownloading(false);
             };
 
+            const checkAndDownloadMissing = async () => {
+                if (!navigator.onLine) return;
+                const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL);
+                const lastUpdate = StorageService.get(CONFIG.STORAGE_KEYS.LAST_POOL_UPDATE);
+                const today = new Date().toISOString().split('T')[0];
+
+                if (!pool || pool.length === 0 || lastUpdate !== today) {
+                    await refreshContent(true);
+                } else {
+                    setDownloading(true);
+                    await downloadPages(pool);
+                    await downloadSpecialReadings();
+                    await downloadPrayerTimes();
+                    setDownloading(false);
+                }
+            };
+
             const downloadEverything = () => refreshContent(false);
 
-            return { downloading, progress, downloadEverything, refreshContent };
+            return { downloading, progress, downloadEverything, refreshContent, checkAndDownloadMissing };
         };
 
         const useZikrReminder = (prayerData, currentTime) => {
             const { t } = useApp();
             const [notifSentFor, setNotifSentFor] = useState(null);
+            
             useEffect(() => {
                 if (!prayerData || !("Notification" in window) || Notification.permission !== "granted") return;
+                
                 const timings = prayerData.timings;
                 const now = currentTime.getTime();
                 const getP = (str) => { const [h, m] = str.split(' ')[0].split(':').map(Number); const d = new Date(); d.setHours(h, m, 0, 0); return d.getTime(); };
                 const dhuhr = getP(timings.Dhuhr); const asr = getP(timings.Asr); const maghrib = getP(timings.Maghrib); const isha = getP(timings.Isha);
+                
                 const isModeFinished = (mode) => { const s = StorageService.get(`tasbeeh_status_${mode}`); return s && s.date === new Date().toISOString().split('T')[0] && s.finished; };
+                
                 const checkAndSend = (targetTime, targetName, prevModeToCheck) => {
                     const diff = targetTime - now;
                     if (diff > 29 * 60 * 1000 && diff <= 30 * 60 * 1000) {
-                        if (notifSentFor !== targetName) {
+                        const key = `${new Date().toISOString().split('T')[0]}_${targetName}`;
+                        const sent = StorageService.get(`notif_sent_${key}`);
+                        
+                        if (!sent && notifSentFor !== targetName) {
                             let bodyText = `${t('notifTimeLeft')} ${targetName}.`;
                             if (prevModeToCheck && !isModeFinished(prevModeToCheck)) bodyText += ` ${t('notifUnfinished')}`;
-                            sendNotification(t('appName'), { body: bodyText });
+                            
+                            sendNotification(t('appName'), { body: bodyText, tag: key });
                             setNotifSentFor(targetName);
+                            StorageService.set(`notif_sent_${key}`, true);
                         }
                     }
                 };
+                
                 if (now < dhuhr) checkAndSend(dhuhr, t('dhuhr'), 'morning');
                 if (now < maghrib) checkAndSend(maghrib, t('maghrib'), 'ikindi');
                 if (now < asr) checkAndSend(asr, t('asr'), null);
                 if (now < isha) checkAndSend(isha, t('isha'), null);
-                if (now > dhuhr + 60000 && notifSentFor === t('dhuhr')) setNotifSentFor(null);
-                if (now > maghrib + 60000 && notifSentFor === t('maghrib')) setNotifSentFor(null);
+                
             }, [currentTime, prayerData, notifSentFor, t]);
         };
 
@@ -771,6 +806,8 @@
                         const edition = ApiService.getTranslationEdition(lang), transEdition = ApiService.getTransliterationEdition(lang); let url = '';
                         if (current.type === 'kehf_first_10') url = `${CONFIG.API.QURAN}/surah/18/editions/quran-uthmani,${edition},${transEdition}?offset=0&limit=10`;
                         else if (current.type === 'kehf_last_10') url = `${CONFIG.API.QURAN}/surah/18/editions/quran-uthmani,${edition},${transEdition}?offset=100&limit=10`;
+                        else if (current.type === 'qaf_first_10') url = `${CONFIG.API.QURAN}/surah/50/editions/quran-uthmani,${edition},${transEdition}?offset=0&limit=10`;
+                        else if (current.type === 'qaf_last_10') url = `${CONFIG.API.QURAN}/surah/50/editions/quran-uthmani,${edition},${transEdition}?offset=35&limit=10`;
                         else if (current.type === 'amenarresulu') url = `${CONFIG.API.QURAN}/surah/2/editions/quran-uthmani,${edition},${transEdition}?offset=284&limit=2`;
                         if (url) { const json = await ApiService.fetchJson(url); if (json.code === 200 && isMounted) { const processed = json.data[0].ayahs.map((a, i) => ({ arabic: a.text, mean: json.data[1].ayahs[i].text, trans: json.data[2].ayahs[i].text, number: a.numberInSurah })); setData(processed); CacheService.set(cacheKey, processed, null); } else throw new Error(); }
                     } catch (e) { if (isMounted) setError(true); } finally { if (isMounted) setLoading(false); }
@@ -1231,24 +1268,37 @@
                         }
                         targetPage = rnd;
                     } 
-                    setPageInfo(targetPage); 
-                    StorageService.set('last_quran_page', targetPage); 
                     
                     const edition = ApiService.getTranslationEdition(lang), transEdition = ApiService.getTransliterationEdition(lang), cacheKey = `page_${targetPage}_${lang}`;
                     
                     const cached = CacheService.get(cacheKey); 
-                    if (cached) { setAyahs(cached); setLoading(false); return; } 
+                    if (cached) { 
+                        setAyahs(cached); 
+                        setPageInfo(targetPage); 
+                        StorageService.set('last_quran_page', targetPage);
+                        setLoading(false); 
+                        return; 
+                    } 
                     
-                    const [p1, p2, p3] = await Promise.all([ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/quran-uthmani`), ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${edition}`), ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${transEdition}`)]); 
+                    const [p1, p2, p3] = await Promise.all([
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/quran-uthmani`), 
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${edition}`), 
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${transEdition}`)
+                    ]); 
+                    
                     if (p1.code === 200) { 
                         const combined = p1.data.ayahs.map((item, i) => ({ arabic: item.text, text: p2.data.ayahs[i]?.text || '', trans: p3.data.ayahs[i]?.text || '', info: `${ApiService.getSurahNameTR(item.surah.number)} : ${item.numberInSurah}` })); 
                         setAyahs(combined); 
+                        setPageInfo(targetPage); 
+                        StorageService.set('last_quran_page', targetPage);
                         // Cache indefinitely since this is a user-visited page
                         CacheService.set(cacheKey, combined, null); 
                     } 
-                } catch (e) {} 
+                } catch (e) {
+                    if(!navigator.onLine) alert(t('connectionError') + " / Offline");
+                } 
                 setLoading(false); 
-            }, [lang]);
+            }, [lang, t]);
             
             useEffect(() => { if (pageInfo > 0 && ayahs.length === 0) load(pageInfo).catch(() => {}); }, []);
             useEffect(() => { if (pageInfo > 0) load(pageInfo).catch(() => {}); }, [lang, pageInfo]);
@@ -1357,23 +1407,19 @@
             useZikrReminder(prayerData, currentTime);
 
             // Offline Auto-Update Logic
-            const { refreshContent } = useOfflineContent(lang, locationHook);
+            const { checkAndDownloadMissing } = useOfflineContent(lang, locationHook);
             useEffect(() => {
-                const handleOnline = () => {
-                    const today = new Date().toISOString().split('T')[0];
-                    const lastUpdate = StorageService.get(CONFIG.STORAGE_KEYS.LAST_POOL_UPDATE);
-                    if (lastUpdate !== today) refreshContent(true);
+                const runCheck = () => {
+                    if (navigator.onLine) {
+                        checkAndDownloadMissing();
+                    }
                 };
-                window.addEventListener('online', handleOnline);
+                window.addEventListener('online', runCheck);
                 
-                // Also check on mount if online
-                if(navigator.onLine) {
-                    const today = new Date().toISOString().split('T')[0];
-                    const lastUpdate = StorageService.get(CONFIG.STORAGE_KEYS.LAST_POOL_UPDATE);
-                    if (lastUpdate !== today) refreshContent(true);
-                }
+                // Check on mount/update
+                runCheck();
                 
-                return () => window.removeEventListener('online', handleOnline);
+                return () => window.removeEventListener('online', runCheck);
             }, [lang, locationHook.coords]);
 
             useEffect(() => { const handlePopState = (event) => { if (event.state && event.state.tab) { setActiveTab(event.state.tab); } else { const hash = window.location.hash.replace('#', ''); if (['times', 'tasbeeh', 'quran', 'settings'].includes(hash)) setActiveTab(hash); } }; window.addEventListener('popstate', handlePopState); return () => window.removeEventListener('popstate', handlePopState); }, []);
