@@ -872,17 +872,27 @@
                     return;
                 }
 
-                // 2. Helper to find ANY working offline page
+                // 2. Helper to find ANY working offline page (Randomized)
                 const useFallback = () => {
                     const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
-                    for(const p of pool) {
-                        const c = CacheService.get(`page_${p}_${lang}`);
-                        if(c) {
-                            setAyahs(c);
-                            setPageNumber(p);
-                            StorageService.set(key, p); // Update daily key to valid page
-                            return true;
-                        }
+                    // Find all pages that are actually cached
+                    const validPages = pool.filter(p => CacheService.get(`page_${p}_${lang}`));
+                    
+                    if (validPages.length > 0) {
+                        // Avoid immediate repeat if possible
+                        const lastPage = parseInt(StorageService.get('last_picked_asr_page') || '0');
+                        const candidates = validPages.filter(p => p !== lastPage);
+                        const effectivePool = candidates.length > 0 ? candidates : validPages;
+                        
+                        const randomPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
+                        
+                        // Retrieve content again (it's fast/sync)
+                        const c = CacheService.get(`page_${randomPage}_${lang}`);
+                        setAyahs(c);
+                        setPageNumber(randomPage);
+                        StorageService.set(key, randomPage);
+                        StorageService.set('last_picked_asr_page', randomPage);
+                        return true;
                     }
                     return false;
                 };
@@ -1354,6 +1364,25 @@
                     } 
                     
                     if (!navigator.onLine) {
+                        // Fallback: Try to find ANY cached page from the pool
+                        const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
+                        const validPages = pool.filter(p => CacheService.get(`page_${p}_${lang}`));
+                        
+                        if (validPages.length > 0) {
+                             const lastPage = parseInt(StorageService.get('last_picked_quran_page') || '0');
+                             const candidates = validPages.filter(p => p !== lastPage);
+                             const effectivePool = candidates.length > 0 ? candidates : validPages;
+                             const fallbackPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
+                             
+                             const fallbackContent = CacheService.get(`page_${fallbackPage}_${lang}`);
+                             setAyahs(fallbackContent);
+                             setPageInfo(fallbackPage);
+                             StorageService.set('last_quran_page', fallbackPage);
+                             StorageService.set('last_picked_quran_page', fallbackPage);
+                             setLoading(false);
+                             return;
+                        }
+
                         alert(t('connectionError') + " / Offline Content Missing");
                         setLoading(false);
                         return;
