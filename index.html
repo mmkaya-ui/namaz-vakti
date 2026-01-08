@@ -839,7 +839,16 @@
             const [pageNumber, setPageNumber] = useState(() => {
                 const today = new Date().toISOString().split('T')[0];
                 const key = `tasbeeh_read_page_${today}`;
-                const saved = StorageService.get(key);
+                let saved = StorageService.get(key);
+                
+                // Consistency Check for Offline
+                if (!navigator.onLine && saved) {
+                     // Check if this saved page is actually cached (check TR as proxy)
+                     if (!CacheService.get(`page_${saved}_${lang}`)) {
+                         saved = null; // invalid for offline, force re-selection
+                     }
+                }
+
                 if (saved) return parseInt(saved);
                 
                 // NEW: Use random page if online, pool if offline
