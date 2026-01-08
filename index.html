@@ -843,45 +843,63 @@
             
             const load = useCallback(async () => {
                 setLoading(true); setError(false);
-                try {
-                    const today = new Date().toISOString().split('T')[0];
-                    const key = `tasbeeh_read_page_${today}`;
-                    let targetPage = StorageService.get(key);
-                    
-                    // Offline consistency check
-                    if (!navigator.onLine && targetPage) {
-                        if (!CacheService.get(`page_${targetPage}_${lang}`)) {
-                            targetPage = null; // force re-pick from pool
-                        }
-                    }
+                const today = new Date().toISOString().split('T')[0];
+                const key = `tasbeeh_read_page_${today}`;
+                
+                const getFromPool = () => {
+                    const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
+                    const lastPage = StorageService.get('last_picked_asr_page');
+                    const available = pool.filter(p => p !== lastPage);
+                    const effectivePool = available.length > 0 ? available : pool;
+                    return effectivePool.length > 0 ? effectivePool[Math.floor(Math.random() * effectivePool.length)] : 1;
+                };
 
-                    if (!targetPage) {
-                        if (navigator.onLine) {
-                            targetPage = getSecureRandomNumber(1, 604);
-                        } else {
-                            const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
-                            // Avoid repeating the last picked page if possible
-                            const lastPage = StorageService.get('last_picked_asr_page');
-                            const available = pool.filter(p => p !== lastPage);
-                            const effectivePool = available.length > 0 ? available : pool;
-                            targetPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
-                        }
-                        StorageService.set(key, targetPage);
-                        StorageService.set('last_picked_asr_page', targetPage);
-                    }
+                let targetPage = StorageService.get(key);
+                // Initial selection if empty
+                if (!targetPage) {
+                    targetPage = navigator.onLine ? getSecureRandomNumber(1, 604) : getFromPool();
+                    StorageService.set(key, targetPage);
+                    StorageService.set('last_picked_asr_page', targetPage);
+                }
 
+                // 1. Try Cache First
+                const cacheKey = `page_${targetPage}_${lang}`;
+                const cached = CacheService.get(cacheKey);
+                if (cached) {
+                    setAyahs(cached);
                     setPageNumber(targetPage);
-                    const cacheKey = `page_${targetPage}_${lang}`;
-                    const cached = CacheService.get(cacheKey);
-                    
-                    if (cached) {
-                        setAyahs(cached);
-                        setLoading(false);
-                        return;
+                    setLoading(false);
+                    return;
+                }
+
+                // 2. Helper to find ANY working offline page
+                const useFallback = () => {
+                    const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
+                    for(const p of pool) {
+                        const c = CacheService.get(`page_${p}_${lang}`);
+                        if(c) {
+                            setAyahs(c);
+                            setPageNumber(p);
+                            StorageService.set(key, p); // Update daily key to valid page
+                            return true;
+                        }
                     }
+                    return false;
+                };
 
-                    if (!navigator.onLine) throw new Error("Offline and not cached");
+                // 3. If Offline, force fallback
+                if (!navigator.onLine) {
+                    if (useFallback()) {
+                        setLoading(false);
+                    } else {
+                        setError(true);
+                        setLoading(false);
+                    }
+                    return;
+                }
 
+                // 4. Online Fetch
+                try {
                     const edition = ApiService.getTranslationEdition(lang);
                     const transEdition = ApiService.getTransliterationEdition(lang);
                     const [p1, p2, p3] = await Promise.all([
@@ -898,12 +916,18 @@
                             info: `${ApiService.getSurahNameTR(ayah.surah.number)} : ${ayah.numberInSurah}`
                         }));
                         setAyahs(combined);
+                        setPageNumber(targetPage);
                         CacheService.set(cacheKey, combined, null);
+                    } else {
+                        throw new Error("API Error");
+                    }
+                } catch (e) {
+                    // Fetch failed, try fallback
+                    if (useFallback()) {
+                        // Fallback success
                     } else {
                         setError(true);
                     }
-                } catch (e) {
-                    setError(true);
                 } finally {
                     setLoading(false);
                 }
