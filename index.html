@@ -645,6 +645,36 @@
             const [rawMatches, setRawMatches] = useState([]);
             const [loading, setLoading] = useState(false);
             const [loadingText, setLoadingText] = useState("");
+            const autoPlayAfterLoad = useRef(false);
+            const autoScrollToAyah = useRef(null);
+
+            useEffect(() => {
+                if (autoPlayAfterLoad.current && ayahs.length > 0) {
+                    playAyah(ayahs[0]);
+                    autoPlayAfterLoad.current = false;
+                }
+                
+                if (autoScrollToAyah.current && ayahs.length > 0) {
+                    let targetIndex = -1;
+                    const refVal = autoScrollToAyah.current;
+
+                    // Desteklenen formatlar: Obje {inSurah, global} veya sadece sayı
+                    if (typeof refVal === 'object' && refVal !== null) {
+                        targetIndex = ayahs.findIndex(a => (refVal.inSurah && a.numberInSurah === refVal.inSurah) || (refVal.global && a.number === refVal.global));
+                    } else {
+                        targetIndex = ayahs.findIndex(a => a.numberInSurah === refVal);
+                    }
+                    
+                    if (targetIndex !== -1) {
+                        const targetAyah = ayahs[targetIndex];
+                        if (targetIndex >= displayLimit) {
+                            setDisplayLimit(targetIndex + 5);
+                        }
+                        setTimeout(() => setActiveAyah(targetAyah), 100);
+                    }
+                    autoScrollToAyah.current = null;
+                }
+            }, [ayahs]);
             
             // Player State
             const [activeAyah, setActiveAyah] = useState(null);
@@ -663,6 +693,9 @@
             const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
             const [sortType, setSortType] = useState('mushaf');
             const [bookmark, setBookmark] = useState(null);
+            
+            // UI State
+            const [displayLimit, setDisplayLimit] = useState(10);
 
             // Initialize Audio
             useEffect(() => {
@@ -692,7 +725,7 @@
                     audio.removeEventListener('pause', onPause);
                     audio.removeEventListener('ended', onEnded);
                 };
-            }, [ayahs, detailedResults, activeAyah, activePlaylist, viewMode]); // Deps needed for playNext closure
+            }, [ayahs, detailedResults, activeAyah, activePlaylist, viewMode, activeSurah, sortType, surahs]); // Deps needed for playNext closure
 
             // Load Initial Data & Settings
             useEffect(() => {
@@ -823,8 +856,23 @@
             const playNext = () => {
                 const list = (viewMode === 'playlist_view' && activePlaylist) ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
+                
                 if (idx !== -1 && idx < list.length - 1) {
                     playAyah(list[idx + 1]);
+                } else if (viewMode === 'reader' && activeSurah && idx === list.length - 1) {
+                    let nextSurah = null;
+                    if (sortType === 'mushaf') {
+                        nextSurah = surahs.find(s => s.number === activeSurah.number + 1);
+                    } else {
+                        const sorted = [...surahs].sort((a, b) => (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999));
+                        const currentIdx = sorted.findIndex(s => s.number === activeSurah.number);
+                        if (currentIdx !== -1 && currentIdx < sorted.length - 1) nextSurah = sorted[currentIdx + 1];
+                    }
+
+                    if (nextSurah) {
+                        autoPlayAfterLoad.current = true;
+                        fetchSurah(nextSurah);
+                    }
                 }
             };
 
@@ -973,7 +1021,8 @@
                 activeAyah, isPlaying, playAyah, playNext, playPrev, seek, currentTime, duration, closePlayer: () => { audioRef.current.pause(); setActiveAyah(null); },
                 playlists, setPlaylists, selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist,
                 fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
-                bookmark, fetchDetailsForMatches, loading, loadingText, searching
+                bookmark, fetchDetailsForMatches, loading, loadingText, searching,
+                displayLimit, setDisplayLimit
             };
 
             return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
@@ -1182,11 +1231,9 @@
                 searching, searchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, playlists, activePlaylist, setActivePlaylist, setPlaylists, 
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType,
-                activeAyah
+                activeAyah, displayLimit, setDisplayLimit
             } = useQuran();
             
-            const [displayLimit, setDisplayLimit] = useState(10);
-
             const lastScrolledAyah = useRef(null);
 
             // Auto-scroll to active ayah
@@ -1332,8 +1379,25 @@
                                     <p className="text-xs text-emerald-700 dark:text-emerald-400">{bookmark.surah} Suresi, {bookmark.numberInSurah || '?'} . Ayet</p>
                                 </div>
                                 <button onClick={() => { 
-                                    const s = surahs.find(x => x.number === bookmark.surahNumber); 
-                                    if(s) fetchSurah(s); 
+                                    if(!bookmark) return;
+                                    
+                                    // 1. Hedef sureyi bul
+                                    const targetSurahNum = parseInt(bookmark.surahNumber || bookmark.surah_number);
+                                    if(!targetSurahNum) return;
+
+                                    const s = surahs.find(x => x.number === targetSurahNum); 
+                                    
+                                    // 2. Hedef ayet bilgisini hazırla
+                                    if(s) {
+                                        // Hem sure içi hem global noyu saklayalım
+                                        autoScrollToAyah.current = { 
+                                            inSurah: parseInt(bookmark.numberInSurah), 
+                                            global: parseInt(bookmark.number) 
+                                        };
+                                        
+                                        // 3. Sureyi yükle (Bu tetiklenince useEffect devreye girecek)
+                                        fetchSurah(s); 
+                                    }
                                 }} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700">Devam Et</button>
                             </div>
                         )}
