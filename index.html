@@ -668,9 +668,18 @@
                     if (targetIndex !== -1) {
                         const targetAyah = ayahs[targetIndex];
                         if (targetIndex >= displayLimit) {
-                            setDisplayLimit(targetIndex + 5);
+                            setDisplayLimit(targetIndex + 10);
                         }
-                        setTimeout(() => setActiveAyah(targetAyah), 100);
+                        
+                        // Render için daha uzun süre tanı (500ms)
+                        setTimeout(() => {
+                            setActiveAyah(targetAyah);
+                            // Yedek scroll denemesi (useEffect kaçırırsa diye)
+                            setTimeout(() => {
+                                const el = document.getElementById(`ayah-${targetAyah.number}`);
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }, 200);
+                        }, 500);
                     }
                     autoScrollToAyah.current = null;
                 }
