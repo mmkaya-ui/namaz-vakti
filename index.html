@@ -680,7 +680,7 @@
                 
                 const checkAndSend = (targetTime, targetName, prevModeToCheck) => {
                     const diff = targetTime - now;
-                    if (diff > 29 * 60 * 1000 && diff <= 30 * 60 * 1000) {
+                    if (diff <= 30 * 60 * 1000) {
                         const key = `${new Date().toISOString().split('T')[0]}_${targetName}`;
                         const sent = StorageService.get(`notif_sent_${key}`);
                         
