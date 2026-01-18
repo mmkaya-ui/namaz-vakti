@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
@@ -423,30 +422,61 @@
 
         class AudioService {
             static ctx = null;
-            static init() { if (!this.ctx) { const AudioContext = window.AudioContext || window.webkitAudioContext; if (AudioContext) this.ctx = new AudioContext(); } }
+            static compressor = null;
+            static init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        this.ctx = new AudioContext();
+                        try {
+                            // Master Compressor for Loudness Normalization (makes quiet sounds louder)
+                            this.compressor = this.ctx.createDynamicsCompressor();
+                            this.compressor.threshold.setValueAtTime(-24, this.ctx.currentTime); // Start compressing early
+                            this.compressor.knee.setValueAtTime(30, this.ctx.currentTime); // Soft knee
+                            this.compressor.ratio.setValueAtTime(12, this.ctx.currentTime); // High compression ratio
+                            this.compressor.attack.setValueAtTime(0.003, this.ctx.currentTime); // Fast attack
+                            this.compressor.release.setValueAtTime(0.25, this.ctx.currentTime);
+                            this.compressor.connect(this.ctx.destination);
+                        } catch (e) { console.error("Audio compressor error", e); }
+                    }
+                }
+            }
             static play(type) {
                 try {
                     this.init(); if (!this.ctx) return; if (this.ctx.state === 'suspended') this.ctx.resume();
-                    const osc = this.ctx.createOscillator(), gain = this.ctx.createGain(), now = this.ctx.currentTime;
-                    osc.connect(gain); gain.connect(this.ctx.destination);
-                    // Optimized for Mobile: Linear Ramp for fuller sound + increased duration (75ms)
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.connect(gain);
+                    // Route through compressor if available, otherwise direct
+                    gain.connect(this.compressor || this.ctx.destination);
+
                     if (type === 'tick') {
+                        // Revert to Sine wave for softer, more spiritual sound
                         osc.type = 'sine';
+
+                        // Original softer pitch (400Hz -> 100Hz)
                         osc.frequency.setValueAtTime(400, now);
-                        osc.frequency.exponentialRampToValueAtTime(100, now + 0.075);
-                        gain.gain.setValueAtTime(0.23, now);
-                        gain.gain.linearRampToValueAtTime(0.01, now + 0.075); // Linear plays optimized for low vol
+                        osc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+
+                        // Keep linear ramp for audibility, but smoother attack
+                        gain.gain.setValueAtTime(0, now);
+                        gain.gain.linearRampToValueAtTime(0.5, now + 0.005); // Boosted gain to compensate for Sine softness
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
                         osc.start(now);
-                        osc.stop(now + 0.075);
+                        osc.stop(now + 0.09);
                     }
                     else if (type === 'finish') {
+                        // Softer sine wave for the finish sound
                         osc.type = 'sine';
-                        osc.frequency.setValueAtTime(440, now);
+                        osc.frequency.setValueAtTime(500, now); // Slightly higher for clarity
                         gain.gain.setValueAtTime(0, now);
-                        gain.gain.linearRampToValueAtTime(0.125, now + 0.05);
-                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+                        gain.gain.linearRampToValueAtTime(0.15, now + 0.1);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
                         osc.start(now);
-                        osc.stop(now + 0.8);
+                        osc.stop(now + 1.0);
                     }
                 } catch (e) { }
             }
@@ -1721,5 +1751,4 @@
         root.render(<AppProvider><App /></AppProvider>);
     </script>
 </body>
-
 </html>
