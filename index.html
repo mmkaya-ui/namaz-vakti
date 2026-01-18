@@ -429,8 +429,9 @@
                     this.init(); if (!this.ctx) return; if (this.ctx.state === 'suspended') this.ctx.resume();
                     const osc = this.ctx.createOscillator(), gain = this.ctx.createGain(), now = this.ctx.currentTime;
                     osc.connect(gain); gain.connect(this.ctx.destination);
-                    if (type === 'tick') { osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.05); gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05); osc.start(now); osc.stop(now + 0.05); }
-                    else if (type === 'finish') { osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.1, now + 0.05); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8); osc.start(now); osc.stop(now + 0.8); }
+                    // Increased volume: tick ~53% boost (0.15->0.23), finish ~25% boost (0.1->0.125)
+                    if (type === 'tick') { osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.05); gain.gain.setValueAtTime(0.23, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05); osc.start(now); osc.stop(now + 0.05); }
+                    else if (type === 'finish') { osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.125, now + 0.05); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8); osc.start(now); osc.stop(now + 0.8); }
                 } catch (e) { }
             }
         }
@@ -1209,23 +1210,24 @@
             );
         });
 
-        const TasbeehView = memo(() => {
+        // SPLIT COMPONENT: TasbeehContent handles specific mode logic
+        // key={mode} in parent ensures this component REMOUNTS when mode changes
+        const TasbeehContent = memo(({ mode, setModeParent }) => {
             const { t, lang, settings, fs } = useApp();
-            const [mode, setMode] = useState(() => StorageService.get('lastZikrMode') || 'morning');
 
-            // LAZY INIT STATES
+            // 1. LAZY STATE INIT (Reads guaranteed valid data or defaults to 0)
+            const [customZikrs, setCustomZikrs] = useState(() => StorageService.get(CONFIG.STORAGE_KEYS.CUSTOM_ZIKRS) || []);
+
             const [index, setIndex] = useState(() => {
                 const today = getLocalTodayDate();
                 const p = StorageService.get(`tasbeeh_progress_${mode}`);
-                if (p && p.date === today) return p.idx || 0;
-                return 0;
+                return (p && p.date === today) ? (p.idx || 0) : 0;
             });
 
             const [count, setCount] = useState(() => {
                 const today = getLocalTodayDate();
                 const p = StorageService.get(`tasbeeh_progress_${mode}`);
-                if (p && p.date === today) return p.cnt || 0;
-                return 0;
+                return (p && p.date === today) ? (p.cnt || 0) : 0;
             });
 
             const [isFinishedToday, setIsFinishedToday] = useState(() => {
@@ -1239,36 +1241,13 @@
                 return StorageService.get(`checklist_${mode}_${today}`) || {};
             });
 
-            const [customZikrs, setCustomZikrs] = useState(() => StorageService.get(CONFIG.STORAGE_KEYS.CUSTOM_ZIKRS) || []);
-
             const [cooldown, setCooldown] = useState(false);
             const [resetKey, setResetKey] = useState(0);
             const [resetConfirm, setResetConfirm] = useState(false);
             const [timeLeft, setTimeLeft] = useState(0);
             const [showAddModal, setShowAddModal] = useState(false);
 
-            // EFFECT: Handle Mode Switch without clearing valid data
-            useEffect(() => {
-                const today = getLocalTodayDate();
-                const s = StorageService.get(`tasbeeh_status_${mode}`);
-                const p = StorageService.get(`tasbeeh_progress_${mode}`);
-                const cl = StorageService.get(`checklist_${mode}_${today}`);
-
-                if (p && p.date !== today) {
-                    StorageService.remove(`tasbeeh_progress_${mode}`);
-                    StorageService.remove(`tasbeeh_status_${mode}`);
-                    setIndex(0); setCount(0); setIsFinishedToday(false);
-                } else {
-                    if (s) { setIsFinishedToday(s.date === today && s.finished); } else setIsFinishedToday(false);
-                    if (p && p.date === today) { setIndex(p.idx || 0); setCount(p.cnt || 0); } else { setIndex(0); setCount(0); }
-                    setChecklistState(cl || {});
-                }
-                setResetConfirm(false);
-            }, [mode, resetKey]);
-
-            // Save custom zikrs
-            useEffect(() => { if (customZikrs.length > 0 || mode === 'personal') StorageService.set(CONFIG.STORAGE_KEYS.CUSTOM_ZIKRS, customZikrs); }, [customZikrs]);
-
+            // 2. DATA DEFINITION
             const zikrList = useMemo(() => {
                 const db = ZIKR_DB; if (!db) return [];
                 const g = (k) => (db[k][lang] || db[k]['en']);
@@ -1295,26 +1274,29 @@
 
             const current = zikrList[index] || zikrList[0];
 
-            // TIMER INIT & SYNC
+            // 3. PERSISTENCE HELPERS
+            const saveProgress = useCallback((idx, cnt) => {
+                const today = getLocalTodayDate();
+                StorageService.set(`tasbeeh_progress_${mode}`, { date: today, idx, cnt });
+            }, [mode]);
+
+            // Save custom zikrs when they change
+            useEffect(() => { if (customZikrs.length > 0 || mode === 'personal') StorageService.set(CONFIG.STORAGE_KEYS.CUSTOM_ZIKRS, customZikrs); }, [customZikrs]);
+
+            // 4. TIMER LOGIC
+            // Init Timer State on Mount (or when zikr changes within mode)
             useEffect(() => {
                 if (current && (current.type === 'timer' || current.type === 'min_timer')) {
                     const today = getLocalTodayDate();
-                    // Load saved timer from storage
                     const savedTime = current.id ? StorageService.get(`timer_${current.id}_${today}`) : null;
-                    if (savedTime !== null && typeof savedTime === 'number') {
-                        setTimeLeft(savedTime);
-                    } else {
-                        // Only reset to duration if we DON'T have a saved time
-                        // Double check we are not overwriting an existing running timer state from a quick re-render
-                        // But since we key this useEffect on [current], it runs when zikr changes.
-                        // If we are just mounting, stored value takes precedence.
-                        setTimeLeft(current.duration);
-                    }
+                    // If saved time exists, use it. Else default to duration.
+                    setTimeLeft((savedTime !== null && typeof savedTime === 'number') ? savedTime : current.duration);
                 } else {
                     setTimeLeft(0);
                 }
             }, [current]);
 
+            // Run Timer
             useEffect(() => {
                 let interval;
                 if (current && (current.type === 'timer' || current.type === 'min_timer') && timeLeft > 0 && !isFinishedToday) {
@@ -1322,6 +1304,7 @@
                         setTimeLeft((prev) => {
                             const newVal = prev - 1;
                             if (current.id) {
+                                // Sync to storage every second
                                 const today = getLocalTodayDate();
                                 StorageService.set(`timer_${current.id}_${today}`, newVal);
                             }
@@ -1337,11 +1320,7 @@
                 return () => clearInterval(interval);
             }, [current, timeLeft, settings, isFinishedToday]);
 
-            const saveProgress = useCallback((idx, cnt) => {
-                const today = getLocalTodayDate();
-                StorageService.set(`tasbeeh_progress_${mode}`, { date: today, idx, cnt });
-            }, [mode]);
-
+            // 5. ACTIONS
             const toggleChecklistItem = useCallback((itemIndex) => {
                 const today = getLocalTodayDate();
                 const key = `checklist_${mode}_${today}`;
@@ -1353,31 +1332,22 @@
             }, [mode, settings]);
 
             const reset = useCallback(() => {
+                const today = getLocalTodayDate();
                 StorageService.remove(`tasbeeh_status_${mode}`);
                 StorageService.remove(`tasbeeh_progress_${mode}`);
-                const today = getLocalTodayDate();
                 StorageService.remove(`checklist_${mode}_${today}`);
                 if (mode === 'morning') StorageService.remove(`timer_estag_${today}`);
                 if (mode === 'ikindi') StorageService.remove(`tasbeeh_read_page_${today}`);
-
                 if (mode === 'personal') customZikrs.forEach(z => { if (z.type === 'timer' || z.type === 'min_timer') StorageService.remove(`timer_${z.id}_${today}`); });
+
                 setChecklistState({}); setIsFinishedToday(false); setIndex(0); setCount(0); setCooldown(false);
             }, [mode, customZikrs]);
 
             const resetTime = useCallback(() => {
                 if (!resetConfirm) { setResetConfirm(true); setTimeout(() => setResetConfirm(false), 3000); return; }
-                const today = getLocalTodayDate();
-                StorageService.remove(`tasbeeh_status_${mode}`);
-                StorageService.remove(`tasbeeh_progress_${mode}`);
-                StorageService.remove(`checklist_${mode}_${today}`);
-                if (mode === 'morning') StorageService.remove(`timer_estag_${today}`);
-                if (mode === 'ikindi') {
-                    StorageService.remove(`tasbeeh_read_page_${today}`);
-                    StorageService.remove(`tasbeeh_read_index_${today}`);
-                }
-                if (mode === 'personal') customZikrs.forEach(z => { if (z.type === 'timer' || z.type === 'min_timer') StorageService.remove(`timer_${z.id}_${today}`); });
-                setIsFinishedToday(false); setIndex(0); setCount(0); setCooldown(false); setResetKey(prev => prev + 1); setResetConfirm(false);
-            }, [mode, resetConfirm, customZikrs]);
+                reset(); // Reuse reset logic
+                setResetKey(prev => prev + 1); setResetConfirm(false);
+            }, [resetConfirm, reset]);
 
             const resetLocal = useCallback(() => { setCount(0); saveProgress(index, 0); }, [index, saveProgress]);
 
@@ -1399,8 +1369,14 @@
                 const isSpecial = current.type?.includes('kehf') || current.type === 'amenarresulu'; let newCount = count;
                 const vibrate = (p) => { if (navigator.vibrate && settings.vibrationEnabled) navigator.vibrate(p); };
                 const triggerFeedback = (isFinish) => { const isReadingNav = current.type?.includes('kehf') || current.isReading; if (isFinish) { vibrate(400); if (settings.soundEnabled) AudioService.play('finish'); } else { vibrate(40); if (settings.soundEnabled && !isReadingNav) AudioService.play('tick'); } };
+
                 if (isSpecial) {
-                    if (count < current.target - 1) { setCooldown(true); setTimeout(() => setCooldown(false), 500); newCount = count + 1; setCount(newCount); triggerFeedback(newCount + 1 >= current.target); saveProgress(index, newCount); }
+                    if (count < current.target - 1) {
+                        setCooldown(true); setTimeout(() => setCooldown(false), 500);
+                        newCount = count + 1; setCount(newCount);
+                        triggerFeedback(newCount + 1 >= current.target);
+                        saveProgress(index, newCount);
+                    }
                 } else if (!current.isReading && current.type !== 'checklist') {
                     if (current.type === 'infinite' || current.type === 'timer' || current.type === 'min_timer' || count < current.target) {
                         newCount = count + 1; setCount(newCount);
@@ -1423,10 +1399,11 @@
 
             return (
                 <div className="flex flex-col h-full">
+                    {/* Header Controls */}
                     <div className="flex flex-col gap-2 mb-2">
                         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg transition-colors duration-300 overflow-x-auto no-scrollbar">
                             {['morning', 'ikindi', 'night', 'ek', 'personal'].map(m => (
-                                <button key={m} onClick={() => { setMode(m); StorageService.set('lastZikrMode', m); }} className={`flex-1 min-w-[60px] py-1.5 text-xs font-medium rounded-md capitalize transition whitespace-nowrap px-2 ${mode === m ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.75)}>
+                                <button key={m} onClick={() => { setModeParent(m); StorageService.set('lastZikrMode', m); }} className={`flex-1 min-w-[60px] py-1.5 text-xs font-medium rounded-md capitalize transition whitespace-nowrap px-2 ${mode === m ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.75)}>
                                     {m === 'ek' ? t('ekZikr') : m === 'personal' ? t('personalZikr') : t(m + 'Zikr')}
                                 </button>
                             ))}
@@ -1443,6 +1420,7 @@
                         </div>
                     </div>
 
+                    {/* Content Body */}
                     {mode === 'personal' && zikrList.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-400 dark:text-slate-500">
                             <Icon path={ICONS.BookOpen} size={40} className="mb-2 opacity-50" />
@@ -1470,6 +1448,15 @@
                     {showAddModal && <AddZikrModal onClose={() => setShowAddModal(false)} onAdd={addCustomZikr} />}
                 </div>
             );
+        });
+
+        // 6. MAIN VIEW (Container)
+        const TasbeehView = memo(() => {
+            const [mode, setMode] = useState(() => StorageService.get('lastZikrMode') || 'morning');
+            // By keying the Content component with 'mode', we force a remount when mode changes.
+            // This ensures all state in TasbeehContent (index, count, timer) is initialized
+            // strictly from StorageService for that specific mode, eliminating synchronization bugs.
+            return <TasbeehContent key={mode} mode={mode} setModeParent={setMode} />;
         });
 
         const QuranView = memo(() => {
