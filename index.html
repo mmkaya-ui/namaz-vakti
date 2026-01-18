@@ -1463,13 +1463,7 @@
 
                     {showAddModal && <AddZikrModal onClose={() => setShowAddModal(false)} onAdd={addCustomZikr} />}
 
-                    {/* DEBUG OVERLAY - REMOVE AFTER FIX */}
-                    <div className="mt-2 p-2 bg-black/80 text-green-400 text-xs font-mono rounded overflow-x-auto select-all">
-                        <p>Mode: {mode}</p>
-                        <p>Date: {getLocalTodayDate()}</p>
-                        <p>Saved: {JSON.stringify(StorageService.get(`tasbeeh_progress_${mode}`))}</p>
-                        <p>Status: {JSON.stringify(StorageService.get(`tasbeeh_status_${mode}`))}</p>
-                    </div>
+
                 </div>
             );
         });
