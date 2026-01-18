@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#f8fafc">
     <meta name="description" content="Namaz Vakitleri, Tesbihat ve Kuran Okuma Uygulaması">
-    
+
     <!-- iOS & PWA Config -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -13,7 +15,7 @@
     <meta name="format-detection" content="telephone=no">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Namaz ve Zikir</title>
-    
+
     <!-- Network Optimization -->
     <link rel="preconnect" href="https://api.aladhan.com">
     <link rel="preconnect" href="https://api.alquran.cloud">
@@ -22,7 +24,7 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/5533/5533023.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5533/5533023.png">
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -37,26 +39,30 @@
             }
         }
     </script>
-    
+
     <!-- React Dependencies -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
+
     <style>
         /* BASE RESET & PWA FIXES */
-        html, body, #root {
+        html,
+        body,
+        #root {
             height: 100%;
             width: 100%;
             margin: 0;
             padding: 0;
             background-color: #f8fafc;
-             -webkit-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
             transition: background-color 0.3s ease;
         }
-        
+
         /* Dark mode global background fix */
-        html.dark, html.dark body, html.dark #root {
+        html.dark,
+        html.dark body,
+        html.dark #root {
             background-color: #0f172a !important;
             color: #f1f5f9;
         }
@@ -69,43 +75,121 @@
         }
 
         /* --- IOS SAFE AREA UTILITIES --- */
-        .pt-safe { padding-top: env(safe-area-inset-top); }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-        
+        .pt-safe {
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
         .main-layout {
-            padding-top: calc(env(safe-area-inset-top) + 72px); /* Header */
-            padding-bottom: calc(env(safe-area-inset-bottom) + 65px); /* Navbar */
+            padding-top: calc(env(safe-area-inset-top) + 72px);
+            /* Header */
+            padding-bottom: calc(env(safe-area-inset-bottom) + 65px);
+            /* Navbar */
         }
 
         /* Utilities */
-        .will-change-transform { will-change: transform; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
-        button { touch-action: manipulation; }
-        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=range] { touch-action: none; }
+        .will-change-transform {
+            will-change: transform;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fade-in 0.4s ease-out forwards;
+        }
+
+        button {
+            touch-action: manipulation;
+        }
+
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=range] {
+            touch-action: none;
+        }
 
         /* Zikir Ripple Effect */
-        .ripple-effect { position: relative; overflow: hidden; transform: translateZ(0); }
-        .ripple-effect::after {
-            content: ""; display: block; position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none;
-            background-image: radial-gradient(circle, #10b981 10%, transparent 10.01%);
-            background-repeat: no-repeat; background-position: 50%; transform: scale(10, 10); opacity: 0; transition: transform .5s, opacity 1s;
+        .ripple-effect {
+            position: relative;
+            overflow: hidden;
+            transform: translateZ(0);
         }
-        .ripple-effect:active::after { transform: scale(0, 0); opacity: .3; transition: 0s; }
-        
-        .text-xxs { font-size: 0.65rem; }
-        
+
+        .ripple-effect::after {
+            content: "";
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #10b981 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform .5s, opacity 1s;
+        }
+
+        .ripple-effect:active::after {
+            transform: scale(0, 0);
+            opacity: .3;
+            transition: 0s;
+        }
+
+        .text-xxs {
+            font-size: 0.65rem;
+        }
+
         /* Modal Overlay */
-        .modal-overlay { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
 
         /* Offline Banner */
-        .offline-banner { background-color: #fed7aa; color: #7c2d12; text-align: center; font-size: 0.65rem; padding: 4px 0; width: 100%; font-weight: 600; border-bottom: 1px solid #fdba74; }
+        .offline-banner {
+            background-color: #fed7aa;
+            color: #7c2d12;
+            text-align: center;
+            font-size: 0.65rem;
+            padding: 4px 0;
+            width: 100%;
+            font-weight: 600;
+            border-bottom: 1px solid #fdba74;
+        }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-emerald-200 dark:selection:bg-emerald-800 transition-colors duration-300 antialiased">
+
+<body
+    class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-emerald-200 dark:selection:bg-emerald-800 transition-colors duration-300 antialiased">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -120,44 +204,44 @@
 
         const ZIKR_DB = {
             fatiha: {
-                 tr: { t: "", m: "Hamd, Alemlerin Rabbi, Rahman, Rahim, din gününün sahibi Allah'a mahsustur..." },
-                 en: { t: "", m: "All praise is due to Allah, Lord of the worlds, The Entirely Merciful, The Especially Merciful..." },
-                 de: { t: "", m: "Alles Lob gebührt Allah, dem Herrn der Welten, dem Allerbarmer, dem Barmherzigen..." }
-             },
+                tr: { t: "", m: "Hamd, Alemlerin Rabbi, Rahman, Rahim, din gününün sahibi Allah'a mahsustur..." },
+                en: { t: "", m: "All praise is due to Allah, Lord of the worlds, The Entirely Merciful, The Especially Merciful..." },
+                de: { t: "", m: "Alles Lob gebührt Allah, dem Herrn der Welten, dem Allerbarmer, dem Barmherzigen..." }
+            },
             estag: {
-                 tr: { t: "Estağfirullah el azim ve etûbü ileyh", m: "Azim olan Allah'tan bağışlanma dilerim." },
-                 en: { t: "Astaghfirullah al-azim wa atubu ilayh", m: "I seek forgiveness from Allah, the Magnificent." },
-                 de: { t: "Astaghfirullah al-azim wa atubu ilayh", m: "Ich bitte Allah, den Allmächtigen, um Vergebung." }
-             },
+                tr: { t: "Estağfirullah el azim ve etûbü ileyh", m: "Azim olan Allah'tan bağışlanma dilerim." },
+                en: { t: "Astaghfirullah al-azim wa atubu ilayh", m: "I seek forgiveness from Allah, the Magnificent." },
+                de: { t: "Astaghfirullah al-azim wa atubu ilayh", m: "Ich bitte Allah, den Allmächtigen, um Vergebung." }
+            },
             salavatM: {
-                 tr: { t: "Allahümme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed", m: "Allah'ım! Efendimiz Muhammed'e ve Efendimiz Muhammed'in ailesine salat eyle." },
-                 en: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad", m: "O Allah, send prayers upon our Master Muhammad and upon the family of our Master Muhammad." },
-                 de: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad", m: "O Allah, segne unseren Meister Muhammad und die Familie unseres Meisters Muhammad." }
-             },
+                tr: { t: "Allahümme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed", m: "Allah'ım! Efendimiz Muhammed'e ve Efendimiz Muhammed'in ailesine salat eyle." },
+                en: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad", m: "O Allah, send prayers upon our Master Muhammad and upon the family of our Master Muhammad." },
+                de: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad", m: "O Allah, segne unseren Meister Muhammad und die Familie unseres Meisters Muhammad." }
+            },
             salavatA: {
-                 tr: { t: "Allâhümme salli alâ seyyidinâ Âdem", m: "Allah'ım! Efendimiz Adem'e salat eyle." },
-                 en: { t: "Allahumma salli ala sayyidina Adam", m: "O Allah, send prayers upon our Master Adam." },
-                 de: { t: "Allahumma salli ala sayyidina Adam", m: "O Allah, segne unseren Meister Adam." }
-             },
+                tr: { t: "Allâhümme salli alâ seyyidinâ Âdem", m: "Allah'ım! Efendimiz Adem'e salat eyle." },
+                en: { t: "Allahumma salli ala sayyidina Adam", m: "O Allah, send prayers upon our Master Adam." },
+                de: { t: "Allahumma salli ala sayyidina Adam", m: "O Allah, segne unseren Meister Adam." }
+            },
             salavatI: {
-                 tr: { t: "Allâhümme salli alâ seyyidinâ İsâ", m: "Allah'ım! Efendimiz İsa'ya salat eyle." },
-                 en: { t: "Allahumma salli ala sayyidina Isa", m: "O Allah, send prayers upon our Master Jesus." },
-                 de: { t: "Allahumma salli ala sayyidina Isa", m: "O Allah, segne unseren Meister Jesus." }
-             },
+                tr: { t: "Allâhümme salli alâ seyyidinâ İsâ", m: "Allah'ım! Efendimiz İsa'ya salat eyle." },
+                en: { t: "Allahumma salli ala sayyidina Isa", m: "O Allah, send prayers upon our Master Jesus." },
+                de: { t: "Allahumma salli ala sayyidina Isa", m: "O Allah, segne unseren Meister Jesus." }
+            },
             salavatB: {
-                 tr: { t: "Allâhumme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed ve alâ ashâbi’l-Kehfi ve ashâbi’r-Rakîmi ve ashâbi Bedrin ve melaiketi Bedri, sallallâhu teâlâ aleyhi ve sellem.", m: "Allah'ım! Efendimiz Muhammed'e, ailesine, Ashab-ı Kehf'e, Rakim sahiplerine, Bedir ashabına ve Bedir meleklerine salat eyle." },
-                 en: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad wa ala ashab il-kahfi wa ashab ir-raqimi wa ashab i-badrin wa malaikati badrin, sallallahu teala aleyhi ve sellem.", m: "O Allah, send prayers upon our Master Muhammad, his family, the Companions of the Cave, the Companions of the Inscription, the Companions of Badr and the Angels of Badr." },
-                 de: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad wa ala ashab il-kahfi wa ashab ir-raqimi wa ashab i-badrin wa malaikati badrin, sallallahu teala aleyhi ve sellem.", m: "O Allah, segne unseren Meister Muhammad, seine Familie, die Gefährten der Höhle, die Leute der Inschrift, die Gefährten von Badr und die Engel von Badr." }
-             },
+                tr: { t: "Allâhumme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed ve alâ ashâbi’l-Kehfi ve ashâbi’r-Rakîmi ve ashâbi Bedrin ve melaiketi Bedri, sallallâhu teâlâ aleyhi ve sellem.", m: "Allah'ım! Efendimiz Muhammed'e, ailesine, Ashab-ı Kehf'e, Rakim sahiplerine, Bedir ashabına ve Bedir meleklerine salat eyle." },
+                en: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad wa ala ashab il-kahfi wa ashab ir-raqimi wa ashab i-badrin wa malaikati badrin, sallallahu teala aleyhi ve sellem.", m: "O Allah, send prayers upon our Master Muhammad, his family, the Companions of the Cave, the Companions of the Inscription, the Companions of Badr and the Angels of Badr." },
+                de: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad wa ala ashab il-kahfi wa ashab ir-raqimi wa ashab i-badrin wa malaikati badrin, sallallahu teala aleyhi ve sellem.", m: "O Allah, segne unseren Meister Muhammad, seine Familie, die Gefährten der Höhle, die Leute der Inschrift, die Gefährten von Badr und die Engel von Badr." }
+            },
             kuddus: {
-                 tr: { t: "Ya Kuddüs, Ya Kuddüs", m: "Ey her türlü eksiklikten münezzeh olan." },
-                 en: { t: "Ya Quddus, Ya Quddus", m: "O The Holy, O The Pure One." },
-                 de: { t: "Ya Quddus, Ya Quddus", m: "O der Heilige, O der Reine." }
-             },
+                tr: { t: "Ya Kuddüs, Ya Kuddüs", m: "Ey her türlü eksiklikten münezzeh olan." },
+                en: { t: "Ya Quddus, Ya Quddus", m: "O The Holy, O The Pure One." },
+                de: { t: "Ya Quddus, Ya Quddus", m: "O der Heilige, O der Reine." }
+            },
             ek_list: {
-                tr: [ { id: 'kafnun', text: '51 defa "Kaf" "Nun" yaz', sub: "", arabic: "ق ن" }, { id: 'besmele_full', text: "Besmele zikri (10 dakika)", sub: "Bismillah - Bismirrahman - Bismirrahim - Bismillahirrahman - Bismillahirrahim - Bismirrahmanirrahim - Bismillahirrahmanirrahim" } ],
-                en: [ { id: 'kafnun', text: 'Write "Kaf" "Nun" 51 times', sub: "", arabic: "ق ن" }, { id: 'besmele_full', text: "Basmala Dhikr (10 minutes)", sub: "Bismillah - Bismirrahman - Bismirrahim - Bismillahirrahman - Bismillahirrahim - Bismirrahmanirrahim - Bismillahirrahmanirrahim" } ],
-                de: [ { id: 'kafnun', text: 'Schreibe "Kaf" "Nun" 51 mal', sub: "", arabic: "ق ن" }, { id: 'besmele_full', text: "Basmala Dhikr (10 Minuten)", sub: "Bismillah - Bismirrahman - Bismirrahim - Bismillahirrahman - Bismillahirrahim - Bismirrahmanirrahim - Bismillahirrahmanirrahim" } ]
+                tr: [{ id: 'kafnun', text: '51 defa "Kaf" "Nun" yaz', sub: "", arabic: "ق ن" }, { id: 'besmele_full', text: "Besmele zikri (10 dakika)", sub: "Bismillah - Bismirrahman - Bismirrahim - Bismillahirrahman - Bismillahirrahim - Bismirrahmanirrahim - Bismillahirrahmanirrahim" }],
+                en: [{ id: 'kafnun', text: 'Write "Kaf" "Nun" 51 times', sub: "", arabic: "ق ن" }, { id: 'besmele_full', text: "Basmala Dhikr (10 minutes)", sub: "Bismillah - Bismirrahman - Bismirrahim - Bismillahirrahman - Bismillahirrahim - Bismirrahmanirrahim - Bismillahirrahmanirrahim" }],
+                de: [{ id: 'kafnun', text: 'Schreibe "Kaf" "Nun" 51 mal', sub: "", arabic: "ق ن" }, { id: 'besmele_full', text: "Basmala Dhikr (10 Minuten)", sub: "Bismillah - Bismirrahman - Bismirrahim - Bismillahirrahman - Bismillahirrahim - Bismirrahmanirrahim - Bismillahirrahmanirrahim" }]
             }
         };
 
@@ -170,11 +254,11 @@
                 { title: "İpuçları 💡", content: "<b>Bildirimler:</b> Vakit girmeden 30 dakika önce haber verecek şekilde planlandı. Ama istenirse kapatılabilir. Eğer bir önceki vaktin tesbihatını bitirmediysek bunu da bize hatırlatacak şekilde programlandı.<br/><b>Uygulama Olarak İndirme:</b> Siteyi açtığımız tarayıcıda (browser, mesela Chrome, Edge, Safari gibi) Ayarlardan 'Ana sayfaya ekle' veya 'Ana menüye ekle' tuşuna basarsak telefonumuza uygulama gibi iner.<br/><br/>Güle güle kullanalım hayırlara güzelliklere vesile olsun inşallah!" }
             ],
             en: [
-                 { title: "1. Main Screen: Times", content: "This is the screen that greets you when you first open the app.<br/><b>Time Counter:</b> In the green area at the top, you can see how much time is left until the next prayer time and your current location.<br/><b>Prayer Times:</b> All prayer times for the day are listed.<br/><b>Special Times:</b> Below the list, Tahajjud (Time of Acceptance) and Karaha (Disliked) times are automatically calculated based on location and date." },
-                 { title: "2. Dhikr & Tasbeeh", content: "Accessible by clicking the <b>Dhikr</b> icon from the bottom menu.<br/><b>Mode Selection:</b> Choose from Morning, Asr, Night, Daily, or Personal modes at the top.<br/><b>Timed Dhikrs:</b> Specific dhikrs for Morning, Asr, and Night. The Daily menu has tasks for the day.<br/><b>Counting:</b> Tap the large circle to advance the counter. It automatically moves to the next dhikr when completed. Some require manual progression.<br/><b>Personal Dhikr:</b> Add your own dhikrs (counted, timed, or both) in the \"Personal\" tab.<br/><b>Resetting:</b> The small reset button resets only the current dhikr. \"Restart\" resets the entire session (requires confirmation)." },
-                 { title: "3. Quran Reading", content: "Opens by clicking the <b>Quran</b> icon.<br/><b>Random Page:</b> Brings a random Quran page (Arabic, Transliteration, Meaning) every time you open it or click \"Load\".<br/><b>Next:</b> Click the button at the bottom to proceed to a new page." },
-                 { title: "4. Settings & Offline Use", content: "Opens by clicking the <b>Settings</b> icon.<br/><b>Location:</b> Fix your location using \"Find\" (green arrow) or by searching manually.<br/><b>Sound & Vibration:</b> Toggle sound and vibration for dhikr.<br/><b>🌟 Download Offline Content (IMPORTANT):</b> Downloads prayer times for 2 months and 50 Quran pages for offline use. <b>Offline Mode</b> banner appears when there is no internet. Avoid refreshing the page in this mode.<br/><b>Language & Font:</b> Adjust text size and change language (TR, EN, DE)." },
-                 { title: "Tips 💡", content: "<b>Notifications:</b> Alerts 30 mins before prayer time. Can be disabled. Also reminds you if previous dhikrs aren't finished.<br/><b>Install as App:</b> Use 'Add to Home Screen' in your browser settings to install as an app.<br/><br/>May it be beneficial for you!" }
+                { title: "1. Main Screen: Times", content: "This is the screen that greets you when you first open the app.<br/><b>Time Counter:</b> In the green area at the top, you can see how much time is left until the next prayer time and your current location.<br/><b>Prayer Times:</b> All prayer times for the day are listed.<br/><b>Special Times:</b> Below the list, Tahajjud (Time of Acceptance) and Karaha (Disliked) times are automatically calculated based on location and date." },
+                { title: "2. Dhikr & Tasbeeh", content: "Accessible by clicking the <b>Dhikr</b> icon from the bottom menu.<br/><b>Mode Selection:</b> Choose from Morning, Asr, Night, Daily, or Personal modes at the top.<br/><b>Timed Dhikrs:</b> Specific dhikrs for Morning, Asr, and Night. The Daily menu has tasks for the day.<br/><b>Counting:</b> Tap the large circle to advance the counter. It automatically moves to the next dhikr when completed. Some require manual progression.<br/><b>Personal Dhikr:</b> Add your own dhikrs (counted, timed, or both) in the \"Personal\" tab.<br/><b>Resetting:</b> The small reset button resets only the current dhikr. \"Restart\" resets the entire session (requires confirmation)." },
+                { title: "3. Quran Reading", content: "Opens by clicking the <b>Quran</b> icon.<br/><b>Random Page:</b> Brings a random Quran page (Arabic, Transliteration, Meaning) every time you open it or click \"Load\".<br/><b>Next:</b> Click the button at the bottom to proceed to a new page." },
+                { title: "4. Settings & Offline Use", content: "Opens by clicking the <b>Settings</b> icon.<br/><b>Location:</b> Fix your location using \"Find\" (green arrow) or by searching manually.<br/><b>Sound & Vibration:</b> Toggle sound and vibration for dhikr.<br/><b>🌟 Download Offline Content (IMPORTANT):</b> Downloads prayer times for 2 months and 50 Quran pages for offline use. <b>Offline Mode</b> banner appears when there is no internet. Avoid refreshing the page in this mode.<br/><b>Language & Font:</b> Adjust text size and change language (TR, EN, DE)." },
+                { title: "Tips 💡", content: "<b>Notifications:</b> Alerts 30 mins before prayer time. Can be disabled. Also reminds you if previous dhikrs aren't finished.<br/><b>Install as App:</b> Use 'Add to Home Screen' in your browser settings to install as an app.<br/><br/>May it be beneficial for you!" }
             ],
             de: [
                 { title: "1. Hauptbildschirm: Zeiten", content: "Dies ist der Startbildschirm der App.<br/><b>Zeit-Zähler:</b> Im grünen Bereich oben sehen Sie die verbleibende Zeit bis zum nächsten Gebet und Ihren Standort.<br/><b>Gebetszeiten:</b> Alle Gebetszeiten des Tages werden aufgelistet.<br/><b>Spezielle Zeiten:</b> Tahajjud und Kerahat Zeiten werden automatisch berechnet." },
@@ -187,10 +271,15 @@
 
 
         // --- 0. HELPER UTILS ---
-        
+
         const getSecureRandomNumber = (min, max) => {
             // Using Math.random() directly to avoid "AES key data" errors from browser extensions
             return Math.floor(Math.random() * (max - min + 1)) + min;
+        };
+
+        const getLocalTodayDate = () => {
+            const d = new Date();
+            return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
         };
 
         const generateManifest = (appName) => {
@@ -240,10 +329,10 @@
                             );
                         });
                     `;
-                    const blob = new Blob([swCode], {type: 'text/javascript'});
+                    const blob = new Blob([swCode], { type: 'text/javascript' });
                     const url = URL.createObjectURL(blob);
                     await navigator.serviceWorker.register(url).catch(err => {
-                         console.warn("Service Worker registration failed (common in preview/iframe):", err.message);
+                        console.warn("Service Worker registration failed (common in preview/iframe):", err.message);
                     });
                 } catch (e) {
                     console.warn('SW Setup Error:', e);
@@ -254,14 +343,14 @@
         const sendNotification = async (title, options = {}) => {
             if (!("Notification" in window) || Notification.permission !== "granted") return;
             const notifOptions = { icon: 'https://cdn-icons-png.flaticon.com/512/5533/5533023.png', ...options };
-            
+
             try {
                 // Try Service Worker first (better for mobile)
                 if ('serviceWorker' in navigator) {
                     const reg = await navigator.serviceWorker.getRegistration();
-                    if (reg && reg.active) { 
-                        await reg.showNotification(title, notifOptions); 
-                        return; 
+                    if (reg && reg.active) {
+                        await reg.showNotification(title, notifOptions);
+                        return;
                     }
                 }
             } catch (e) {
@@ -269,9 +358,9 @@
             }
 
             // Fallback to standard Notification API
-            try { 
-                new Notification(title, notifOptions); 
-            } catch(e2) {
+            try {
+                new Notification(title, notifOptions);
+            } catch (e2) {
                 // console.warn("Notification API failed", e2);
             }
         };
@@ -289,33 +378,33 @@
 
         const Icon = ({ path, size = 20, className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{path}</svg>;
         const ICONS = {
-            MapPin: <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></>,
-            Settings: <><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1-1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></>,
-            Moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>,
-            Sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></>,
-            BookOpen: <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>,
-            CheckCircle: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></>,
-            RefreshCw: <><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></>,
-            Globe: <><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></>,
-            Navigation: <polygon points="3 11 22 2 13 21 11 13 3 11"/>,
-            Clock: <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
-            Menu: <><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></>,
-            AlertTriangle: <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></>,
-            ChevronRight: <path d="m9 18 6-6-6-6"/>,
-            Lock: <><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
-            Edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
-            Bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>,
+            MapPin: <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></>,
+            Settings: <><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1-1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></>,
+            Moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />,
+            Sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></>,
+            BookOpen: <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></>,
+            CheckCircle: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="m9 11 3 3L22 4" /></>,
+            RefreshCw: <><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></>,
+            Globe: <><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" /></>,
+            Navigation: <polygon points="3 11 22 2 13 21 11 13 3 11" />,
+            Clock: <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>,
+            Menu: <><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></>,
+            AlertTriangle: <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></>,
+            ChevronRight: <path d="m9 18 6-6-6-6" />,
+            Lock: <><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></>,
+            Edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></>,
+            Bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></>,
             RotateCcw: <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 16" />,
-            Type: <><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></>,
+            Type: <><polyline points="4 7 4 4 20 4 20 7" /><line x1="9" y1="20" x2="15" y2="20" /><line x1="12" y1="4" x2="12" y2="20" /></>,
             Volume2: <><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></>,
             Vibrate: <path d="M6 8v8M18 8v8M2 10v4M22 10v4M10 4v16M14 6v12" />,
-            HelpCircle: <><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></>,
+            HelpCircle: <><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></>,
             Trash2: <><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></>,
             CheckSquare: <><polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></>,
             Plus: <><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></>,
             X: <><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>,
-            Download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
-            Info: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>
+            Download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></>,
+            Info: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></>
         };
 
         const { useState, useEffect, useCallback, useMemo, memo, useReducer, useRef, useContext, createContext } = React;
@@ -323,8 +412,8 @@
         // --- 3. SERVICES ---
         class StorageService {
             static get(key, fallback = null) { try { const item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; } }
-            static set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
-            static remove(key) { try { localStorage.removeItem(key); } catch (e) {} }
+            static set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { } }
+            static remove(key) { try { localStorage.removeItem(key); } catch (e) { } }
         }
 
         class CacheService {
@@ -342,7 +431,7 @@
                     osc.connect(gain); gain.connect(this.ctx.destination);
                     if (type === 'tick') { osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.05); gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05); osc.start(now); osc.stop(now + 0.05); }
                     else if (type === 'finish') { osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.1, now + 0.05); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8); osc.start(now); osc.stop(now + 0.8); }
-                } catch(e) {}
+                } catch (e) { }
             }
         }
 
@@ -365,9 +454,9 @@
                 const existingPool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL);
                 if (!existingPool || existingPool.length === 0) {
                     const newPool = [];
-                    while(newPool.length < 50) { // Increased to 50
+                    while (newPool.length < 50) { // Increased to 50
                         const r = Math.floor(Math.random() * 604) + 1;
-                        if(!newPool.includes(r)) newPool.push(r);
+                        if (!newPool.includes(r)) newPool.push(r);
                     }
                     StorageService.set(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL, newPool);
                 }
@@ -396,7 +485,7 @@
 
         // --- 5. CUSTOM HOOKS ---
         const useTime = () => { const [time, setTime] = useState(new Date()); useEffect(() => { const timer = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(timer); }, []); return time; };
-        
+
         const useGeolocation = () => {
             const { t } = useApp();
             const [state, setState] = useState(() => ({
@@ -406,7 +495,7 @@
             }));
             const [suggestions, setSuggestions] = useState([]);
             const update = useCallback((part) => setState(s => ({ ...s, ...part })), []);
-            
+
             const getUserLocation = useCallback(async (isManual = false) => {
                 if (!navigator.geolocation) return;
                 update({ loading: true });
@@ -425,15 +514,15 @@
 
                     if (pos) {
                         const newCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                        StorageService.set(CONFIG.STORAGE_KEYS.COORDS, newCoords); 
+                        StorageService.set(CONFIG.STORAGE_KEYS.COORDS, newCoords);
                         update({ coords: newCoords });
-                        
+
                         let name = t('location');
-                        try { 
-                            const data = await ApiService.fetchJson(`${CONFIG.API.NOMINATIM}/reverse?format=json&lat=${newCoords.lat}&lon=${newCoords.lng}`); 
-                            name = data.address.city || data.address.town || data.address.district || "Konum"; 
-                            StorageService.set(CONFIG.STORAGE_KEYS.LOC_NAME, name); 
-                        } catch(e) { name = `${newCoords.lat.toFixed(2)}, ${newCoords.lng.toFixed(2)}`; }
+                        try {
+                            const data = await ApiService.fetchJson(`${CONFIG.API.NOMINATIM}/reverse?format=json&lat=${newCoords.lat}&lon=${newCoords.lng}`);
+                            name = data.address.city || data.address.town || data.address.district || "Konum";
+                            StorageService.set(CONFIG.STORAGE_KEYS.LOC_NAME, name);
+                        } catch (e) { name = `${newCoords.lat.toFixed(2)}, ${newCoords.lng.toFixed(2)}`; }
                         update({ locationName: name, loading: false });
                     } else {
                         update({ loading: false });
@@ -447,12 +536,12 @@
 
             const searchLocation = useCallback(async (query) => {
                 if (!query) return; update({ loading: true });
-                try { const data = await ApiService.fetchJson(`${CONFIG.API.NOMINATIM}/search?format=json&q=${query}`); if (data.length > 0) { const p = data[0], nc = { lat: parseFloat(p.lat), lng: parseFloat(p.lon) }, name = p.display_name.split(',')[0]; update({ coords: nc, locationName: name, loading: false }); StorageService.set(CONFIG.STORAGE_KEYS.COORDS, nc); StorageService.set(CONFIG.STORAGE_KEYS.LOC_NAME, name); setSuggestions([]); } } catch(e) {} update({ loading: false });
+                try { const data = await ApiService.fetchJson(`${CONFIG.API.NOMINATIM}/search?format=json&q=${query}`); if (data.length > 0) { const p = data[0], nc = { lat: parseFloat(p.lat), lng: parseFloat(p.lon) }, name = p.display_name.split(',')[0]; update({ coords: nc, locationName: name, loading: false }); StorageService.set(CONFIG.STORAGE_KEYS.COORDS, nc); StorageService.set(CONFIG.STORAGE_KEYS.LOC_NAME, name); setSuggestions([]); } } catch (e) { } update({ loading: false });
             }, [update]);
-            
-            const liveSearch = useCallback(async (query) => { if (query.length < 3) { setSuggestions([]); return; } try { const data = await ApiService.fetchJson(`${CONFIG.API.NOMINATIM}/search?format=json&q=${query}&limit=5`); setSuggestions(data); } catch(e) {} }, []);
-            
-            useEffect(() => { 
+
+            const liveSearch = useCallback(async (query) => { if (query.length < 3) { setSuggestions([]); return; } try { const data = await ApiService.fetchJson(`${CONFIG.API.NOMINATIM}/search?format=json&q=${query}&limit=5`); setSuggestions(data); } catch (e) { } }, []);
+
+            useEffect(() => {
                 if (!state.coords) {
                     getUserLocation(false).catch(err => console.log("Geo init error handled", err));
                 }
@@ -462,7 +551,7 @@
 
         const usePrayerTimes = (coords) => {
             const { settings } = useApp();
-            const [data, setData] = useState(null); 
+            const [data, setData] = useState(null);
             const [loading, setLoading] = useState(false);
             useEffect(() => {
                 if (!coords) return;
@@ -470,33 +559,33 @@
                 const year = date.getFullYear();
                 const month = date.getMonth() + 1;
                 const cacheKey = `prayer_calendar_${year}_${month}_${coords.lat.toFixed(2)}_${coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
-                const cached = CacheService.get(cacheKey); 
-                if(cached) {
+                const cached = CacheService.get(cacheKey);
+                if (cached) {
                     const todayDay = date.getDate();
                     const todayData = cached.find(d => parseInt(d.date.gregorian.day) === todayDay);
-                    if(todayData) setData({ timings: todayData.timings, date: todayData.date });
-                    return; 
+                    if (todayData) setData({ timings: todayData.timings, date: todayData.date });
+                    return;
                 }
-                const fetchTimes = async () => { 
-                    setLoading(true); 
-                    try { 
+                const fetchTimes = async () => {
+                    setLoading(true);
+                    try {
                         const mId = settings.methodId;
                         const sP = settings.asrMethod === 1 ? '&school=1' : '&school=0';
                         // Fix: Aladhan ignores school=1 for method=13 (Diyanet). 
                         // Use Method 3 (MWL) as proxy for Diyanet angles when Hanafi is selected.
                         const effectiveMethod = (mId === 13 && settings.asrMethod === 1) ? 3 : mId;
-                        
-                        const json = await ApiService.fetchJson(`${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${coords.lat}&longitude=${coords.lng}&method=${effectiveMethod}${sP}`); 
-                        if (json.code === 200 && Array.isArray(json.data)) { 
-                            CacheService.set(cacheKey, json.data, 60*24*30);
+
+                        const json = await ApiService.fetchJson(`${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${coords.lat}&longitude=${coords.lng}&method=${effectiveMethod}${sP}`);
+                        if (json.code === 200 && Array.isArray(json.data)) {
+                            CacheService.set(cacheKey, json.data, 60 * 24 * 30);
                             const todayDay = date.getDate();
                             const todayData = json.data.find(d => parseInt(d.date.gregorian.day) === todayDay);
-                            if(todayData) setData({ timings: todayData.timings, date: todayData.date });
-                        } 
-                    } catch (e) {} 
-                    setLoading(false); 
-                }; 
-                fetchTimes().catch(() => {});
+                            if (todayData) setData({ timings: todayData.timings, date: todayData.date });
+                        }
+                    } catch (e) { }
+                    setLoading(false);
+                };
+                fetchTimes().catch(() => { });
             }, [coords, settings.methodId, settings.asrMethod]);
             return { data, loading };
         };
@@ -507,9 +596,9 @@
 
             const generatePool = (preserve = []) => {
                 const newPool = [...preserve];
-                while(newPool.length < 50) {
+                while (newPool.length < 50) {
                     const r = getSecureRandomNumber(1, 604);
-                    if(!newPool.includes(r)) newPool.push(r);
+                    if (!newPool.includes(r)) newPool.push(r);
                 }
                 return newPool;
             };
@@ -517,16 +606,16 @@
             const downloadPages = async (pool) => {
                 const languages = ['tr', 'en', 'de'];
                 let count = 0;
-                
+
                 for (const pageNum of pool) {
                     for (const l of languages) {
-                         const cacheKey = `page_${pageNum}_${l}`;
-                         if (CacheService.get(cacheKey)) continue;
+                        const cacheKey = `page_${pageNum}_${l}`;
+                        if (CacheService.get(cacheKey)) continue;
 
-                         const edition = ApiService.getTranslationEdition(l);
-                         const transEdition = ApiService.getTransliterationEdition(l);
-                         
-                         try {
+                        const edition = ApiService.getTranslationEdition(l);
+                        const transEdition = ApiService.getTransliterationEdition(l);
+
+                        try {
                             const [p1, p2, p3] = await Promise.all([
                                 ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${pageNum}/quran-uthmani`),
                                 ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${pageNum}/${edition}`),
@@ -542,15 +631,15 @@
                                 }));
                                 CacheService.set(cacheKey, combined, null);
                             }
-                         } catch (e) {
-                             console.warn(`Error downloading page ${pageNum} for ${l}`, e);
-                         }
+                        } catch (e) {
+                            console.warn(`Error downloading page ${pageNum} for ${l}`, e);
+                        }
                     }
                     count++;
                     setProgress(`${count}/50`);
                 }
             };
-            
+
             const downloadSpecialReadings = async () => {
                 const languages = ['tr', 'en', 'de'];
                 const types = [
@@ -598,13 +687,13 @@
                 const date = new Date();
                 const year = date.getFullYear();
                 const month = date.getMonth() + 1;
-                
+
                 try {
                     const url1 = `${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${locationHook.coords.lat}&longitude=${locationHook.coords.lng}${queryParams}`;
                     const json1 = await ApiService.fetchJson(url1);
                     if (json1.code === 200 && Array.isArray(json1.data)) {
-                         const specificCacheKey1 = `prayer_calendar_${year}_${month}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
-                         CacheService.set(specificCacheKey1, json1.data, 60*24*30);
+                        const specificCacheKey1 = `prayer_calendar_${year}_${month}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
+                        CacheService.set(specificCacheKey1, json1.data, 60 * 24 * 30);
                     }
 
                     const nextMonth = month === 12 ? 1 : month + 1;
@@ -612,33 +701,33 @@
                     const url2 = `${CONFIG.API.ALADHAN}/calendar/${nextYear}/${nextMonth}?latitude=${locationHook.coords.lat}&longitude=${locationHook.coords.lng}${queryParams}`;
                     const json2 = await ApiService.fetchJson(url2);
                     if (json2.code === 200 && Array.isArray(json2.data)) {
-                         const specificCacheKey2 = `prayer_calendar_${nextYear}_${nextMonth}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
-                         CacheService.set(specificCacheKey2, json2.data, 60*24*30);
+                        const specificCacheKey2 = `prayer_calendar_${nextYear}_${nextMonth}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
+                        CacheService.set(specificCacheKey2, json2.data, 60 * 24 * 30);
                     }
-                } catch(e) { console.warn("Prayer times download failed", e); }
+                } catch (e) { console.warn("Prayer times download failed", e); }
             };
 
             const refreshContent = async (isAuto = false) => {
                 if (!navigator.onLine) return;
                 setDownloading(true);
-                
+
                 const today = new Date().toISOString().split('T')[0];
                 const activeIkindiPage = StorageService.get(`tasbeeh_read_page_${today}`);
                 const activeQuranPage = StorageService.get('last_quran_page');
-                
+
                 const preserve = [];
                 if (activeIkindiPage) preserve.push(parseInt(activeIkindiPage));
                 if (activeQuranPage) preserve.push(parseInt(activeQuranPage));
-                
+
                 const newPool = generatePool(preserve);
                 StorageService.set(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL, newPool);
                 StorageService.set(CONFIG.STORAGE_KEYS.LAST_POOL_UPDATE, today);
 
-                await downloadPages(newPool); 
+                await downloadPages(newPool);
                 await downloadSpecialReadings();
                 await downloadPrayerTimes();
 
-                if(!isAuto) alert("İndirme Tamamlandı / Download Complete");
+                if (!isAuto) alert("İndirme Tamamlandı / Download Complete");
                 setDownloading(false);
             };
 
@@ -667,39 +756,39 @@
         const useZikrReminder = (prayerData, currentTime) => {
             const { t } = useApp();
             const [notifSentFor, setNotifSentFor] = useState(null);
-            
+
             useEffect(() => {
                 if (!prayerData || !("Notification" in window) || Notification.permission !== "granted") return;
-                
+
                 const timings = prayerData.timings;
                 const now = currentTime.getTime();
                 const getP = (str) => { const [h, m] = str.split(' ')[0].split(':').map(Number); const d = new Date(); d.setHours(h, m, 0, 0); return d.getTime(); };
                 const dhuhr = getP(timings.Dhuhr); const asr = getP(timings.Asr); const maghrib = getP(timings.Maghrib); const isha = getP(timings.Isha);
-                
+
                 const isModeFinished = (mode) => { const s = StorageService.get(`tasbeeh_status_${mode}`); return s && s.date === new Date().toISOString().split('T')[0] && s.finished; };
-                
+
                 const checkAndSend = (targetTime, targetName, prevModeToCheck) => {
                     const diff = targetTime - now;
                     if (diff <= 30 * 60 * 1000) {
                         const key = `${new Date().toISOString().split('T')[0]}_${targetName}`;
                         const sent = StorageService.get(`notif_sent_${key}`);
-                        
+
                         if (!sent && notifSentFor !== targetName) {
                             let bodyText = `${t('notifTimeLeft')} ${targetName}.`;
                             if (prevModeToCheck && !isModeFinished(prevModeToCheck)) bodyText += ` ${t('notifUnfinished')}`;
-                            
+
                             sendNotification(t('appName'), { body: bodyText, tag: key });
                             setNotifSentFor(targetName);
                             StorageService.set(`notif_sent_${key}`, true);
                         }
                     }
                 };
-                
+
                 if (now < dhuhr) checkAndSend(dhuhr, t('dhuhr'), 'morning');
                 if (now < maghrib) checkAndSend(maghrib, t('maghrib'), 'ikindi');
                 if (now < asr) checkAndSend(asr, t('asr'), null);
                 if (now < isha) checkAndSend(isha, t('isha'), null);
-                
+
             }, [currentTime, prayerData, notifSentFor, t]);
         };
 
@@ -718,7 +807,7 @@
                     <div className="bg-white dark:bg-slate-850 w-full max-w-sm rounded-2xl p-6 shadow-2xl border dark:border-slate-700 animate-fade-in max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold dark:text-slate-100">{t('aboutTitle')}</h3>
-                            <button onClick={onClose}><Icon path={ICONS.X} size={20}/></button>
+                            <button onClick={onClose}><Icon path={ICONS.X} size={20} /></button>
                         </div>
                         {HELP_CONTENT[useApp().lang].map((section, idx) => (
                             <div key={idx} className="text-sm space-y-2 mb-4 text-slate-600 dark:text-slate-300">
@@ -732,7 +821,7 @@
         };
 
         const LoadingView = memo(() => (<div className="flex justify-center items-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 dark:border-emerald-400"></div></div>));
-        
+
         const Header = memo(({ currentTime }) => {
             const { t, isDarkMode, toggleTheme, fs } = useApp();
             const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -769,7 +858,7 @@
                     <div className="grid grid-cols-4 w-full h-16 max-w-md mx-auto">
                         {[{ id: 'times', i: ICONS.Clock }, { id: 'tasbeeh', i: ICONS.RefreshCw }, { id: 'quran', i: ICONS.BookOpen }, { id: 'settings', i: ICONS.Menu }].map(b => (
                             <button key={b.id} onClick={() => { if (active !== b.id) { window.history.pushState({ tab: b.id }, '', `#${b.id}`); setActive(b.id); } }} className={`flex flex-col items-center justify-center space-y-0.5 transition w-full h-full ${active === b.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-600'}`}>
-                                <div className={`transition-transform duration-200 ${active === b.id ? '-translate-y-1' : ''}`}><Icon path={b.i} size={20}/></div>
+                                <div className={`transition-transform duration-200 ${active === b.id ? '-translate-y-1' : ''}`}><Icon path={b.i} size={20} /></div>
                                 <span className="text-[9px] font-medium max-w-[50px] truncate" style={fs(0.6)}>{t(b.label || b.id)}</span>
                             </button>
                         ))}
@@ -782,13 +871,13 @@
         const ResetBtn = memo(({ onClick }) => { const { t, fs } = useApp(); return (<button onClick={(e) => { e.stopPropagation(); onClick(); }} className="px-2 py-1 rounded-md bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition flex items-center space-x-1 border border-orange-100 dark:border-orange-900/30" title={t('resetStep')}><Icon path={ICONS.RotateCcw} size={14} /><span className="text-xs font-bold" style={fs(0.75)}>{t('reset')}</span></button>); });
 
         // --- COMPONENT CARDS (Defined BEFORE Views) ---
-        const ReadingCard = memo(({ current, next, cooldown }) => { const { t, settings, fs } = useApp(); return (<div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center text-center shadow-sm transition-colors duration-300 h-full justify-center"><Icon path={ICONS.BookOpen} size={32} className="text-emerald-500 mb-2"/><h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1" style={fs(1.125)}>{current.title}</h3><p className="text-slate-600 dark:text-slate-400 mb-3 text-xs" style={fs(0.75)}>{current.text}</p><button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold transition text-sm ${cooldown ? 'bg-slate-300 dark:bg-slate-600' : 'bg-emerald-600 text-white'}`}>{cooldown ? <Icon path={ICONS.Lock} size={16} className="mx-auto"/> : <span style={fs(0.875)}>{t('completed')}</span>}</button></div>); });
-        
+        const ReadingCard = memo(({ current, next, cooldown }) => { const { t, settings, fs } = useApp(); return (<div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center text-center shadow-sm transition-colors duration-300 h-full justify-center"><Icon path={ICONS.BookOpen} size={32} className="text-emerald-500 mb-2" /><h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1" style={fs(1.125)}>{current.title}</h3><p className="text-slate-600 dark:text-slate-400 mb-3 text-xs" style={fs(0.75)}>{current.text}</p><button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold transition text-sm ${cooldown ? 'bg-slate-300 dark:bg-slate-600' : 'bg-emerald-600 text-white'}`}>{cooldown ? <Icon path={ICONS.Lock} size={16} className="mx-auto" /> : <span style={fs(0.875)}>{t('completed')}</span>}</button></div>); });
+
         const ChecklistCard = memo(({ current, onToggleItem, checkedState }) => {
             const { t, fs } = useApp(); const list = current.list || [];
             return (
                 <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col h-full transition-colors duration-300">
-                    <div className="flex justify-between items-center mb-4 text-xs shrink-0 pb-2 border-b border-slate-100 dark:border-slate-800"><div className="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.CheckSquare} size={18}/><span style={fs(1)}>{current.title}</span></div></div>
+                    <div className="flex justify-between items-center mb-4 text-xs shrink-0 pb-2 border-b border-slate-100 dark:border-slate-800"><div className="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.CheckSquare} size={18} /><span style={fs(1)}>{current.title}</span></div></div>
                     <div className="flex-1 overflow-y-auto mb-4 no-scrollbar"><div className="space-y-2 p-1">{list.map((item, idx) => { const isChecked = !!checkedState[idx]; return (<div key={idx} onClick={() => onToggleItem(idx)} className={`flex items-center space-x-3 p-3 rounded-xl transition-all cursor-pointer select-none border ${isChecked ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/50' : 'bg-slate-50 dark:bg-slate-800/50 border-transparent hover:bg-slate-100 dark:hover:bg-slate-800'}`}><div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-colors shrink-0 ${isChecked ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-transparent'}`}><Icon path={ICONS.CheckSquare} size={14} /></div><div className="flex-1 min-w-0"><div className="flex justify-between items-baseline"><p className={`text-sm font-semibold truncate ${isChecked ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200'}`} style={fs(0.9)}>{item.text}</p>{item.arabic && <span className="font-serif text-lg text-emerald-600 dark:text-emerald-500 ml-2" dir="rtl">{item.arabic}</span>}</div>{item.sub && <p className={`text-xs whitespace-normal ${isChecked ? 'text-emerald-600/70 dark:text-emerald-500/70' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.7)}>{item.sub}</p>}</div></div>); })}</div></div>
                 </div>
             );
@@ -819,15 +908,15 @@
             return (
                 <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col transition-colors duration-300 h-full">
                     <div className="flex justify-between items-center mb-2 text-xs shrink-0">
-                        <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.BookOpen} size={16}/><span style={fs(1)}>{current.title}</span></div>
+                        <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.BookOpen} size={16} /><span style={fs(1)}>{current.title}</span></div>
                         <div className="flex items-center space-x-2"><span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono" style={fs(0.75)}>{Math.min(count + 1, current.target)}/{current.target}</span><ResetBtn onClick={resetLocal} /></div>
                     </div>
                     <div className="flex-1 overflow-y-auto mb-2 no-scrollbar">
                         {current.type === 'amenarresulu' ? (<div className="space-y-4 p-2"><div className="text-right font-serif text-xl text-emerald-800 dark:text-emerald-400 mb-2 leading-loose" dir="rtl" style={fs(1.5)}>{data.map((d, i) => <span key={i}>{d.arabic} <span className="text-sm border border-current rounded-full w-6 h-6 inline-flex items-center justify-center mx-1">{d.number}</span></span>)}</div><div className="text-slate-800 dark:text-slate-200 font-medium text-base mb-1 leading-relaxed"><h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1 uppercase tracking-wider" style={fs(0.75)}>{t('turkishTrans')}</h4><p style={fs(1)}>{data.map(d => d.trans).join(' ')}</p></div><div className="text-slate-600 dark:text-slate-400 text-base italic leading-relaxed"><h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1 uppercase tracking-wider" style={fs(0.75)}>{t('turkishMean')}</h4><p style={fs(1)}>{data.map(d => d.mean).join(' ')}</p></div></div>)
-                        : (<><p className="text-right font-serif text-2xl text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl" style={fs(1.5)}>{item.arabic}</p><p className="text-slate-800 dark:text-slate-200 font-semibold text-sm mb-1 leading-relaxed" style={fs(0.875)}>{item.trans}</p><p className="text-slate-600 dark:text-slate-400 italic text-xs" style={fs(0.75)}>{item.mean}</p></>)}
+                            : (<><p className="text-right font-serif text-2xl text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl" style={fs(1.5)}>{item.arabic}</p><p className="text-slate-800 dark:text-slate-200 font-semibold text-sm mb-1 leading-relaxed" style={fs(0.875)}>{item.trans}</p><p className="text-slate-600 dark:text-slate-400 italic text-xs" style={fs(0.75)}>{item.mean}</p></>)}
                     </div>
                     <div className="shrink-0 h-16 flex items-center justify-center border-t border-slate-100 dark:border-slate-800 pt-2">
-                        <button onClick={isLast ? next : tap} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500' : 'bg-emerald-600 text-white active:scale-95'}`}>{cooldown ? <Icon path={ICONS.Lock} size={16}/> : <span style={fs(0.875)}>{isLast ? t('completed') : (current.type === 'amenarresulu' ? t('tapToCount') : t('nextAyah'))}</span>}</button>
+                        <button onClick={isLast ? next : tap} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500' : 'bg-emerald-600 text-white active:scale-95'}`}>{cooldown ? <Icon path={ICONS.Lock} size={16} /> : <span style={fs(0.875)}>{isLast ? t('completed') : (current.type === 'amenarresulu' ? t('tapToCount') : t('nextAyah'))}</span>}</button>
                     </div>
                 </div>
             );
@@ -840,12 +929,12 @@
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(false);
             const [pageNumber, setPageNumber] = useState(0);
-            
+
             const load = useCallback(async () => {
                 setLoading(true); setError(false);
                 const today = new Date().toISOString().split('T')[0];
                 const key = `tasbeeh_read_page_${today}`;
-                
+
                 const getFromPool = () => {
                     const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
                     const lastPage = StorageService.get('last_picked_asr_page');
@@ -877,15 +966,15 @@
                     const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
                     // Find all pages that are actually cached
                     const validPages = pool.filter(p => CacheService.get(`page_${p}_${lang}`));
-                    
+
                     if (validPages.length > 0) {
                         // Avoid immediate repeat if possible
                         const lastPage = parseInt(StorageService.get('last_picked_asr_page') || '0');
                         const candidates = validPages.filter(p => p !== lastPage);
                         const effectivePool = candidates.length > 0 ? candidates : validPages;
-                        
+
                         const randomPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
-                        
+
                         // Retrieve content again (it's fast/sync)
                         const c = CacheService.get(`page_${randomPage}_${lang}`);
                         setAyahs(c);
@@ -944,22 +1033,22 @@
             }, [lang]);
 
             useEffect(() => { load(); }, [load]);
-            
+
             const handleScroll = (e) => {
                 const { scrollTop, scrollHeight, clientHeight } = e.target;
                 setShowHint(scrollHeight - scrollTop > clientHeight + 20);
             };
-            
+
             if (error) return <div className="bg-white dark:bg-slate-850 border border-red-200 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-full"><p className="text-red-500 mb-2 text-xs">{t('connectionError')}</p><button onClick={load} className="bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded text-xs text-slate-600 dark:text-slate-300">{t('tryAgain')}</button></div>;
             if (loading || !ayahs) return <LoadingView />;
             return (
                 <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col h-full transition-colors duration-300">
-                    <div className="flex justify-between items-center mb-2 text-xs shrink-0"><div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.BookOpen} size={16}/><span style={fs(1)}>{current.title}</span></div><span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono" style={fs(0.75)}>{t('pageInfo')} {pageNumber}</span></div>
+                    <div className="flex justify-between items-center mb-2 text-xs shrink-0"><div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.BookOpen} size={16} /><span style={fs(1)}>{current.title}</span></div><span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono" style={fs(0.75)}>{t('pageInfo')} {pageNumber}</span></div>
                     <div className="flex-1 relative overflow-hidden mb-2">
                         <div className="h-full overflow-y-auto no-scrollbar space-y-4 pr-1 pb-6" onScroll={handleScroll}>
                             {ayahs.map((currentAyah, index) => (<div key={index} className="border-b border-slate-50 dark:border-slate-800 pb-3 last:border-0"><div className="mb-1 text-[10px] text-emerald-600 dark:text-emerald-500 font-bold uppercase tracking-wider" style={fs(0.65)}>{currentAyah.info}</div><p className="text-right font-serif text-2xl text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl" style={fs(1.5)}>{currentAyah.arabic}</p><p className="text-slate-800 dark:text-slate-200 font-medium mb-1 text-xs" style={fs(0.75)}>{currentAyah.trans}</p><p className="text-slate-500 dark:text-slate-400 italic text-xxs" style={fs(0.65)}>{currentAyah.text}</p></div>))}
                         </div>
-                        {showHint && <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-slate-850 to-transparent pointer-events-none flex justify-center items-end pb-1"><div className="animate-bounce text-emerald-500/30 dark:text-emerald-400/30"><Icon path={ICONS.ChevronRight} className="rotate-90" size={16}/></div></div>}
+                        {showHint && <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-slate-850 to-transparent pointer-events-none flex justify-center items-end pb-1"><div className="animate-bounce text-emerald-500/30 dark:text-emerald-400/30"><Icon path={ICONS.ChevronRight} className="rotate-90" size={16} /></div></div>}
                     </div>
                     <div className="shrink-0 h-16 flex items-center justify-center border-t border-slate-100 dark:border-slate-800 pt-2">
                         <button onClick={next} className="w-full py-2.5 rounded-lg font-bold bg-emerald-600 text-white active:scale-95 transition text-sm"><span style={fs(0.875)}>{t('completed')}</span></button>
@@ -972,18 +1061,18 @@
             const { t, settings, fs } = useApp();
             let done = false; if (current.type === 'timer') done = timeLeft === 0; else if (current.type === 'infinite') done = false; else done = count >= current.target;
             const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60) < 10 ? '0' : ''}${s % 60}`;
-            
+
             return (
                 <div className={`border-2 rounded-2xl p-3 flex flex-col text-center shadow-sm transition-colors duration-300 select-none h-full relative ${done ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500' : 'bg-white dark:bg-slate-850 border-emerald-100 dark:border-slate-700'}`}>
                     <div className="w-full flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-1 relative z-10 shrink-0">
                         <span style={fs(0.65)}>{t('step')} {index + 1}/{totalLength}</span>
                         <div className="flex items-center gap-2">
                             {current.type === 'timer' ? (<span className="text-xs font-bold text-slate-600 dark:text-slate-300 font-mono" style={fs(0.75)}>{t('timeTarget')}: {formatTime(timeLeft)}</span>) : current.type === 'infinite' ? (<div className="flex items-center space-x-1"><span className="text-xs font-bold text-slate-600 dark:text-slate-300" style={fs(0.75)}>{t('unlimited')}</span>{current.minTarget > 0 && <span className="text-[9px] bg-slate-100 dark:bg-slate-700 px-1 rounded text-slate-500">Min: {current.minTarget}</span>}</div>) : (<span className="text-xs font-bold text-slate-600 dark:text-slate-300" style={fs(0.75)}>{t('target')}: {current.target}</span>)}
-                            {onDelete && <button onClick={(e) => { e.stopPropagation(); onDelete(current.id); }} className="text-red-500 p-0.5"><Icon path={ICONS.Trash2} size={14}/></button>}
+                            {onDelete && <button onClick={(e) => { e.stopPropagation(); onDelete(current.id); }} className="text-red-500 p-0.5"><Icon path={ICONS.Trash2} size={14} /></button>}
                             <ResetBtn onClick={resetLocal} />
                         </div>
                     </div>
-                    <div className="w-full shrink-0 mb-2">{current.type === 'timer' ? (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1 transform-gpu"><div className="bg-emerald-600 h-2 rounded-full transition-all duration-1000 ease-linear will-change-transform" style={{ width: `${Math.min(100, ((current.duration - timeLeft) / current.duration) * 100)}%` }}></div></div>) : current.type === 'infinite' ? (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1">{current.minTarget > 0 && (<div className="bg-emerald-600 h-2 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (count / current.minTarget) * 100)}%` }}></div>)}</div>) : (<ProgressBar current={count} total={current.target}/>)}</div>
+                    <div className="w-full shrink-0 mb-2">{current.type === 'timer' ? (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1 transform-gpu"><div className="bg-emerald-600 h-2 rounded-full transition-all duration-1000 ease-linear will-change-transform" style={{ width: `${Math.min(100, ((current.duration - timeLeft) / current.duration) * 100)}%` }}></div></div>) : current.type === 'infinite' ? (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1">{current.minTarget > 0 && (<div className="bg-emerald-600 h-2 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (count / current.minTarget) * 100)}%` }}></div>)}</div>) : (<ProgressBar current={count} total={current.target} />)}</div>
                     <div className="flex-1 w-full flex flex-col justify-center items-center relative overflow-y-auto no-scrollbar py-2 px-1 min-h-0">
                         <div className="w-full">
                             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2" style={fs(1.125)}>{current.title}</h2>
@@ -1004,17 +1093,17 @@
                         {done && (
                             <div className="h-full flex flex-col justify-end w-full pb-2">
                                 <button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold text-white flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-600 animate-pulse-slow'}`}>
-                                    <span style={fs(0.875)}>{t('nextZikr')}</span><Icon path={ICONS.ChevronRight} size={16}/>
+                                    <span style={fs(0.875)}>{t('nextZikr')}</span><Icon path={ICONS.ChevronRight} size={16} />
                                 </button>
                             </div>
                         )}
                         {!done && (current.type === 'infinite' || current.type === 'timer') && (
                             (current.type !== 'infinite' || count >= (current.minTarget || 0)) ? (
                                 <button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute bottom-2 right-2 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 p-2 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-600 transition-colors z-20">
-                                    <Icon path={ICONS.ChevronRight} size={20}/>
+                                    <Icon path={ICONS.ChevronRight} size={20} />
                                 </button>
                             ) : (
-                                <button disabled className="absolute bottom-2 right-2 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 p-2 rounded-full cursor-not-allowed z-20 border border-slate-100 dark:border-slate-700"><Icon path={ICONS.Lock} size={20}/></button>
+                                <button disabled className="absolute bottom-2 right-2 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 p-2 rounded-full cursor-not-allowed z-20 border border-slate-100 dark:border-slate-700"><Icon path={ICONS.Lock} size={20} /></button>
                             )
                         )}
                     </div>
@@ -1051,7 +1140,7 @@
                     <div className="bg-white dark:bg-slate-850 w-full max-w-sm rounded-2xl p-6 shadow-2xl border dark:border-slate-700 animate-fade-in">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-bold dark:text-slate-100">{t('addZikr')}</h3>
-                            <button onClick={onClose}><Icon path={ICONS.X} size={20}/></button>
+                            <button onClick={onClose}><Icon path={ICONS.X} size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
@@ -1123,20 +1212,56 @@
         const TasbeehView = memo(() => {
             const { t, lang, settings, fs } = useApp();
             const [mode, setMode] = useState(() => StorageService.get('lastZikrMode') || 'morning');
-            const [index, setIndex] = useState(0), [count, setCount] = useState(0), [cooldown, setCooldown] = useState(false), [isFinishedToday, setIsFinishedToday] = useState(false), [resetKey, setResetKey] = useState(0), [resetConfirm, setResetConfirm] = useState(false), [timeLeft, setTimeLeft] = useState(0);
-            const [checklistState, setChecklistState] = useState(() => { const today = new Date().toISOString().split('T')[0]; return StorageService.get(`checklist_${mode}_${today}`) || {}; });
+
+            // LAZY INIT STATES
+            const [index, setIndex] = useState(() => {
+                const today = getLocalTodayDate();
+                const p = StorageService.get(`tasbeeh_progress_${mode}`);
+                if (p && p.date === today) return p.idx || 0;
+                return 0;
+            });
+
+            const [count, setCount] = useState(() => {
+                const today = getLocalTodayDate();
+                const p = StorageService.get(`tasbeeh_progress_${mode}`);
+                if (p && p.date === today) return p.cnt || 0;
+                return 0;
+            });
+
+            const [isFinishedToday, setIsFinishedToday] = useState(() => {
+                const today = getLocalTodayDate();
+                const s = StorageService.get(`tasbeeh_status_${mode}`);
+                return (s && s.date === today && s.finished);
+            });
+
+            const [checklistState, setChecklistState] = useState(() => {
+                const today = getLocalTodayDate();
+                return StorageService.get(`checklist_${mode}_${today}`) || {};
+            });
+
             const [customZikrs, setCustomZikrs] = useState(() => StorageService.get(CONFIG.STORAGE_KEYS.CUSTOM_ZIKRS) || []);
+
+            const [cooldown, setCooldown] = useState(false);
+            const [resetKey, setResetKey] = useState(0);
+            const [resetConfirm, setResetConfirm] = useState(false);
+            const [timeLeft, setTimeLeft] = useState(0);
             const [showAddModal, setShowAddModal] = useState(false);
 
-            useEffect(() => { const today = new Date().toISOString().split('T')[0], s = StorageService.get(`tasbeeh_status_${mode}`), p = StorageService.get(`tasbeeh_progress_${mode}`), cl = StorageService.get(`checklist_${mode}_${today}`);
+            // EFFECT: Handle Mode Switch without clearing valid data
+            useEffect(() => {
+                const today = getLocalTodayDate();
+                const s = StorageService.get(`tasbeeh_status_${mode}`);
+                const p = StorageService.get(`tasbeeh_progress_${mode}`);
+                const cl = StorageService.get(`checklist_${mode}_${today}`);
+
                 if (p && p.date !== today) {
                     StorageService.remove(`tasbeeh_progress_${mode}`);
                     StorageService.remove(`tasbeeh_status_${mode}`);
                     setIndex(0); setCount(0); setIsFinishedToday(false);
                 } else {
-                    setChecklistState(cl || {});
                     if (s) { setIsFinishedToday(s.date === today && s.finished); } else setIsFinishedToday(false);
-                    if (p) { setIndex(p.idx || 0); setCount(p.cnt || 0); } else { setIndex(0); setCount(0); }
+                    if (p && p.date === today) { setIndex(p.idx || 0); setCount(p.cnt || 0); } else { setIndex(0); setCount(0); }
+                    setChecklistState(cl || {});
                 }
                 setResetConfirm(false);
             }, [mode, resetKey]);
@@ -1170,13 +1295,24 @@
 
             const current = zikrList[index] || zikrList[0];
 
+            // TIMER INIT & SYNC
             useEffect(() => {
                 if (current && (current.type === 'timer' || current.type === 'min_timer')) {
-                    const today = new Date().toISOString().split('T')[0];
+                    const today = getLocalTodayDate();
+                    // Load saved timer from storage
                     const savedTime = current.id ? StorageService.get(`timer_${current.id}_${today}`) : null;
-                    if (savedTime !== null && typeof savedTime === 'number') setTimeLeft(savedTime);
-                    else setTimeLeft(current.duration);
-                } else setTimeLeft(0);
+                    if (savedTime !== null && typeof savedTime === 'number') {
+                        setTimeLeft(savedTime);
+                    } else {
+                        // Only reset to duration if we DON'T have a saved time
+                        // Double check we are not overwriting an existing running timer state from a quick re-render
+                        // But since we key this useEffect on [current], it runs when zikr changes.
+                        // If we are just mounting, stored value takes precedence.
+                        setTimeLeft(current.duration);
+                    }
+                } else {
+                    setTimeLeft(0);
+                }
             }, [current]);
 
             useEffect(() => {
@@ -1185,8 +1321,15 @@
                     interval = setInterval(() => {
                         setTimeLeft((prev) => {
                             const newVal = prev - 1;
-                            if (current.id) { const today = new Date().toISOString().split('T')[0]; StorageService.set(`timer_${current.id}_${today}`, newVal); }
-                            if (prev <= 1) { if (settings.vibrationEnabled) navigator.vibrate([200, 100, 200]); if (settings.soundEnabled) AudioService.play('finish'); return 0; }
+                            if (current.id) {
+                                const today = getLocalTodayDate();
+                                StorageService.set(`timer_${current.id}_${today}`, newVal);
+                            }
+                            if (prev <= 1) {
+                                if (settings.vibrationEnabled) navigator.vibrate([200, 100, 200]);
+                                if (settings.soundEnabled) AudioService.play('finish');
+                                return 0;
+                            }
                             return newVal;
                         });
                     }, 1000);
@@ -1194,32 +1337,45 @@
                 return () => clearInterval(interval);
             }, [current, timeLeft, settings, isFinishedToday]);
 
-            const saveProgress = useCallback((idx, cnt) => { const today = new Date().toISOString().split('T')[0]; StorageService.set(`tasbeeh_progress_${mode}`, { date: today, idx, cnt }); }, [mode]);
-            const toggleChecklistItem = useCallback((itemIndex) => { const today = new Date().toISOString().split('T')[0], key = `checklist_${mode}_${today}`, currentState = StorageService.get(key) || {}, newState = { ...currentState, [itemIndex]: !currentState[itemIndex] }; setChecklistState(newState); StorageService.set(key, newState); if (newState[itemIndex] && settings.soundEnabled) AudioService.play('tick'); }, [mode, settings]);
-            
+            const saveProgress = useCallback((idx, cnt) => {
+                const today = getLocalTodayDate();
+                StorageService.set(`tasbeeh_progress_${mode}`, { date: today, idx, cnt });
+            }, [mode]);
+
+            const toggleChecklistItem = useCallback((itemIndex) => {
+                const today = getLocalTodayDate();
+                const key = `checklist_${mode}_${today}`;
+                const currentState = StorageService.get(key) || {};
+                const newState = { ...currentState, [itemIndex]: !currentState[itemIndex] };
+                setChecklistState(newState);
+                StorageService.set(key, newState);
+                if (newState[itemIndex] && settings.soundEnabled) AudioService.play('tick');
+            }, [mode, settings]);
+
             const reset = useCallback(() => {
-                StorageService.remove(`tasbeeh_status_${mode}`); StorageService.remove(`tasbeeh_progress_${mode}`);
-                const today = new Date().toISOString().split('T')[0]; StorageService.remove(`checklist_${mode}_${today}`);
+                StorageService.remove(`tasbeeh_status_${mode}`);
+                StorageService.remove(`tasbeeh_progress_${mode}`);
+                const today = getLocalTodayDate();
+                StorageService.remove(`checklist_${mode}_${today}`);
                 if (mode === 'morning') StorageService.remove(`timer_estag_${today}`);
-                // NEW: Clear page for Ikindi on reset
                 if (mode === 'ikindi') StorageService.remove(`tasbeeh_read_page_${today}`);
-                
-                // Reset custom timers
-                if (mode === 'personal') customZikrs.forEach(z => { if(z.type==='timer' || z.type==='min_timer') StorageService.remove(`timer_${z.id}_${today}`); });
+
+                if (mode === 'personal') customZikrs.forEach(z => { if (z.type === 'timer' || z.type === 'min_timer') StorageService.remove(`timer_${z.id}_${today}`); });
                 setChecklistState({}); setIsFinishedToday(false); setIndex(0); setCount(0); setCooldown(false);
             }, [mode, customZikrs]);
 
             const resetTime = useCallback(() => {
                 if (!resetConfirm) { setResetConfirm(true); setTimeout(() => setResetConfirm(false), 3000); return; }
-                const today = new Date().toISOString().split('T')[0];
-                StorageService.remove(`tasbeeh_status_${mode}`); StorageService.remove(`tasbeeh_progress_${mode}`); StorageService.remove(`checklist_${mode}_${today}`);
+                const today = getLocalTodayDate();
+                StorageService.remove(`tasbeeh_status_${mode}`);
+                StorageService.remove(`tasbeeh_progress_${mode}`);
+                StorageService.remove(`checklist_${mode}_${today}`);
                 if (mode === 'morning') StorageService.remove(`timer_estag_${today}`);
-                // Fix: Specifically remove the reading page key to force new random selection
-                if (mode === 'ikindi') { 
-                    StorageService.remove(`tasbeeh_read_page_${today}`); 
-                    StorageService.remove(`tasbeeh_read_index_${today}`); 
+                if (mode === 'ikindi') {
+                    StorageService.remove(`tasbeeh_read_page_${today}`);
+                    StorageService.remove(`tasbeeh_read_index_${today}`);
                 }
-                if (mode === 'personal') customZikrs.forEach(z => { if(z.type==='timer' || z.type==='min_timer') StorageService.remove(`timer_${z.id}_${today}`); });
+                if (mode === 'personal') customZikrs.forEach(z => { if (z.type === 'timer' || z.type === 'min_timer') StorageService.remove(`timer_${z.id}_${today}`); });
                 setIsFinishedToday(false); setIndex(0); setCount(0); setCooldown(false); setResetKey(prev => prev + 1); setResetConfirm(false);
             }, [mode, resetConfirm, customZikrs]);
 
@@ -1230,11 +1386,10 @@
                 if (index < zikrList.length - 1) {
                     const newIdx = index + 1; setIndex(newIdx); setCount(0); saveProgress(newIdx, 0);
                 } else {
-                    const today = new Date().toISOString().split('T')[0];
+                    const today = getLocalTodayDate();
                     StorageService.set(`tasbeeh_status_${mode}`, { date: today, finished: true });
                     StorageService.remove(`tasbeeh_progress_${mode}`);
                     setIsFinishedToday(true);
-                    // Send notification ONLY when all zikrs are done
                     sendNotification(t('completed'), { body: `${t(mode + 'Zikr')} tamamlandı.` });
                 }
             }, [index, zikrList.length, saveProgress, mode, t]);
@@ -1262,8 +1417,7 @@
                 setCustomZikrs(newZikrs);
                 if (newZikrs.length === 0) { setIndex(0); setIsFinishedToday(false); }
                 else if (index >= newZikrs.length) setIndex(0);
-                // Clean up storage
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalTodayDate();
                 StorageService.remove(`timer_${id}_${today}`);
             };
 
@@ -1280,7 +1434,7 @@
                         <div className="flex justify-between items-center">
                             {mode === 'personal' && (
                                 <button onClick={() => setShowAddModal(true)} className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1">
-                                    <Icon path={ICONS.Plus} size={14}/> <span>{t('addZikr')}</span>
+                                    <Icon path={ICONS.Plus} size={14} /> <span>{t('addZikr')}</span>
                                 </button>
                             )}
                             <button onClick={resetTime} className={`ml-auto bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 transition-colors ${resetConfirm ? 'bg-red-500 !text-white hover:bg-red-600 border-red-500' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
@@ -1291,31 +1445,119 @@
 
                     {mode === 'personal' && zikrList.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-400 dark:text-slate-500">
-                            <Icon path={ICONS.BookOpen} size={40} className="mb-2 opacity-50"/>
+                            <Icon path={ICONS.BookOpen} size={40} className="mb-2 opacity-50" />
                             <p className="text-sm mb-4">{t('emptyPersonal')}</p>
                             <button onClick={() => setShowAddModal(true)} className="bg-emerald-600 text-white px-4 py-2 rounded-full font-bold text-xs shadow-lg transform active:scale-95 transition">{t('addZikr')}</button>
                         </div>
                     ) : isFinishedToday ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border border-emerald-100 dark:border-emerald-800">
-                            <Icon path={ICONS.CheckCircle} size={40} className="text-emerald-500 dark:text-emerald-400 mb-2"/>
+                            <Icon path={ICONS.CheckCircle} size={40} className="text-emerald-500 dark:text-emerald-400 mb-2" />
                             <h2 className="font-bold text-lg text-emerald-800 dark:text-emerald-100" style={fs(1.125)}>{t('completed')}</h2>
                             <button onClick={reset} className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs" style={fs(0.75)}>{t('reset')}</button>
                         </div>
                     ) : (
                         <div className="flex-1 flex flex-col min-h-0 overflow-hidden pb-2">
-                            {!current ? <LoadingView /> : 
-                             (current.type?.includes('kehf') || current.type === 'amenarresulu') ? <FetchableZikrCard key={`${resetKey}_fetchable`} current={current} count={count} next={next} tap={tap} cooldown={cooldown} resetLocal={resetLocal} /> : 
-                             current.type === 'random15' ? <MultiAyahReadingCard key={`${resetKey}_multi`} current={current} next={next} cooldown={cooldown} /> : 
-                             current.type === 'checklist' ? <ChecklistCard key={`${resetKey}_checklist`} current={current} onToggleItem={toggleChecklistItem} checkedState={checklistState} /> : 
-                             (current.isReading ? <ReadingCard current={current} next={next} cooldown={cooldown} /> : 
-                             <CounterCard key={`${resetKey}_counter`} current={current} count={count} next={next} tap={tap} cooldown={cooldown} index={index} totalLength={zikrList.length} resetLocal={resetLocal} timeLeft={timeLeft} onDelete={mode === 'personal' ? deleteCustomZikr : null} />)
+                            {!current ? <LoadingView /> :
+                                (current.type?.includes('kehf') || current.type === 'amenarresulu') ? <FetchableZikrCard key={`${resetKey}_fetchable`} current={current} count={count} next={next} tap={tap} cooldown={cooldown} resetLocal={resetLocal} /> :
+                                    current.type === 'random15' ? <MultiAyahReadingCard key={`${resetKey}_multi`} current={current} next={next} cooldown={cooldown} /> :
+                                        current.type === 'checklist' ? <ChecklistCard key={`${resetKey}_checklist`} current={current} onToggleItem={toggleChecklistItem} checkedState={checklistState} /> :
+                                            (current.isReading ? <ReadingCard current={current} next={next} cooldown={cooldown} /> :
+                                                <CounterCard key={`${resetKey}_counter`} current={current} count={count} next={next} tap={tap} cooldown={cooldown} index={index} totalLength={zikrList.length} resetLocal={resetLocal} timeLeft={timeLeft} onDelete={mode === 'personal' ? deleteCustomZikr : null} />)
                             }
                         </div>
                     )}
-                    
+
                     {showAddModal && <AddZikrModal onClose={() => setShowAddModal(false)} onAdd={addCustomZikr} />}
                 </div>
             );
+        }); const newIdx = index + 1; setIndex(newIdx); setCount(0); saveProgress(newIdx, 0);
+                } else {
+            const today = new Date().toISOString().split('T')[0];
+            StorageService.set(`tasbeeh_status_${mode}`, { date: today, finished: true });
+            StorageService.remove(`tasbeeh_progress_${mode}`);
+            setIsFinishedToday(true);
+            // Send notification ONLY when all zikrs are done
+            sendNotification(t('completed'), { body: `${t(mode + 'Zikr')} tamamlandı.` });
+        }
+            }, [index, zikrList.length, saveProgress, mode, t]);
+
+        const tap = useCallback(() => {
+            if (isFinishedToday || cooldown || !current) return;
+            const isSpecial = current.type?.includes('kehf') || current.type === 'amenarresulu'; let newCount = count;
+            const vibrate = (p) => { if (navigator.vibrate && settings.vibrationEnabled) navigator.vibrate(p); };
+            const triggerFeedback = (isFinish) => { const isReadingNav = current.type?.includes('kehf') || current.isReading; if (isFinish) { vibrate(400); if (settings.soundEnabled) AudioService.play('finish'); } else { vibrate(40); if (settings.soundEnabled && !isReadingNav) AudioService.play('tick'); } };
+            if (isSpecial) {
+                if (count < current.target - 1) { setCooldown(true); setTimeout(() => setCooldown(false), 500); newCount = count + 1; setCount(newCount); triggerFeedback(newCount + 1 >= current.target); saveProgress(index, newCount); }
+            } else if (!current.isReading && current.type !== 'checklist') {
+                if (current.type === 'infinite' || current.type === 'timer' || current.type === 'min_timer' || count < current.target) {
+                    newCount = count + 1; setCount(newCount);
+                    const isDone = (current.type !== 'infinite' && current.type !== 'timer' && current.type !== 'min_timer' && newCount === current.target);
+                    triggerFeedback(isDone);
+                    if (isDone) { setTimeout(() => next(), 200); } else { saveProgress(index, newCount); }
+                }
+            }
+        }, [isFinishedToday, cooldown, current, count, index, saveProgress, settings, next]);
+
+        const addCustomZikr = (zikr) => { setCustomZikrs(prev => [...prev, zikr]); };
+        const deleteCustomZikr = (id) => {
+            const newZikrs = customZikrs.filter(z => z.id !== id);
+            setCustomZikrs(newZikrs);
+            if (newZikrs.length === 0) { setIndex(0); setIsFinishedToday(false); }
+            else if (index >= newZikrs.length) setIndex(0);
+            // Clean up storage
+            const today = new Date().toISOString().split('T')[0];
+            StorageService.remove(`timer_${id}_${today}`);
+        };
+
+        return (
+            <div className="flex flex-col h-full">
+                <div className="flex flex-col gap-2 mb-2">
+                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg transition-colors duration-300 overflow-x-auto no-scrollbar">
+                        {['morning', 'ikindi', 'night', 'ek', 'personal'].map(m => (
+                            <button key={m} onClick={() => { setMode(m); StorageService.set('lastZikrMode', m); }} className={`flex-1 min-w-[60px] py-1.5 text-xs font-medium rounded-md capitalize transition whitespace-nowrap px-2 ${mode === m ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.75)}>
+                                {m === 'ek' ? t('ekZikr') : m === 'personal' ? t('personalZikr') : t(m + 'Zikr')}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex justify-between items-center">
+                        {mode === 'personal' && (
+                            <button onClick={() => setShowAddModal(true)} className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1">
+                                <Icon path={ICONS.Plus} size={14} /> <span>{t('addZikr')}</span>
+                            </button>
+                        )}
+                        <button onClick={resetTime} className={`ml-auto bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 transition-colors ${resetConfirm ? 'bg-red-500 !text-white hover:bg-red-600 border-red-500' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                            <span style={fs(0.75)}>{resetConfirm ? t('areYouSure') : t('resetTime')}</span>
+                        </button>
+                    </div>
+                </div>
+
+                {mode === 'personal' && zikrList.length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-400 dark:text-slate-500">
+                        <Icon path={ICONS.BookOpen} size={40} className="mb-2 opacity-50" />
+                        <p className="text-sm mb-4">{t('emptyPersonal')}</p>
+                        <button onClick={() => setShowAddModal(true)} className="bg-emerald-600 text-white px-4 py-2 rounded-full font-bold text-xs shadow-lg transform active:scale-95 transition">{t('addZikr')}</button>
+                    </div>
+                ) : isFinishedToday ? (
+                    <div className="flex-1 flex flex-col items-center justify-center p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                        <Icon path={ICONS.CheckCircle} size={40} className="text-emerald-500 dark:text-emerald-400 mb-2" />
+                        <h2 className="font-bold text-lg text-emerald-800 dark:text-emerald-100" style={fs(1.125)}>{t('completed')}</h2>
+                        <button onClick={reset} className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs" style={fs(0.75)}>{t('reset')}</button>
+                    </div>
+                ) : (
+                    <div className="flex-1 flex flex-col min-h-0 overflow-hidden pb-2">
+                        {!current ? <LoadingView /> :
+                            (current.type?.includes('kehf') || current.type === 'amenarresulu') ? <FetchableZikrCard key={`${resetKey}_fetchable`} current={current} count={count} next={next} tap={tap} cooldown={cooldown} resetLocal={resetLocal} /> :
+                                current.type === 'random15' ? <MultiAyahReadingCard key={`${resetKey}_multi`} current={current} next={next} cooldown={cooldown} /> :
+                                    current.type === 'checklist' ? <ChecklistCard key={`${resetKey}_checklist`} current={current} onToggleItem={toggleChecklistItem} checkedState={checklistState} /> :
+                                        (current.isReading ? <ReadingCard current={current} next={next} cooldown={cooldown} /> :
+                                            <CounterCard key={`${resetKey}_counter`} current={current} count={count} next={next} tap={tap} cooldown={cooldown} index={index} totalLength={zikrList.length} resetLocal={resetLocal} timeLeft={timeLeft} onDelete={mode === 'personal' ? deleteCustomZikr : null} />)
+                        }
+                    </div>
+                )}
+
+                {showAddModal && <AddZikrModal onClose={() => setShowAddModal(false)} onAdd={addCustomZikr} />}
+            </div>
+        );
         });
 
         const QuranView = memo(() => {
@@ -1323,7 +1565,7 @@
             const [showHint, setShowHint] = useState(true);
             const [ayahs, setAyahs] = useState([]); const [loading, setLoading] = useState(false);
             const [pageInfo, setPageInfo] = useState(() => { const saved = StorageService.get('last_quran_page'); return saved ? parseInt(saved) : 0; });
-            
+
             const handleScroll = (e) => {
                 const { scrollTop, scrollHeight, clientHeight } = e.target;
                 if (scrollHeight - scrollTop <= clientHeight + 20) {
@@ -1332,55 +1574,55 @@
                     setShowHint(true);
                 }
             };
-            
-            const load = useCallback(async (existingPage = null) => { 
-                setLoading(true); 
-                try { 
-                    let targetPage = existingPage; 
-                    if (!targetPage) { 
+
+            const load = useCallback(async (existingPage = null) => {
+                setLoading(true);
+                try {
+                    let targetPage = existingPage;
+                    if (!targetPage) {
                         // NEW LOGIC: Use random page if online, pool if offline
                         if (navigator.onLine) {
-                             targetPage = getSecureRandomNumber(1, 604);
+                            targetPage = getSecureRandomNumber(1, 604);
                         } else {
-                             const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
-                             // Avoid immediate repeat
-                             const lastPage = StorageService.get('last_picked_quran_page');
-                             const available = pool.filter(p => p !== lastPage);
-                             const effectivePool = available.length > 0 ? available : pool;
-                             targetPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
+                            const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
+                            // Avoid immediate repeat
+                            const lastPage = StorageService.get('last_picked_quran_page');
+                            const available = pool.filter(p => p !== lastPage);
+                            const effectivePool = available.length > 0 ? available : pool;
+                            targetPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
                         }
-                    } 
-                    
+                    }
+
                     const edition = ApiService.getTranslationEdition(lang), transEdition = ApiService.getTransliterationEdition(lang), cacheKey = `page_${targetPage}_${lang}`;
-                    
-                    const cached = CacheService.get(cacheKey); 
-                    if (cached) { 
-                        setAyahs(cached); 
-                        setPageInfo(targetPage); 
+
+                    const cached = CacheService.get(cacheKey);
+                    if (cached) {
+                        setAyahs(cached);
+                        setPageInfo(targetPage);
                         StorageService.set('last_quran_page', targetPage);
                         StorageService.set('last_picked_quran_page', targetPage);
-                        setLoading(false); 
-                        return; 
-                    } 
-                    
+                        setLoading(false);
+                        return;
+                    }
+
                     if (!navigator.onLine) {
                         // Fallback: Try to find ANY cached page from the pool
                         const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
                         const validPages = pool.filter(p => CacheService.get(`page_${p}_${lang}`));
-                        
+
                         if (validPages.length > 0) {
-                             const lastPage = parseInt(StorageService.get('last_picked_quran_page') || '0');
-                             const candidates = validPages.filter(p => p !== lastPage);
-                             const effectivePool = candidates.length > 0 ? candidates : validPages;
-                             const fallbackPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
-                             
-                             const fallbackContent = CacheService.get(`page_${fallbackPage}_${lang}`);
-                             setAyahs(fallbackContent);
-                             setPageInfo(fallbackPage);
-                             StorageService.set('last_quran_page', fallbackPage);
-                             StorageService.set('last_picked_quran_page', fallbackPage);
-                             setLoading(false);
-                             return;
+                            const lastPage = parseInt(StorageService.get('last_picked_quran_page') || '0');
+                            const candidates = validPages.filter(p => p !== lastPage);
+                            const effectivePool = candidates.length > 0 ? candidates : validPages;
+                            const fallbackPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
+
+                            const fallbackContent = CacheService.get(`page_${fallbackPage}_${lang}`);
+                            setAyahs(fallbackContent);
+                            setPageInfo(fallbackPage);
+                            StorageService.set('last_quran_page', fallbackPage);
+                            StorageService.set('last_picked_quran_page', fallbackPage);
+                            setLoading(false);
+                            return;
                         }
 
                         alert(t('connectionError') + " / Offline Content Missing");
@@ -1389,39 +1631,39 @@
                     }
 
                     const [p1, p2, p3] = await Promise.all([
-                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/quran-uthmani`), 
-                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${edition}`), 
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/quran-uthmani`),
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${edition}`),
                         ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${transEdition}`)
-                    ]); 
-                    
-                    if (p1.code === 200) { 
-                        const combined = p1.data.ayahs.map((item, i) => ({ arabic: item.text, text: p2.data.ayahs[i]?.text || '', trans: p3.data.ayahs[i]?.text || '', info: `${ApiService.getSurahNameTR(item.surah.number)} : ${item.numberInSurah}` })); 
-                        setAyahs(combined); 
-                        setPageInfo(targetPage); 
+                    ]);
+
+                    if (p1.code === 200) {
+                        const combined = p1.data.ayahs.map((item, i) => ({ arabic: item.text, text: p2.data.ayahs[i]?.text || '', trans: p3.data.ayahs[i]?.text || '', info: `${ApiService.getSurahNameTR(item.surah.number)} : ${item.numberInSurah}` }));
+                        setAyahs(combined);
+                        setPageInfo(targetPage);
                         StorageService.set('last_quran_page', targetPage);
                         StorageService.set('last_picked_quran_page', targetPage);
                         // Cache indefinitely since this is a user-visited page
-                        CacheService.set(cacheKey, combined, null); 
-                    } 
+                        CacheService.set(cacheKey, combined, null);
+                    }
                 } catch (e) {
-                    if(!navigator.onLine) alert(t('connectionError') + " / Offline");
-                } 
-                setLoading(false); 
+                    if (!navigator.onLine) alert(t('connectionError') + " / Offline");
+                }
+                setLoading(false);
             }, [lang, t]);
-            
-            useEffect(() => { if (pageInfo > 0 && ayahs.length === 0) load(pageInfo).catch(() => {}); }, []);
-            useEffect(() => { if (pageInfo > 0) load(pageInfo).catch(() => {}); }, [lang, pageInfo]);
-            
+
+            useEffect(() => { if (pageInfo > 0 && ayahs.length === 0) load(pageInfo).catch(() => { }); }, []);
+            useEffect(() => { if (pageInfo > 0) load(pageInfo).catch(() => { }); }, [lang, pageInfo]);
+
             return (
                 <div className="flex flex-col h-full space-y-3">
-                     <div className="flex justify-between items-center shrink-0">
+                    <div className="flex justify-between items-center shrink-0">
                         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100" style={fs(1)}>{t('randomAyahs')} <span className="text-[10px] font-normal text-slate-400" style={fs(0.65)}>({t('pageInfo')} {pageInfo})</span></h2>
                         <button onClick={() => load(null)} className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full"><Icon path={ICONS.RefreshCw} size={16} className={loading ? "animate-spin" : ""} /></button>
                     </div>
                     <div className="flex-1 relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-900/50">
-                         {ayahs.length === 0 && !loading ? (
+                        {ayahs.length === 0 && !loading ? (
                             <div className="h-full flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
-                                <Icon path={ICONS.BookOpen} size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-3"/>
+                                <Icon path={ICONS.BookOpen} size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
                                 <button onClick={() => load(null)} className="bg-emerald-600 text-white px-4 py-2 rounded-full text-xs font-bold transition transform active:scale-95" style={fs(0.75)}>{t('loadBtn')}</button>
                             </div>
                         ) : loading ? <LoadingView /> : (
@@ -1437,7 +1679,7 @@
                                     ))}
                                 </div>
                                 {showHint && <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 via-slate-50/80 to-transparent dark:from-slate-900 dark:via-slate-900/80 pointer-events-none flex justify-center items-end pb-2">
-                                    <div className="animate-bounce text-emerald-500/50 dark:text-emerald-400/50"><Icon path={ICONS.ChevronRight} className="rotate-90" size={20}/></div>
+                                    <div className="animate-bounce text-emerald-500/50 dark:text-emerald-400/50"><Icon path={ICONS.ChevronRight} className="rotate-90" size={20} /></div>
                                 </div>}
                             </>
                         )}
@@ -1462,11 +1704,11 @@
                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                         <div className="flex justify-between items-center mb-1"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.MapPin} size={14} className="mr-1.5 text-emerald-500" /> {t('location')}</h3><span className="text-[9px] text-slate-400 max-w-[120px] truncate" style={fs(0.65)}>{locationHook.locationName}</span></div>
                         <div className="relative z-50" ref={searchContainerRef}>
-                            <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex space-x-1"><input name="q" placeholder={t('searchCity')} onChange={handleSearchChange} autoComplete="off" className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-w-0" style={fs(0.75)}/><button type="submit" className="bg-slate-800 dark:bg-slate-700 text-white px-2 rounded-lg"><Icon path={ICONS.RefreshCw} size={14}/></button><button type="button" onClick={() => locationHook.getUserLocation(true)} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 rounded-lg flex items-center justify-center"><Icon path={ICONS.Navigation} size={14} className={locationHook.loading ? "animate-spin" : ""} /></button></form>
+                            <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex space-x-1"><input name="q" placeholder={t('searchCity')} onChange={handleSearchChange} autoComplete="off" className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-w-0" style={fs(0.75)} /><button type="submit" className="bg-slate-800 dark:bg-slate-700 text-white px-2 rounded-lg"><Icon path={ICONS.RefreshCw} size={14} /></button><button type="button" onClick={() => locationHook.getUserLocation(true)} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 rounded-lg flex items-center justify-center"><Icon path={ICONS.Navigation} size={14} className={locationHook.loading ? "animate-spin" : ""} /></button></form>
                             {locationHook.suggestions.length > 0 && (<ul className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-xl max-h-40 overflow-y-auto z-50">{locationHook.suggestions.map((item, idx) => (<li key={idx} onClick={() => selectCity(item)} className="px-3 py-2 text-xs border-b dark:border-slate-700 last:border-0 hover:bg-emerald-50 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-200 flex justify-between items-center"><span style={fs(0.75)}>{item.display_name.split(',')[0]}</span><span className="text-[9px] text-slate-400" style={fs(0.65)}>{item.display_name.split(',').slice(1, 2).join('')}</span></li>))}</ul>)}
                         </div>
                     </div>
-                    
+
                     {/* New Offline Download Section */}
                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                         <button onClick={downloadEverything} disabled={downloading} className={`w-full flex items-center justify-between p-1 rounded-lg transition-colors ${downloading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
@@ -1480,7 +1722,7 @@
                         <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center overflow-visible relative"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><div className="flex items-center"><Icon path={ICONS.Vibrate} size={14} className="mr-1.5 text-emerald-500" /> {t('vibration')}<div className="relative ml-1 inline-block"><button onClick={(e) => { e.stopPropagation(); setShowVibHint(!showVibHint); }} className="text-slate-400 hover:text-emerald-500 focus:outline-none flex"><Icon path={ICONS.HelpCircle} size={12} /></button>{showVibHint && (<div className="absolute top-full right-[-8px] mt-2 w-32 p-2 bg-slate-700 text-white text-[9px] rounded-lg shadow-xl z-50 text-center leading-snug animate-fade-in pointer-events-none" style={fs(0.65)}>{t('iosVibrationWarning')}<div className="absolute bottom-full right-2 border-4 border-transparent border-b-slate-700"></div></div>)}</div></div></h3><button onClick={() => updateSetting('vibrationEnabled', !settings.vibrationEnabled)} className={`w-8 h-4 rounded-full p-0.5 transition-colors ${settings.vibrationEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}><div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${settings.vibrationEnabled ? 'translate-x-4' : 'translate-x-0'}`}></div></button></div>
                     </div>
                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
-                        <div className="flex flex-col space-y-1"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Settings} size={14} className="mr-1.5 text-emerald-500" /> {t('calcMethod')}</h3><select value={settings.methodId} onChange={(e) => updateSetting('methodId', parseInt(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-900 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300" style={fs(0.75)}>{[ { id: 13, name: 'Diyanet' }, { id: 3, name: 'Muslim World League' }, { id: 2, name: 'ISNA' }, { id: 5, name: 'Egypt' } ].map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></div>
+                        <div className="flex flex-col space-y-1"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Settings} size={14} className="mr-1.5 text-emerald-500" /> {t('calcMethod')}</h3><select value={settings.methodId} onChange={(e) => updateSetting('methodId', parseInt(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-900 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300" style={fs(0.75)}>{[{ id: 13, name: 'Diyanet' }, { id: 3, name: 'Muslim World League' }, { id: 2, name: 'ISNA' }, { id: 5, name: 'Egypt' }].map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></div>
                         <div className="h-px bg-slate-100 dark:bg-slate-800"></div>
                         <div className="flex justify-between items-center"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}>{t('asrMethod')}</h3><div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg"><button onClick={() => updateSetting('asrMethod', 0)} className={`px-2 py-1 rounded-md text-[10px] transition ${settings.asrMethod === 0 ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>{t('standard')}</button><button onClick={() => updateSetting('asrMethod', 1)} className={`px-2 py-1 rounded-md text-[10px] transition ${settings.asrMethod === 1 ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>{t('hanafi')}</button></div></div>
                     </div>
@@ -1489,16 +1731,16 @@
                         <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><h3 className="font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Globe} size={14} className="mr-1.5 text-emerald-500" /> {t('language')}</h3><div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg"><button onClick={() => setLang('tr')} className={`flex-1 py-1 rounded-md text-[10px] uppercase font-bold transition ${lang === 'tr' ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>TR</button><button onClick={() => setLang('en')} className={`flex-1 py-1 rounded-md text-[10px] uppercase font-bold transition ${lang === 'en' ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>EN</button><button onClick={() => setLang('de')} className={`flex-1 py-1 rounded-md text-[10px] uppercase font-bold transition ${lang === 'de' ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>DE</button></div></div>
                         <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><h3 className="font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Type} size={14} className="mr-1.5 text-emerald-500" /> {t('fontSize')}</h3><input type="range" min="0.8" max="2.0" step="0.1" value={settings.fontSize} onChange={(e) => updateSetting('fontSize', parseFloat(e.target.value))} className="w-full accent-emerald-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer" /></div>
                     </div>
-                    
+
                     {/* Help Button */}
                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
                         <button onClick={() => setShowHelp(true)} className="w-full flex items-center justify-between"><div className="flex items-center"><Icon path={ICONS.HelpCircle} size={14} className="mr-2 text-emerald-500" /><span className="text-xs font-semibold text-slate-700 dark:text-slate-300" style={fs(0.75)}>{t('help')}</span></div><div className="px-2 py-0.5"><Icon path={ICONS.ChevronRight} size={14} /></div></button>
                     </div>
 
-                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><button onClick={handleNotifClick} className="w-full flex items-center justify-between"><div className="flex items-center"><Icon path={ICONS.Bell} size={14} className="mr-2 text-emerald-500" /><span className="text-xs font-semibold text-slate-700 dark:text-slate-300" style={fs(0.75)}>{t('enableNotifications')}</span></div><div className={`px-2 py-0.5 rounded text-[9px] font-bold ${notifPermission === 'granted' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{notifPermission === 'granted' ? 'ON' : 'OFF'}</div></button></div>
+                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><button onClick={handleNotifClick} className="w-full flex items-center justify-between"><div className="flex items-center"><Icon path={ICONS.Bell} size={14} className="mr-2 text-emerald-500" /><span className="text-xs font-semibold text-slate-700 dark:text-slate-300" style={fs(0.75)}>{t('enableNotifications')}</span></div><div className={`px-2 py-0.5 rounded text-[9px] font-bold ${notifPermission === 'granted' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{notifPermission === 'granted' ? 'ON' : 'OFF'}</div></button></div>
                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><button onClick={() => { if (confirm(t('areYouSure'))) { localStorage.clear(); window.location.reload(); } }} className="w-full flex items-center justify-center space-x-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors"><Icon path={ICONS.Trash2} size={16} /><span className="font-bold text-xs" style={fs(0.75)}>{t('reset')} (All Data)</span></button></div>
                     <div className="text-center pb-2"><p className="text-[9px] text-slate-400 dark:text-slate-600" style={fs(0.65)}>v2.6.0 • {t('appName')}</p></div>
-                    
+
                     <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
                 </div>
             );
@@ -1511,7 +1753,7 @@
             const locationHook = useGeolocation();
             const { data: prayerData, loading: prayerLoading } = usePrayerTimes(locationHook.coords);
             const [activeTab, setActiveTab] = useState(() => { const hash = window.location.hash.replace('#', ''); return ['times', 'tasbeeh', 'quran', 'settings'].includes(hash) ? hash : 'times'; });
-            
+
             // Advanced Zikr Reminder Hook
             useZikrReminder(prayerData, currentTime);
 
@@ -1524,10 +1766,10 @@
                     }
                 };
                 window.addEventListener('online', runCheck);
-                
+
                 // Check on mount/update
                 runCheck();
-                
+
                 return () => window.removeEventListener('online', runCheck);
             }, [lang, locationHook.coords]);
 
@@ -1549,7 +1791,7 @@
                     <main className="main-layout flex-1 w-full max-w-md mx-auto relative overflow-hidden flex flex-col px-4">
                         <ErrorBoundary>
                             <div className="flex-1 h-full overflow-hidden w-full">
-                                 {renderContent()}
+                                {renderContent()}
                             </div>
                         </ErrorBoundary>
                     </main>
@@ -1562,4 +1804,5 @@
         root.render(<AppProvider><App /></AppProvider>);
     </script>
 </body>
+
 </html>
