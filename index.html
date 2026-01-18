@@ -429,9 +429,25 @@
                     this.init(); if (!this.ctx) return; if (this.ctx.state === 'suspended') this.ctx.resume();
                     const osc = this.ctx.createOscillator(), gain = this.ctx.createGain(), now = this.ctx.currentTime;
                     osc.connect(gain); gain.connect(this.ctx.destination);
-                    // Increased volume: tick ~53% boost (0.15->0.23), finish ~25% boost (0.1->0.125)
-                    if (type === 'tick') { osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.05); gain.gain.setValueAtTime(0.23, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05); osc.start(now); osc.stop(now + 0.05); }
-                    else if (type === 'finish') { osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.125, now + 0.05); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8); osc.start(now); osc.stop(now + 0.8); }
+                    // Optimized for Mobile: Linear Ramp for fuller sound + increased duration (75ms)
+                    if (type === 'tick') {
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(400, now);
+                        osc.frequency.exponentialRampToValueAtTime(100, now + 0.075);
+                        gain.gain.setValueAtTime(0.23, now);
+                        gain.gain.linearRampToValueAtTime(0.01, now + 0.075); // Linear plays optimized for low vol
+                        osc.start(now);
+                        osc.stop(now + 0.075);
+                    }
+                    else if (type === 'finish') {
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(440, now);
+                        gain.gain.setValueAtTime(0, now);
+                        gain.gain.linearRampToValueAtTime(0.125, now + 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+                        osc.start(now);
+                        osc.stop(now + 0.8);
+                    }
                 } catch (e) { }
             }
         }
@@ -1446,6 +1462,14 @@
                     )}
 
                     {showAddModal && <AddZikrModal onClose={() => setShowAddModal(false)} onAdd={addCustomZikr} />}
+
+                    {/* DEBUG OVERLAY - REMOVE AFTER FIX */}
+                    <div className="mt-2 p-2 bg-black/80 text-green-400 text-xs font-mono rounded overflow-x-auto select-all">
+                        <p>Mode: {mode}</p>
+                        <p>Date: {getLocalTodayDate()}</p>
+                        <p>Saved: {JSON.stringify(StorageService.get(`tasbeeh_progress_${mode}`))}</p>
+                        <p>Status: {JSON.stringify(StorageService.get(`tasbeeh_status_${mode}`))}</p>
+                    </div>
                 </div>
             );
         });
