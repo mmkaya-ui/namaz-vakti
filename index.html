@@ -35,7 +35,7 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: { slate: { 850: '#1e293b' } },
+                    colors: { slate: { 850: '#0c0c0c', 900: '#000000' } },
                     animation: { 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' },
                     fontFamily: { sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }
                 }
@@ -62,11 +62,11 @@
             transition: background-color 0.3s ease;
         }
 
-        /* Dark mode global background fix */
+        /* Dark mode global background fix — OLED pure black */
         html.dark,
         html.dark body,
         html.dark #root {
-            background-color: #0f172a !important;
+            background-color: #000000 !important;
             color: #f1f5f9;
         }
 
@@ -525,7 +525,17 @@
             }, [lang]);
 
             const toggleTheme = useCallback(() => setIsDarkMode(p => !p), []);
-            useEffect(() => { isDarkMode ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark'); }, [isDarkMode]);
+            useEffect(() => {
+                if (isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000000');
+                    document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content', 'black-translucent');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f8fafc');
+                    document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content', 'default');
+                }
+            }, [isDarkMode]);
             const t = useCallback((key) => TRANSLATIONS[lang]?.[key] || key, [lang]);
             const updateSetting = useCallback((key, val) => { setSettings(prev => ({ ...prev, [key]: val })); }, []);
             const fs = useCallback((baseRem) => ({ fontSize: `${baseRem * settings.fontSize}rem`, lineHeight: '1.4' }), [settings.fontSize]);
