@@ -14,6 +14,9 @@
     <meta name="apple-mobile-web-app-title" content="Namaz ve Zikir">
     <meta name="format-detection" content="telephone=no">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
     <title>Namaz ve Zikir</title>
 
     <!-- Network Optimization -->
@@ -1857,6 +1860,16 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<AppProvider><App /></AppProvider>);
+    </script>
+    <script>
+        // Register Service Worker for offline support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.warn('SW registration failed:', err));
+            });
+        }
     </script>
 </body>
 
