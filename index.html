@@ -1154,7 +1154,7 @@
                                 <button disabled className="absolute bottom-2 right-2 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 p-2 rounded-full cursor-not-allowed z-20 border border-slate-100 dark:border-slate-700"><Icon path={ICONS.Lock} size={20} /></button>
                             )
                         )}
-                        {!done && current.skippable && count >= 3 && (
+                        {!done && current.skippable && (
                             <button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute bottom-2 right-2 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 p-2 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-600 transition-colors z-20">
                                 <Icon path={ICONS.ChevronRight} size={20} />
                             </button>
