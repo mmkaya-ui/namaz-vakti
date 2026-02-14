@@ -1,7 +1,9 @@
-const CACHE_NAME = 'namaz-zikir-v2.7.0';
+const CACHE_NAME = 'namaz-zikir-v2.7.1';
 const ASSETS_TO_CACHE = [
     './',
-    './index.html'
+    './index.html',
+    './icon1.jpg',
+    './manifest.json'
 ];
 
 // Install: cache core app files
