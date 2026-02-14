@@ -1,0 +1,1566 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#f8fafc">
+    <meta name="description" content="Namaz Vakitleri, Tesbihat ve Kuran Okuma Uygulaması">
+    
+    <!-- iOS & PWA Config -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Namaz ve Zikir">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Namaz ve Zikir</title>
+    
+    <!-- Network Optimization -->
+    <link rel="preconnect" href="https://api.aladhan.com">
+    <link rel="preconnect" href="https://api.alquran.cloud">
+    <link rel="dns-prefetch" href="https://nominatim.openstreetmap.org">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/5533/5533023.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5533/5533023.png">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { slate: { 850: '#1e293b' } },
+                    animation: { 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' },
+                    fontFamily: { sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    
+    <!-- React Dependencies -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        /* BASE RESET & PWA FIXES */
+        html, body, #root {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+             -webkit-text-size-adjust: 100%;
+            transition: background-color 0.3s ease;
+        }
+        
+        /* Dark mode global background fix */
+        html.dark, html.dark body, html.dark #root {
+            background-color: #0f172a !important;
+            color: #f1f5f9;
+        }
+
+        body {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: pan-y;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* --- IOS SAFE AREA UTILITIES --- */
+        .pt-safe { padding-top: env(safe-area-inset-top); }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        
+        .main-layout {
+            padding-top: calc(env(safe-area-inset-top) + 72px); /* Header */
+            padding-bottom: calc(env(safe-area-inset-bottom) + 65px); /* Navbar */
+        }
+
+        /* Utilities */
+        .will-change-transform { will-change: transform; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
+        button { touch-action: manipulation; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=range] { touch-action: none; }
+
+        /* Zikir Ripple Effect */
+        .ripple-effect { position: relative; overflow: hidden; transform: translateZ(0); }
+        .ripple-effect::after {
+            content: ""; display: block; position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none;
+            background-image: radial-gradient(circle, #10b981 10%, transparent 10.01%);
+            background-repeat: no-repeat; background-position: 50%; transform: scale(10, 10); opacity: 0; transition: transform .5s, opacity 1s;
+        }
+        .ripple-effect:active::after { transform: scale(0, 0); opacity: .3; transition: 0s; }
+        
+        .text-xxs { font-size: 0.65rem; }
+        
+        /* Modal Overlay */
+        .modal-overlay { background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+
+        /* Offline Banner */
+        .offline-banner { background-color: #fed7aa; color: #7c2d12; text-align: center; font-size: 0.65rem; padding: 4px 0; width: 100%; font-weight: 600; border-bottom: 1px solid #fdba74; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans selection:bg-emerald-200 dark:selection:bg-emerald-800 transition-colors duration-300 antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- DATA DEFINITIONS ---
+        const SURAH_NAMES_TR = ["Fatiha", "Bakara", "Ali İmran", "Nisa", "Maide", "En'am", "Araf", "Enfal", "Tevbe", "Yunus", "Hud", "Yusuf", "Ra'd", "İbrahim", "Hicr", "Nahl", "İsra", "Kehf", "Meryem", "Taha", "Enbiya", "Hac", "Mü'minun", "Nur", "Furkan", "Şuara", "Neml", "Kasas", "Ankebut", "Rum", "Lokman", "Secde", "Ahzab", "Sebe", "Fatır", "Yasin", "Saffat", "Sad", "Zümer", "Mü'min", "Fussilet", "Şura", "Zuhruf", "Duhan", "Casiye", "Ahkaf", "Muhammed", "Fetih", "Hucurat", "Kaf", "Zariyat", "Tur", "Necm", "Kamer", "Rahman", "Vakıa", "Hadid", "Mücadele", "Haşr", "Mümtehine", "Saf", "Cuma", "Münafikun", "Tegabun", "Talak", "Tahrim", "Mülk", "Kalem", "Hakka", "Mearic", "Nuh", "Cin", "Müzzemmil", "Müddessir", "Kıyamet", "İnsan", "Mürselat", "Nebe", "Naziat", "Abese", "Tekvir", "İnfitar", "Mutaffifin", "İnşikak", "Buruc", "Tarık", "A'la", "Gaşiye", "Fecr", "Beled", "Şems", "Leyl", "Duha", "İnşirah", "Tin", "Alak", "Kadir", "Beyyine", "Zilzal", "Adiyat", "Karia", "Tekasür", "Asr", "Hümeze", "Fil", "Kureyn", "Maun", "Kevser", "Kafirun", "Nasr", "Tebbet", "İhlas", "Felak", "Nas"];
+
+        const TRANSLATIONS = {
+            tr: { appName: "Namaz ve Zikir", location: "Konum", detectLocation: "Bul", searchCity: "Şehir...", prayerTimes: "Namaz Vakitleri", tasbeeh: "Tesbihat", quran: "Kur'an", settings: "Ayarlar", times: "Vakitler", calcMethod: "Yöntem", language: "Dil", fajr: "İmsak", sunrise: "Güneş", dhuhr: "Öğle", asr: "İkindi", maghrib: "Akşam", isha: "Yatsı", midnight: "Gece Yarısı", teheccud: "Vakt-i İcabet", kerahatMorning: "İşrak", kerahatNoon: "İstiva", kerahatEvening: "İsfirar", remaining: "Kalan", loading: "Yükleniyor...", error: "Hata", morningZikr: "Sabah", ikindiZikr: "İkindi", nightZikr: "Yatsı", ekZikr: "Günlük", personalZikr: "Kişisel", tapToCount: "Dokun", completed: "Tamamlandı", next: "İleri", nextZikr: "Sonraki", nextAyah: "Sıradaki", reset: "Sıfırla", resetTime: "Başa Dön", areYouSure: "Emin misin?", manualLocation: "Konum", search: "Ara", randomAyahs: "Kur'an'dan bir sayfa", turkishTrans: "Okunuş", turkishMean: "Meal", amenarresulu: "Amenerrasulü", nextPrayer: "Vakit", now: "Şu an", bestTimeTeheccud: "Gece namazı vakti", kerahatHeader: "Kerahat", step: "Adım", target: "Hedef", loadContent: "Yükle", loadBtn: "Getir", readFirst10: "Kehf (İlk 10)", readLast10: "Kehf (Son 10)", read15Random: "1 Sayfa Oku", salavatAdam: "Adem (a.s)", salavatIsa: "İsa (a.s)", salavatMuhammed: "Salavat-ı Şerife", salavatBedr: "Bedir & Kehf Salavatı", tryAgain: "Tekrar Dene", connectionError: "Bağlantı Hatası", pageInfo: "Sayfa", asrMethod: "İkindi Yöntemi", standard: "Standart", hanafi: "Hanefi", timeAdjustments: "Vakit Düzeltmeleri (dk)", save: "Kaydet", enableNotifications: "Bildirim İzni Ver", notificationGranted: "Bildirim İzni Verildi", notifications: "Bildirimler", fontSize: "Yazı Boyutu", resetStep: "Sayacı Sıfırla", sound: "Ses Efekti", vibration: "Titreşim", iosVibrationWarning: "iOS güvenlik kısıtlamaları nedeniyle iPhone'larda titreşim çalışmayabilir.", timeTarget: "Süre", unlimited: "Limitsiz", minTarget: "Min", ekHeader: "Günlük Ödevler", kafnunTitle: "Kaf ve Nun", besmeleTitle: "Besmele Zikri", addZikr: "Zikir Ekle", title: "Başlık", type: "Tür", fixedCount: "Sayılı", timeBased: "Süreli", timeMin: "Süre + Min Sayı", minutes: "Dakika", delete: "Sil", emptyPersonal: "Henüz kişisel zikir eklenmedi.", notifTimeLeft: "vaktine 30 dk kaldı", notifUnfinished: "Tesbihat bitmedi.", downloadOffline: "Çevrimdışı İçerik İndir", downloading: "İndiriliyor...", downloadComplete: "İndirme Tamamlandı", offlineReady: "Çevrimdışı Kullanıma Hazır", offlineMode: "Çevrimdışı Mod", help: "Yardım & Hakkında", aboutTitle: "Hakkında ve Kullanım" },
+            en: { appName: "Prayer & Dhikr", location: "Location", detectLocation: "Find", searchCity: "City...", prayerTimes: "Times", tasbeeh: "Dhikr", quran: "Quran", settings: "Settings", times: "Times", calcMethod: "Method", language: "Lang", fajr: "Fajr", sunrise: "Sun", dhuhr: "Dhuhr", asr: "Asr", maghrib: "Maghrib", isha: "Isha", midnight: "Midnight", teheccud: "Time of Acceptance", kerahatMorning: "Ishraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Left", loading: "Loading...", error: "Error", morningZikr: "Morning", ikindiZikr: "Asr", nightZikr: "Night", ekZikr: "Daily", personalZikr: "Personal", tapToCount: "Tap", completed: "Done", next: "Next", nextZikr: "Next", nextAyah: "Next", reset: "Reset", resetTime: "Restart", areYouSure: "Are you sure?", manualLocation: "Loc", search: "Go", randomAyahs: "A page in Quran", turkishTrans: "Transliteration", turkishMean: "Meaning", amenarresulu: "Amenarrasul", nextPrayer: "Next", now: "Now", bestTimeTeheccud: "Night prayer", kerahatHeader: "Kerahat", step: "Step", target: "Goal", loadContent: "Load", loadBtn: "Load", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Last 10)", read15Random: "Read 1 Page", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Try Again", connectionError: "Connection Error", pageInfo: "Page", asrMethod: "Asr Method", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Time Adjustments (min)", save: "Save", enableNotifications: "Enable Notifications", notificationGranted: "Notifications Enabled", notifications: "Notifications", fontSize: "Text Size", resetStep: "Reset Counter", sound: "Sound Effect", vibration: "Vibration", iosVibrationWarning: "Vibration may not work on iPhones due to iOS security restrictions.", timeTarget: "Time", unlimited: "Unlimited", minTarget: "Min", ekHeader: "Daily Tasks", kafnunTitle: "Qaf and Nun", besmeleTitle: "Basmala Dhikr", addZikr: "Add Dhikr", title: "Title", type: "Type", fixedCount: "Fixed Count", timeBased: "Timed", timeMin: "Time + Min Count", minutes: "Minutes", delete: "Delete", emptyPersonal: "No personal dhikrs yet.", notifTimeLeft: "30 min left to", notifUnfinished: "Dhikr not finished.", downloadOffline: "Download Offline Content", downloading: "Downloading...", downloadComplete: "Download Complete", offlineReady: "Ready for Offline Use", offlineMode: "Offline Mode", help: "Help & About", aboutTitle: "About & Usage" },
+            de: { appName: "Gebet & Dhikr", location: "Ort", detectLocation: "Finden", searchCity: "Stadt...", prayerTimes: "Zeiten", tasbeeh: "Dhikr", quran: "Koran", settings: "Optionen", times: "Zeiten", calcMethod: "Methode", language: "Sprache", fajr: "Fadschr", sunrise: "Sonne", dhuhr: "Dhuhur", asr: "Assr", maghrib: "Maghrib", isha: "Ischa", midnight: "Mitternacht", teheccud: "Zeit der Erhörung", kerahatMorning: "Ischraq", kerahatNoon: "Istiwa", kerahatEvening: "Isfirar", remaining: "Rest", loading: "Laden...", error: "Fehler", morningZikr: "Morgen", ikindiZikr: "Assr", nightZikr: "Nacht", ekZikr: "Täglich", personalZikr: "Persönlich", tapToCount: "Tippen", completed: "Fertig", next: "Weiter", nextZikr: "Weiter", nextAyah: "Weiter", reset: "Reset", resetTime: "Neu starten", areYouSure: "Bist du sicher?", manualLocation: "Ort", search: "Suche", randomAyahs: "Eine Seite aus Koran", turkishTrans: "Aussprache", turkishMean: "Bedeutung", amenarresulu: "Amenarrasul", nextPrayer: "Nächstes", now: "Jetzt", bestTimeTeheccud: "Nachtgebet", kerahatHeader: "Kerahat", step: "Schritt", target: "Ziel", loadContent: "Laden", loadBtn: "Laden", readFirst10: "Kahf (1-10)", readLast10: "Kahf (Letzte)", read15Random: "1 Seite Lesen", salavatAdam: "Adam (as)", salavatIsa: "Jesus (as)", salavatMuhammed: "Salavat", salavatBedr: "Badr & Kahf", tryAgain: "Wiederholen", connectionError: "Verbindungsfehler", pageInfo: "Seite", asrMethod: "Assr Methode", standard: "Standard", hanafi: "Hanafi", timeAdjustments: "Zeitanpassungen (Min)", save: "Speichern", enableNotifications: "Benachrichtigungen aktivieren", notificationGranted: "Benachrichtigungen aktiviert", notifications: "Benachrichtigungen", fontSize: "Textgröße", resetStep: "Reset", sound: "Soundeffekt", vibration: "Vibration", iosVibrationWarning: "Vibration funktioniert auf iPhones aufgrund von iOS-Sicherheitsbeschränkungen möglicherweise nicht.", timeTarget: "Zeit", unlimited: "Unbegrenzt", minTarget: "Min", ekHeader: "Tägliche Aufgaben", kafnunTitle: "Qaf und Nun", besmeleTitle: "Basmala Dhikr", addZikr: "Dhikr hinzufügen", title: "Titel", type: "Typ", fixedCount: "Anzahl", timeBased: "Zeit", timeMin: "Zeit + Min", minutes: "Minuten", delete: "Löschen", emptyPersonal: "Noch keine persönlichen Dhikrs.", notifTimeLeft: "30 Min bis", notifUnfinished: "Dhikr nicht beendet.", downloadOffline: "Offline-Inhalte herunterladen", downloading: "Herunterladen...", downloadComplete: "Download abgeschlossen", offlineReady: "Bereit für die Offline-Nutzung", offlineMode: "Offline-Modus", help: "Hilfe & Über", aboutTitle: "Über & Nutzung" }
+        };
+
+        const ZIKR_DB = {
+            fatiha: {
+                 tr: { t: "", m: "Hamd, Alemlerin Rabbi, Rahman, Rahim, din gününün sahibi Allah'a mahsustur..." },
+                 en: { t: "", m: "All praise is due to Allah, Lord of the worlds, The Entirely Merciful, The Especially Merciful..." },
+                 de: { t: "", m: "Alles Lob gebührt Allah, dem Herrn der Welten, dem Allerbarmer, dem Barmherzigen..." }
+             },
+            estag: {
+                 tr: { t: "Estağfirullah el azim ve etûbü ileyh", m: "Azim olan Allah'tan bağışlanma dilerim." },
+                 en: { t: "Astaghfirullah al-azim wa atubu ilayh", m: "I seek forgiveness from Allah, the Magnificent." },
+                 de: { t: "Astaghfirullah al-azim wa atubu ilayh", m: "Ich bitte Allah, den Allmächtigen, um Vergebung." }
+             },
+            salavatM: {
+                 tr: { t: "Allahümme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed", m: "Allah'ım! Efendimiz Muhammed'e ve Efendimiz Muhammed'in ailesine salat eyle." },
+                 en: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad", m: "O Allah, send prayers upon our Master Muhammad and upon the family of our Master Muhammad." },
+                 de: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad", m: "O Allah, segne unseren Meister Muhammad und die Familie unseres Meisters Muhammad." }
+             },
+            salavatA: {
+                 tr: { t: "Allâhümme salli alâ seyyidinâ Âdem", m: "Allah'ım! Efendimiz Adem'e salat eyle." },
+                 en: { t: "Allahumma salli ala sayyidina Adam", m: "O Allah, send prayers upon our Master Adam." },
+                 de: { t: "Allahumma salli ala sayyidina Adam", m: "O Allah, segne unseren Meister Adam." }
+             },
+            salavatI: {
+                 tr: { t: "Allâhümme salli alâ seyyidinâ İsâ", m: "Allah'ım! Efendimiz İsa'ya salat eyle." },
+                 en: { t: "Allahumma salli ala sayyidina Isa", m: "O Allah, send prayers upon our Master Jesus." },
+                 de: { t: "Allahumma salli ala sayyidina Isa", m: "O Allah, segne unseren Meister Jesus." }
+             },
+            salavatB: {
+                 tr: { t: "Allâhumme salli alâ seyyidinâ Muhammedin ve alâ âli seyyidinâ Muhammed ve alâ ashâbi’l-Kehfi ve ashâbi’r-Rakîmi ve ashâbi Bedrin ve melaiketi Bedri, sallallâhu teâlâ aleyhi ve sellem.", m: "Allah'ım! Efendimiz Muhammed'e, ailesine, Ashab-ı Kehf'e, Rakim sahiplerine, Bedir ashabına ve Bedir meleklerine salat eyle." },
+                 en: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad wa ala ashab il-kahfi wa ashab ir-raqimi wa ashab i-badrin wa malaikati badrin, sallallahu teala aleyhi ve sellem.", m: "O Allah, send prayers upon our Master Muhammad, his family, the Companions of the Cave, the Companions of the Inscription, the Companions of Badr and the Angels of Badr." },
+                 de: { t: "Allahumma salli ala sayyidina Muhammadin wa ala ali sayyidina Muhammad wa ala ashab il-kahfi wa ashab ir-raqimi wa ashab i-badrin wa malaikati badrin, sallallahu teala aleyhi ve sellem.", m: "O Allah, segne unseren Meister Muhammad, seine Familie, die Gefährten der Höhle, die Leute der Inschrift, die Gefährten von Badr und die Engel von Badr." }
+             },
+            kuddus: {
+                 tr: { t: "Ya Kuddüs, Ya Kuddüs", m: "Ey her türlü eksiklikten münezzeh olan." },
+                 en: { t: "Ya Quddus, Ya Quddus", m: "O The Holy, O The Pure One." },
+                 de: { t: "Ya Quddus, Ya Quddus", m: "O der Heilige, O der Reine." }
+             },
+            ek_list: {
+                tr: [ { id: 'kafnun', text: '51 defa "Kaf" "Nun" yaz', sub: "", arabic: "ق ن" }, { id: 'besmele_full', text: "Besmele zikri (10 dakika)", sub: "Bismillah - Bismirrahman - Bismirrahim - Bismillahirrahman - Bismillahirrahim - Bismirrahmanirrahim - Bismillahirrahmanirrahim" } ],
+                en: [ { id: 'kafnun', text: 'Write "Kaf" "Nun" 51 times', sub: "", arabic: "ق ن" }, { id: 'besmele_full', text: "Basmala Dhikr (10 minutes)", sub: "Bismillah - Bismirrahman - Bismirrahim - Bismillahirrahman - Bismillahirrahim - Bismirrahmanirrahim - Bismillahirrahmanirrahim" } ],
+                de: [ { id: 'kafnun', text: 'Schreibe "Kaf" "Nun" 51 mal', sub: "", arabic: "ق ن" }, { id: 'besmele_full', text: "Basmala Dhikr (10 Minuten)", sub: "Bismillah - Bismirrahman - Bismirrahim - Bismillahirrahman - Bismillahirrahim - Bismirrahmanirrahim - Bismillahirrahmanirrahim" } ]
+            }
+        };
+
+        const HELP_CONTENT = {
+            tr: [
+                { title: "1. Ana Ekran: Vakitler", content: "Uygulamayı ilk açtığınızda bizi karşılayan ekran burasıdır.<br/><b>Vakit Sayacı:</b> En üstteki yeşil alanda, bir sonraki namaz vaktine ne kadar süre kaldığını ve hangi konumda olduğumuzu görebiliriz.<br/><b>Günün Vakitleri:</b> O günün tüm namaz saatleri liste halinde sıralanır.<br/><b>Özel Vakitler:</b> Listenin altında Teheccüd (faziletli Vakti İcabet olarak) vakti ve Kerahat vakitleri otomatik olarak konuma güne göre hesaplanır. Konum izni vermek veya ayarlardan elle girmek yeterli bunun için." },
+                { title: "2. Tesbihat ve Zikirler", content: "Alt menüden <b>Tesbihat</b> ikonuna tıklayarak ulaşabiliyoruz.<br/><b>Mod Seçimi:</b> Üst kısımdaki butonlardan Sabah, İkindi, Yatsı, Günlük veya Kişisel modlarından birini seçebiliyoruz.<br/><b>Vakit Zikirleri:</b> Sabah, İkindi ve Yatsı menülerinde o vakitlere özgü zikirler var. Günlük menüde gün içinde yapmamız icab eden ödevler var.<br/><b>Zikir Çekme:</b> Büyük daireye her dokunduğumuzda sayaç ilerler. Sayı tamamlanınca otomatik olarak bir sonraki zikre geçer. Bazı zikirlerde veya Kur'an ayetlerinde aşağıdaki tuşa basıp geçmemiz gerekiyor bilinçli olarak.<br/><b>Kişisel Zikir:</b> \"Kişisel\" sekmesine gelip \"Zikir Ekle\" diyerek kendi istediğimiz zikri (sayılı veya süreli veya süreli ve minimum sayılı) ekleyebiliyoruz.<br/><b>Sıfırlama:</b> Sağ üstteki küçük sıfırla butonu sadece o anki zikri başa alır. \"Başa Dön\" butonu ise o vaktin tüm tesbihatını en başa sarar (Yanlışlıkla basmaya karşı onay ister)." },
+                { title: "3. Kur'an Okuma", content: "Alt menüden <b>Kur'an</b> ikonuna/yazısına tıklayınca açılır.<br/><b>Rastgele Sayfa:</b> Her açışımızda veya o şekilde olmazsa \"Getir\" butonuna bastığımızda bizlere bir Kur'an sayfası (Arapçası, Türkçe Okunuş ve Meali) getirir.<br/><b>Sıradaki:</b> Sayfayı bitirdiğimizde alttaki butona basarak yeni bir sayfaya geçebiliriz." },
+                { title: "4. Ayarlar ve Çevrimdışı Kullanım", content: "Alt menüden <b>Ayarlar</b> ikonuna tıklayınca açılır.<br/><b>Konum:</b> Şehir isminiz yanlışsa buradan \"Bul\" butonuna (yeşil ok) tıklayarak ve konum izni vererek veya şehir ismini kendimiz yazıp \"Ara\" diyerek düzeltebiliriz.<br/><b>Ses ve Titreşim:</b> Zikir çekerken çıkan sesi veya titreşimi buradan kapatıp açabiliyoruz.<br/><b>🌟 Çevrimdışı İçerik İndir (ÖNEMLİ):</b> Bu butona bir kez tıkladığımızda; önümüzdeki 2 ayın seçili konuma göre namaz vakitlerini ve 50 adet Kur'an sayfasını telefonumuza arka planda indirip kaydeder. Böylece internetimiz olmasa bile uygulama sorunsuz çalışır. Bunun için internet olmadığında <b>Çevrimdışı Mod</b> uyarısı yukarda çıkar. Bu uyarı varken uygulamayı veya sayfayı yenilememek gerekir, yoksa bağlantı hatası verebilir.<br/><b>Dil ve Yazı Boyutu:</b> Yazıları buradan büyütebilir veya dil (TR, EN, DE) değiştirebilirsiniz." },
+                { title: "İpuçları 💡", content: "<b>Bildirimler:</b> Vakit girmeden 30 dakika önce haber verecek şekilde planlandı. Ama istenirse kapatılabilir. Eğer bir önceki vaktin tesbihatını bitirmediysek bunu da bize hatırlatacak şekilde programlandı.<br/><b>Uygulama Olarak İndirme:</b> Siteyi açtığımız tarayıcıda (browser, mesela Chrome, Edge, Safari gibi) Ayarlardan 'Ana sayfaya ekle' veya 'Ana menüye ekle' tuşuna basarsak telefonumuza uygulama gibi iner.<br/><br/>Güle güle kullanalım hayırlara güzelliklere vesile olsun inşallah!" }
+            ],
+            en: [
+                 { title: "1. Main Screen: Times", content: "This is the screen that greets you when you first open the app.<br/><b>Time Counter:</b> In the green area at the top, you can see how much time is left until the next prayer time and your current location.<br/><b>Prayer Times:</b> All prayer times for the day are listed.<br/><b>Special Times:</b> Below the list, Tahajjud (Time of Acceptance) and Karaha (Disliked) times are automatically calculated based on location and date." },
+                 { title: "2. Dhikr & Tasbeeh", content: "Accessible by clicking the <b>Dhikr</b> icon from the bottom menu.<br/><b>Mode Selection:</b> Choose from Morning, Asr, Night, Daily, or Personal modes at the top.<br/><b>Timed Dhikrs:</b> Specific dhikrs for Morning, Asr, and Night. The Daily menu has tasks for the day.<br/><b>Counting:</b> Tap the large circle to advance the counter. It automatically moves to the next dhikr when completed. Some require manual progression.<br/><b>Personal Dhikr:</b> Add your own dhikrs (counted, timed, or both) in the \"Personal\" tab.<br/><b>Resetting:</b> The small reset button resets only the current dhikr. \"Restart\" resets the entire session (requires confirmation)." },
+                 { title: "3. Quran Reading", content: "Opens by clicking the <b>Quran</b> icon.<br/><b>Random Page:</b> Brings a random Quran page (Arabic, Transliteration, Meaning) every time you open it or click \"Load\".<br/><b>Next:</b> Click the button at the bottom to proceed to a new page." },
+                 { title: "4. Settings & Offline Use", content: "Opens by clicking the <b>Settings</b> icon.<br/><b>Location:</b> Fix your location using \"Find\" (green arrow) or by searching manually.<br/><b>Sound & Vibration:</b> Toggle sound and vibration for dhikr.<br/><b>🌟 Download Offline Content (IMPORTANT):</b> Downloads prayer times for 2 months and 50 Quran pages for offline use. <b>Offline Mode</b> banner appears when there is no internet. Avoid refreshing the page in this mode.<br/><b>Language & Font:</b> Adjust text size and change language (TR, EN, DE)." },
+                 { title: "Tips 💡", content: "<b>Notifications:</b> Alerts 30 mins before prayer time. Can be disabled. Also reminds you if previous dhikrs aren't finished.<br/><b>Install as App:</b> Use 'Add to Home Screen' in your browser settings to install as an app.<br/><br/>May it be beneficial for you!" }
+            ],
+            de: [
+                { title: "1. Hauptbildschirm: Zeiten", content: "Dies ist der Startbildschirm der App.<br/><b>Zeit-Zähler:</b> Im grünen Bereich oben sehen Sie die verbleibende Zeit bis zum nächsten Gebet und Ihren Standort.<br/><b>Gebetszeiten:</b> Alle Gebetszeiten des Tages werden aufgelistet.<br/><b>Spezielle Zeiten:</b> Tahajjud und Kerahat Zeiten werden automatisch berechnet." },
+                { title: "2. Dhikr & Tasbih", content: "Erreichbar über das <b>Dhikr</b> Symbol unten.<br/><b>Moduswahl:</b> Wählen Sie oben zwischen Morgen, Assr, Nacht, Täglich oder Persönlich.<br/><b>Zählen:</b> Tippen Sie auf den großen Kreis. Bei Abschluss geht es automatisch weiter.<br/><b>Persönliches Dhikr:</b> Fügen Sie eigene Dhikrs im Tab \"Persönlich\" hinzu.<br/><b>Zurücksetzen:</b> Der kleine Reset-Button setzt nur das aktuelle Dhikr zurück. \"Neustart\" setzt die gesamte Sitzung zurück." },
+                { title: "3. Koran Lesen", content: "Öffnet sich über das <b>Koran</b> Symbol.<br/><b>Zufällige Seite:</b> Zeigt eine zufällige Koranseite (Arabisch, Aussprache, Bedeutung).<br/><b>Weiter:</b> Klicken Sie unten, um zur nächsten Seite zu gelangen." },
+                { title: "4. Einstellungen & Offline", content: "Öffnet sich über das <b>Einstellungen</b> Symbol.<br/><b>Standort:</b> Korrigieren Sie den Ort automatisch oder manuell.<br/><b>Ton & Vibration:</b> Ein-/Ausschalten für Dhikr.<br/><b>🌟 Offline-Inhalte herunterladen (WICHTIG):</b> Lädt Gebetszeiten für 2 Monate und 50 Koranseiten herunter. Ein <b>Offline-Modus</b> Banner erscheint ohne Internet. Seite dann nicht aktualisieren.<br/><b>Sprache & Schrift:</b> Größe und Sprache (TR, EN, DE) ändern." },
+                { title: "Tipps 💡", content: "<b>Benachrichtigungen:</b> 30 Min vor Gebetszeit. Kann deaktiviert werden. Erinnert auch an unvollendete Dhikrs.<br/><b>Als App installieren:</b> Nutzen Sie 'Zum Startbildschirm hinzufügen' in Ihrem Browser.<br/><br/>Möge es nützlich sein!" }
+            ]
+        };
+
+
+        // --- 0. HELPER UTILS ---
+        
+        const getSecureRandomNumber = (min, max) => {
+            // Using Math.random() directly to avoid "AES key data" errors from browser extensions
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        };
+
+        const generateManifest = (appName) => {
+            const manifest = {
+                name: appName,
+                short_name: appName,
+                start_url: ".",
+                display: "standalone",
+                background_color: "#ffffff",
+                theme_color: "#059669",
+                orientation: "portrait",
+                icons: [{ src: "https://cdn-icons-png.flaticon.com/512/5533/5533023.png", sizes: "512x512", type: "image/png" }]
+            };
+            return `data:application/manifest+json;base64,${btoa(JSON.stringify(manifest))}`;
+        };
+
+        const registerServiceWorker = async () => {
+            if ('serviceWorker' in navigator) {
+                try {
+                    // Expanded SW to cache common assets
+                    const swCode = `
+                        const CACHE_NAME = 'namaz-v4-static';
+                        const ASSETS = [
+                            'https://cdn.tailwindcss.com',
+                            'https://unpkg.com/react@18/umd/react.production.min.js',
+                            'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
+                            'https://unpkg.com/@babel/standalone/babel.min.js',
+                            'https://cdn-icons-png.flaticon.com/512/5533/5533023.png'
+                        ];
+                        self.addEventListener('install', (event) => {
+                            self.skipWaiting();
+                            event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
+                        });
+                        self.addEventListener('activate', (event) => self.clients.claim());
+                        self.addEventListener('fetch', (event) => {
+                            event.respondWith(
+                                caches.match(event.request).then(response => {
+                                    return response || fetch(event.request).then(networkResponse => {
+                                        // Cache new static assets dynamically
+                                        if (event.request.url.startsWith('http') && (event.request.url.includes('cdn') || event.request.url.includes('unpkg'))) {
+                                            const clone = networkResponse.clone();
+                                            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                                        }
+                                        return networkResponse;
+                                    });
+                                }).catch(() => null)
+                            );
+                        });
+                    `;
+                    const blob = new Blob([swCode], {type: 'text/javascript'});
+                    const url = URL.createObjectURL(blob);
+                    await navigator.serviceWorker.register(url).catch(err => {
+                         console.warn("Service Worker registration failed (common in preview/iframe):", err.message);
+                    });
+                } catch (e) {
+                    console.warn('SW Setup Error:', e);
+                }
+            }
+        };
+
+        const sendNotification = async (title, options = {}) => {
+            if (!("Notification" in window) || Notification.permission !== "granted") return;
+            const notifOptions = { icon: 'https://cdn-icons-png.flaticon.com/512/5533/5533023.png', ...options };
+            
+            try {
+                // Try Service Worker first (better for mobile)
+                if ('serviceWorker' in navigator) {
+                    const reg = await navigator.serviceWorker.getRegistration();
+                    if (reg && reg.active) { 
+                        await reg.showNotification(title, notifOptions); 
+                        return; 
+                    }
+                }
+            } catch (e) {
+                // console.warn("SW notification failed, trying fallback", e);
+            }
+
+            // Fallback to standard Notification API
+            try { 
+                new Notification(title, notifOptions); 
+            } catch(e2) {
+                // console.warn("Notification API failed", e2);
+            }
+        };
+
+        // --- 1. CONFIGURATION & CONSTANTS ---
+        const CONFIG = Object.freeze({
+            API: {
+                ALADHAN: 'https://api.aladhan.com/v1',
+                QURAN: 'https://api.alquran.cloud/v1',
+                NOMINATIM: 'https://nominatim.openstreetmap.org'
+            },
+            STORAGE_KEYS: { LANG: 'appLang', COORDS: 'coords', LOC_NAME: 'locName', THEME: 'isDarkMode', SETTINGS: 'appSettings', CUSTOM_ZIKRS: 'customZikrs', OFFLINE_QURAN_POOL: 'offlineQuranPool', LAST_POOL_UPDATE: 'offlinePoolLastUpdate' },
+            DEFAULTS: { COORDS: { lat: 41.0082, lng: 28.9784 }, LOC_NAME: "İstanbul", LANG: 'tr' }
+        });
+
+        const Icon = ({ path, size = 20, className = "" }) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{path}</svg>;
+        const ICONS = {
+            MapPin: <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></>,
+            Settings: <><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1-1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></>,
+            Moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>,
+            Sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></>,
+            BookOpen: <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>,
+            CheckCircle: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></>,
+            RefreshCw: <><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></>,
+            Globe: <><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></>,
+            Navigation: <polygon points="3 11 22 2 13 21 11 13 3 11"/>,
+            Clock: <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
+            Menu: <><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></>,
+            AlertTriangle: <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></>,
+            ChevronRight: <path d="m9 18 6-6-6-6"/>,
+            Lock: <><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
+            Edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+            Bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></>,
+            RotateCcw: <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 16" />,
+            Type: <><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></>,
+            Volume2: <><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></>,
+            Vibrate: <path d="M6 8v8M18 8v8M2 10v4M22 10v4M10 4v16M14 6v12" />,
+            HelpCircle: <><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></>,
+            Trash2: <><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></>,
+            CheckSquare: <><polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></>,
+            Plus: <><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></>,
+            X: <><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>,
+            Download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
+            Info: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>
+        };
+
+        const { useState, useEffect, useCallback, useMemo, memo, useReducer, useRef, useContext, createContext } = React;
+
+        // --- 3. SERVICES ---
+        class StorageService {
+            static get(key, fallback = null) { try { const item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; } }
+            static set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+            static remove(key) { try { localStorage.removeItem(key); } catch (e) {} }
+        }
+
+        class CacheService {
+            static get(key) { const item = StorageService.get(key); if (!item) return null; const { value, expiry } = item; if (expiry && Date.now() > expiry) { StorageService.remove(key); return null; } return value; }
+            static set(key, value, ttlMinutes = 60) { const expiry = ttlMinutes ? Date.now() + (ttlMinutes * 60 * 1000) : null; StorageService.set(key, { value, expiry }); }
+        }
+
+        class AudioService {
+            static ctx = null;
+            static init() { if (!this.ctx) { const AudioContext = window.AudioContext || window.webkitAudioContext; if (AudioContext) this.ctx = new AudioContext(); } }
+            static play(type) {
+                try {
+                    this.init(); if (!this.ctx) return; if (this.ctx.state === 'suspended') this.ctx.resume();
+                    const osc = this.ctx.createOscillator(), gain = this.ctx.createGain(), now = this.ctx.currentTime;
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    if (type === 'tick') { osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.05); gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05); osc.start(now); osc.stop(now + 0.05); }
+                    else if (type === 'finish') { osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.1, now + 0.05); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8); osc.start(now); osc.stop(now + 0.8); }
+                } catch(e) {}
+            }
+        }
+
+        class ApiService {
+            static async fetchJson(url) { const res = await fetch(url); if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); }
+            static getSurahNameTR(num) { return (num > 0 && num <= 114) ? SURAH_NAMES_TR[num - 1] : "Surah " + num; }
+            static getTranslationEdition(lang) { return ({ 'de': 'de.aburida', 'en': 'en.sahih' }[lang] || 'tr.diyanet'); }
+            static getTransliterationEdition(lang) { return (lang === 'tr') ? 'tr.transliteration' : 'en.transliteration'; }
+        }
+
+        // --- 4. CONTEXT ---
+        const AppContext = createContext(null);
+        const AppProvider = ({ children }) => {
+            const [lang, setLang] = useState(() => StorageService.get(CONFIG.STORAGE_KEYS.LANG, CONFIG.DEFAULTS.LANG));
+            const [isDarkMode, setIsDarkMode] = useState(false);
+            const [settings, setSettings] = useState(() => ({ methodId: 13, asrMethod: 0, offsets: { fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }, fontSize: 1.0, soundEnabled: true, vibrationEnabled: true, ...StorageService.get(CONFIG.STORAGE_KEYS.SETTINGS, {}) }));
+
+            // Initialize Offline Pool Once
+            useEffect(() => {
+                const existingPool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL);
+                if (!existingPool || existingPool.length === 0) {
+                    const newPool = [];
+                    while(newPool.length < 50) { // Increased to 50
+                        const r = Math.floor(Math.random() * 604) + 1;
+                        if(!newPool.includes(r)) newPool.push(r);
+                    }
+                    StorageService.set(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL, newPool);
+                }
+                registerServiceWorker();
+            }, []);
+
+            useEffect(() => { StorageService.set(CONFIG.STORAGE_KEYS.SETTINGS, settings); }, [settings]);
+            useEffect(() => {
+                StorageService.set(CONFIG.STORAGE_KEYS.LANG, lang);
+                const appName = TRANSLATIONS[lang]?.appName || "Namaz ve Zikir";
+                let manifestLink = document.getElementById('app-manifest');
+                if (!manifestLink) { manifestLink = document.createElement('link'); manifestLink.id = 'app-manifest'; manifestLink.rel = 'manifest'; document.head.appendChild(manifestLink); }
+                manifestLink.href = generateManifest(appName);
+                document.title = appName;
+            }, [lang]);
+
+            const toggleTheme = useCallback(() => setIsDarkMode(p => !p), []);
+            useEffect(() => { isDarkMode ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark'); }, [isDarkMode]);
+            const t = useCallback((key) => TRANSLATIONS[lang]?.[key] || key, [lang]);
+            const updateSetting = useCallback((key, val) => { setSettings(prev => ({ ...prev, [key]: val })); }, []);
+            const fs = useCallback((baseRem) => ({ fontSize: `${baseRem * settings.fontSize}rem`, lineHeight: '1.4' }), [settings.fontSize]);
+            const value = useMemo(() => ({ lang, setLang, isDarkMode, setIsDarkMode, toggleTheme, settings, updateSetting, t, fs }), [lang, isDarkMode, settings, t, toggleTheme, updateSetting, fs]);
+            return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+        };
+        const useApp = () => useContext(AppContext);
+
+        // --- 5. CUSTOM HOOKS ---
+        const useTime = () => { const [time, setTime] = useState(new Date()); useEffect(() => { const timer = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(timer); }, []); return time; };
+        
+        const useGeolocation = () => {
+            const { t } = useApp();
+            const [state, setState] = useState(() => ({
+                coords: StorageService.get(CONFIG.STORAGE_KEYS.COORDS),
+                locationName: StorageService.get(CONFIG.STORAGE_KEYS.LOC_NAME, CONFIG.DEFAULTS.LOC_NAME),
+                loading: false
+            }));
+            const [suggestions, setSuggestions] = useState([]);
+            const update = useCallback((part) => setState(s => ({ ...s, ...part })), []);
+            
+            const getUserLocation = useCallback(async (isManual = false) => {
+                if (!navigator.geolocation) return;
+                update({ loading: true });
+                try {
+                    const pos = await new Promise((resolve) => {
+                        try {
+                            navigator.geolocation.getCurrentPosition(
+                                (p) => resolve(p),
+                                (err) => resolve(null), // Resolve null to handle gracefully
+                                { timeout: 10000 }
+                            );
+                        } catch (err) {
+                            resolve(null);
+                        }
+                    });
+
+                    if (pos) {
+                        const newCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        StorageService.set(CONFIG.STORAGE_KEYS.COORDS, newCoords); 
+                        update({ coords: newCoords });
+                        
+                        let name = t('location');
+                        try { 
+                            const data = await ApiService.fetchJson(`${CONFIG.API.NOMINATIM}/reverse?format=json&lat=${newCoords.lat}&lon=${newCoords.lng}`); 
+                            name = data.address.city || data.address.town || data.address.district || "Konum"; 
+                            StorageService.set(CONFIG.STORAGE_KEYS.LOC_NAME, name); 
+                        } catch(e) { name = `${newCoords.lat.toFixed(2)}, ${newCoords.lng.toFixed(2)}`; }
+                        update({ locationName: name, loading: false });
+                    } else {
+                        update({ loading: false });
+                        if (isManual) alert(t('error') + ": GPS");
+                        if (!state.coords) update({ coords: CONFIG.DEFAULTS.COORDS, locationName: CONFIG.DEFAULTS.LOC_NAME });
+                    }
+                } catch (e) {
+                    update({ loading: false });
+                }
+            }, [t, update, state.coords]);
+
+            const searchLocation = useCallback(async (query) => {
+                if (!query) return; update({ loading: true });
+                try { const data = await ApiService.fetchJson(`${CONFIG.API.NOMINATIM}/search?format=json&q=${query}`); if (data.length > 0) { const p = data[0], nc = { lat: parseFloat(p.lat), lng: parseFloat(p.lon) }, name = p.display_name.split(',')[0]; update({ coords: nc, locationName: name, loading: false }); StorageService.set(CONFIG.STORAGE_KEYS.COORDS, nc); StorageService.set(CONFIG.STORAGE_KEYS.LOC_NAME, name); setSuggestions([]); } } catch(e) {} update({ loading: false });
+            }, [update]);
+            
+            const liveSearch = useCallback(async (query) => { if (query.length < 3) { setSuggestions([]); return; } try { const data = await ApiService.fetchJson(`${CONFIG.API.NOMINATIM}/search?format=json&q=${query}&limit=5`); setSuggestions(data); } catch(e) {} }, []);
+            
+            useEffect(() => { 
+                if (!state.coords) {
+                    getUserLocation(false).catch(err => console.log("Geo init error handled", err));
+                }
+            }, []);
+            return { ...state, getUserLocation, searchLocation, liveSearch, suggestions, setSuggestions, update };
+        };
+
+        const usePrayerTimes = (coords) => {
+            const { settings } = useApp();
+            const [data, setData] = useState(null); 
+            const [loading, setLoading] = useState(false);
+            useEffect(() => {
+                if (!coords) return;
+                const date = new Date();
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const cacheKey = `prayer_calendar_${year}_${month}_${coords.lat.toFixed(2)}_${coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
+                const cached = CacheService.get(cacheKey); 
+                if(cached) {
+                    const todayDay = date.getDate();
+                    const todayData = cached.find(d => parseInt(d.date.gregorian.day) === todayDay);
+                    if(todayData) setData({ timings: todayData.timings, date: todayData.date });
+                    return; 
+                }
+                const fetchTimes = async () => { 
+                    setLoading(true); 
+                    try { 
+                        const mId = settings.methodId;
+                        const sP = settings.asrMethod === 1 ? '&school=1' : '&school=0';
+                        // Fix: Aladhan ignores school=1 for method=13 (Diyanet). 
+                        // Use Method 3 (MWL) as proxy for Diyanet angles when Hanafi is selected.
+                        const effectiveMethod = (mId === 13 && settings.asrMethod === 1) ? 3 : mId;
+                        
+                        const json = await ApiService.fetchJson(`${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${coords.lat}&longitude=${coords.lng}&method=${effectiveMethod}${sP}`); 
+                        if (json.code === 200 && Array.isArray(json.data)) { 
+                            CacheService.set(cacheKey, json.data, 60*24*30);
+                            const todayDay = date.getDate();
+                            const todayData = json.data.find(d => parseInt(d.date.gregorian.day) === todayDay);
+                            if(todayData) setData({ timings: todayData.timings, date: todayData.date });
+                        } 
+                    } catch (e) {} 
+                    setLoading(false); 
+                }; 
+                fetchTimes().catch(() => {});
+            }, [coords, settings.methodId, settings.asrMethod]);
+            return { data, loading };
+        };
+
+        const useOfflineContent = (lang, locationHook) => {
+            const [downloading, setDownloading] = useState(false);
+            const [progress, setProgress] = useState("");
+
+            const generatePool = (preserve = []) => {
+                const newPool = [...preserve];
+                while(newPool.length < 50) {
+                    const r = getSecureRandomNumber(1, 604);
+                    if(!newPool.includes(r)) newPool.push(r);
+                }
+                return newPool;
+            };
+
+            const downloadPages = async (pool) => {
+                const languages = ['tr', 'en', 'de'];
+                let count = 0;
+                
+                for (const pageNum of pool) {
+                    for (const l of languages) {
+                         const cacheKey = `page_${pageNum}_${l}`;
+                         if (CacheService.get(cacheKey)) continue;
+
+                         const edition = ApiService.getTranslationEdition(l);
+                         const transEdition = ApiService.getTransliterationEdition(l);
+                         
+                         try {
+                            const [p1, p2, p3] = await Promise.all([
+                                ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${pageNum}/quran-uthmani`),
+                                ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${pageNum}/${edition}`),
+                                ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${pageNum}/${transEdition}`)
+                            ]);
+
+                            if (p1.code === 200 && p2.code === 200 && p3.code === 200) {
+                                const combined = p1.data.ayahs.map((item, i) => ({
+                                    arabic: item.text,
+                                    text: p2.data.ayahs[i]?.text || '',
+                                    trans: p3.data.ayahs[i]?.text || '',
+                                    info: `${ApiService.getSurahNameTR(item.surah.number)} : ${item.numberInSurah}`
+                                }));
+                                CacheService.set(cacheKey, combined, null);
+                            }
+                         } catch (e) {
+                             console.warn(`Error downloading page ${pageNum} for ${l}`, e);
+                         }
+                    }
+                    count++;
+                    setProgress(`${count}/50`);
+                }
+            };
+            
+            const downloadSpecialReadings = async () => {
+                const languages = ['tr', 'en', 'de'];
+                const types = [
+                    { id: 'kehf_first_10', surah: 18, offset: 0, limit: 10 },
+                    { id: 'kehf_last_10', surah: 18, offset: 100, limit: 10 },
+                    { id: 'qaf_first_10', surah: 50, offset: 0, limit: 10 },
+                    { id: 'qaf_last_10', surah: 50, offset: 35, limit: 10 },
+                    { id: 'amenarresulu', surah: 2, offset: 284, limit: 2 }
+                ];
+
+                for (const l of languages) {
+                    const edition = ApiService.getTranslationEdition(l);
+                    const transEdition = ApiService.getTransliterationEdition(l);
+
+                    for (const t of types) {
+                        const cacheKey = `zikr_data_${t.id}_${l}`;
+                        if (CacheService.get(cacheKey)) continue;
+
+                        try {
+                            const url = `${CONFIG.API.QURAN}/surah/${t.surah}/editions/quran-uthmani,${edition},${transEdition}?offset=${t.offset}&limit=${t.limit}`;
+                            const json = await ApiService.fetchJson(url);
+                            if (json.code === 200) {
+                                const processed = json.data[0].ayahs.map((a, i) => ({
+                                    arabic: a.text,
+                                    mean: json.data[1].ayahs[i].text,
+                                    trans: json.data[2].ayahs[i].text,
+                                    number: a.numberInSurah
+                                }));
+                                CacheService.set(cacheKey, processed, null);
+                            }
+                        } catch (e) {
+                            console.warn(`Error downloading ${t.id} for ${l}`, e);
+                        }
+                    }
+                }
+            };
+
+            const downloadPrayerTimes = async () => {
+                if (!locationHook.coords) return;
+                const settings = StorageService.get(CONFIG.STORAGE_KEYS.SETTINGS) || { methodId: 13, asrMethod: 0 };
+                const mId = settings.methodId;
+                const sP = settings.asrMethod === 1 ? '&school=1' : '&school=0';
+                const effectiveMethod = (mId === 13 && settings.asrMethod === 1) ? 3 : mId;
+                const queryParams = `&method=${effectiveMethod}${sP}`;
+                const date = new Date();
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                
+                try {
+                    const url1 = `${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${locationHook.coords.lat}&longitude=${locationHook.coords.lng}${queryParams}`;
+                    const json1 = await ApiService.fetchJson(url1);
+                    if (json1.code === 200 && Array.isArray(json1.data)) {
+                         const specificCacheKey1 = `prayer_calendar_${year}_${month}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
+                         CacheService.set(specificCacheKey1, json1.data, 60*24*30);
+                    }
+
+                    const nextMonth = month === 12 ? 1 : month + 1;
+                    const nextYear = month === 12 ? year + 1 : year;
+                    const url2 = `${CONFIG.API.ALADHAN}/calendar/${nextYear}/${nextMonth}?latitude=${locationHook.coords.lat}&longitude=${locationHook.coords.lng}${queryParams}`;
+                    const json2 = await ApiService.fetchJson(url2);
+                    if (json2.code === 200 && Array.isArray(json2.data)) {
+                         const specificCacheKey2 = `prayer_calendar_${nextYear}_${nextMonth}_${locationHook.coords.lat.toFixed(2)}_${locationHook.coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
+                         CacheService.set(specificCacheKey2, json2.data, 60*24*30);
+                    }
+                } catch(e) { console.warn("Prayer times download failed", e); }
+            };
+
+            const refreshContent = async (isAuto = false) => {
+                if (!navigator.onLine) return;
+                setDownloading(true);
+                
+                const today = new Date().toISOString().split('T')[0];
+                const activeIkindiPage = StorageService.get(`tasbeeh_read_page_${today}`);
+                const activeQuranPage = StorageService.get('last_quran_page');
+                
+                const preserve = [];
+                if (activeIkindiPage) preserve.push(parseInt(activeIkindiPage));
+                if (activeQuranPage) preserve.push(parseInt(activeQuranPage));
+                
+                const newPool = generatePool(preserve);
+                StorageService.set(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL, newPool);
+                StorageService.set(CONFIG.STORAGE_KEYS.LAST_POOL_UPDATE, today);
+
+                await downloadPages(newPool); 
+                await downloadSpecialReadings();
+                await downloadPrayerTimes();
+
+                if(!isAuto) alert("İndirme Tamamlandı / Download Complete");
+                setDownloading(false);
+            };
+
+            const checkAndDownloadMissing = async () => {
+                if (!navigator.onLine) return;
+                const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL);
+                const lastUpdate = StorageService.get(CONFIG.STORAGE_KEYS.LAST_POOL_UPDATE);
+                const today = new Date().toISOString().split('T')[0];
+
+                if (!pool || pool.length === 0 || lastUpdate !== today) {
+                    await refreshContent(true);
+                } else {
+                    setDownloading(true);
+                    await downloadPages(pool);
+                    await downloadSpecialReadings();
+                    await downloadPrayerTimes();
+                    setDownloading(false);
+                }
+            };
+
+            const downloadEverything = () => refreshContent(false);
+
+            return { downloading, progress, downloadEverything, refreshContent, checkAndDownloadMissing };
+        };
+
+        const useZikrReminder = (prayerData, currentTime) => {
+            const { t } = useApp();
+            const [notifSentFor, setNotifSentFor] = useState(null);
+            
+            useEffect(() => {
+                if (!prayerData || !("Notification" in window) || Notification.permission !== "granted") return;
+                
+                const timings = prayerData.timings;
+                const now = currentTime.getTime();
+                const getP = (str) => { const [h, m] = str.split(' ')[0].split(':').map(Number); const d = new Date(); d.setHours(h, m, 0, 0); return d.getTime(); };
+                const dhuhr = getP(timings.Dhuhr); const asr = getP(timings.Asr); const maghrib = getP(timings.Maghrib); const isha = getP(timings.Isha);
+                
+                const isModeFinished = (mode) => { const s = StorageService.get(`tasbeeh_status_${mode}`); return s && s.date === new Date().toISOString().split('T')[0] && s.finished; };
+                
+                const checkAndSend = (targetTime, targetName, prevModeToCheck) => {
+                    const diff = targetTime - now;
+                    if (diff > 29 * 60 * 1000 && diff <= 30 * 60 * 1000) {
+                        const key = `${new Date().toISOString().split('T')[0]}_${targetName}`;
+                        const sent = StorageService.get(`notif_sent_${key}`);
+                        
+                        if (!sent && notifSentFor !== targetName) {
+                            let bodyText = `${t('notifTimeLeft')} ${targetName}.`;
+                            if (prevModeToCheck && !isModeFinished(prevModeToCheck)) bodyText += ` ${t('notifUnfinished')}`;
+                            
+                            sendNotification(t('appName'), { body: bodyText, tag: key });
+                            setNotifSentFor(targetName);
+                            StorageService.set(`notif_sent_${key}`, true);
+                        }
+                    }
+                };
+                
+                if (now < dhuhr) checkAndSend(dhuhr, t('dhuhr'), 'morning');
+                if (now < maghrib) checkAndSend(maghrib, t('maghrib'), 'ikindi');
+                if (now < asr) checkAndSend(asr, t('asr'), null);
+                if (now < isha) checkAndSend(isha, t('isha'), null);
+                
+            }, [currentTime, prayerData, notifSentFor, t]);
+        };
+
+        // --- 6. SUB-COMPONENTS (Defined BEFORE Views) ---
+        class ErrorBoundary extends React.Component {
+            constructor(props) { super(props); this.state = { hasError: false }; }
+            static getDerivedStateFromError(error) { return { hasError: true }; }
+            render() { if (this.state.hasError) return <div className="h-full flex items-center justify-center flex-col p-4 text-center"><button onClick={() => window.location.reload()} className="bg-emerald-600 text-white px-4 py-2 rounded-lg">Reload</button></div>; return this.props.children; }
+        }
+
+        const HelpModal = ({ open, onClose }) => {
+            const { t } = useApp();
+            if (!open) return null;
+            return (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 modal-overlay" onClick={onClose}>
+                    <div className="bg-white dark:bg-slate-850 w-full max-w-sm rounded-2xl p-6 shadow-2xl border dark:border-slate-700 animate-fade-in max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold dark:text-slate-100">{t('aboutTitle')}</h3>
+                            <button onClick={onClose}><Icon path={ICONS.X} size={20}/></button>
+                        </div>
+                        {HELP_CONTENT[useApp().lang].map((section, idx) => (
+                            <div key={idx} className="text-sm space-y-2 mb-4 text-slate-600 dark:text-slate-300">
+                                <h4 className="font-bold text-emerald-700 dark:text-emerald-400">{section.title}</h4>
+                                <p dangerouslySetInnerHTML={{ __html: section.content }}></p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const LoadingView = memo(() => (<div className="flex justify-center items-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 dark:border-emerald-400"></div></div>));
+        
+        const Header = memo(({ currentTime }) => {
+            const { t, isDarkMode, toggleTheme, fs } = useApp();
+            const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+            useEffect(() => {
+                const handleOnline = () => setIsOffline(false);
+                const handleOffline = () => setIsOffline(true);
+                window.addEventListener('online', handleOnline);
+                window.addEventListener('offline', handleOffline);
+                return () => {
+                    window.removeEventListener('online', handleOnline);
+                    window.removeEventListener('offline', handleOffline);
+                };
+            }, []);
+
+            return (
+                <header className="fixed top-0 left-0 right-0 mx-auto max-w-md z-50 pt-safe transition-colors duration-300">
+                    {isOffline && <div className="offline-banner">{t('offlineMode')}</div>}
+                    <div className="mx-4 mt-2 h-14 bg-white dark:bg-slate-850 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center px-4 transition-colors duration-300">
+                        <div className="flex items-center space-x-2"><div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white"><Icon path={ICONS.Moon} size={18} /></div><span className="font-bold text-base tracking-tight text-slate-800 dark:text-slate-100" style={fs(1)}>{t('appName')}</span></div>
+                        <div className="flex items-center space-x-2">
+                            <div className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded" style={fs(0.875)}>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
+                            <button onClick={toggleTheme} className="text-slate-500 dark:text-slate-400 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><Icon path={isDarkMode ? ICONS.Sun : ICONS.Moon} size={18} /></button>
+                        </div>
+                    </div>
+                </header>
+            );
+        });
+
+        const Navbar = memo(({ active, setActive }) => {
+            const { t, fs } = useApp();
+            return (
+                <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] pb-safe transition-colors duration-300">
+                    <div className="grid grid-cols-4 w-full h-16 max-w-md mx-auto">
+                        {[{ id: 'times', i: ICONS.Clock }, { id: 'tasbeeh', i: ICONS.RefreshCw }, { id: 'quran', i: ICONS.BookOpen }, { id: 'settings', i: ICONS.Menu }].map(b => (
+                            <button key={b.id} onClick={() => { if (active !== b.id) { window.history.pushState({ tab: b.id }, '', `#${b.id}`); setActive(b.id); } }} className={`flex flex-col items-center justify-center space-y-0.5 transition w-full h-full ${active === b.id ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-600'}`}>
+                                <div className={`transition-transform duration-200 ${active === b.id ? '-translate-y-1' : ''}`}><Icon path={b.i} size={20}/></div>
+                                <span className="text-[9px] font-medium max-w-[50px] truncate" style={fs(0.6)}>{t(b.label || b.id)}</span>
+                            </button>
+                        ))}
+                    </div>
+                </nav>
+            );
+        });
+
+        const ProgressBar = memo(({ current, total }) => (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1 transform-gpu"><div className="bg-emerald-600 h-2 rounded-full transition-all duration-300 ease-out will-change-transform" style={{ width: `${Math.min(100, (current / total) * 100)}%` }}></div></div>));
+        const ResetBtn = memo(({ onClick }) => { const { t, fs } = useApp(); return (<button onClick={(e) => { e.stopPropagation(); onClick(); }} className="px-2 py-1 rounded-md bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition flex items-center space-x-1 border border-orange-100 dark:border-orange-900/30" title={t('resetStep')}><Icon path={ICONS.RotateCcw} size={14} /><span className="text-xs font-bold" style={fs(0.75)}>{t('reset')}</span></button>); });
+
+        // --- COMPONENT CARDS (Defined BEFORE Views) ---
+        const ReadingCard = memo(({ current, next, cooldown }) => { const { t, settings, fs } = useApp(); return (<div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col items-center text-center shadow-sm transition-colors duration-300 h-full justify-center"><Icon path={ICONS.BookOpen} size={32} className="text-emerald-500 mb-2"/><h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1" style={fs(1.125)}>{current.title}</h3><p className="text-slate-600 dark:text-slate-400 mb-3 text-xs" style={fs(0.75)}>{current.text}</p><button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold transition text-sm ${cooldown ? 'bg-slate-300 dark:bg-slate-600' : 'bg-emerald-600 text-white'}`}>{cooldown ? <Icon path={ICONS.Lock} size={16} className="mx-auto"/> : <span style={fs(0.875)}>{t('completed')}</span>}</button></div>); });
+        
+        const ChecklistCard = memo(({ current, onToggleItem, checkedState }) => {
+            const { t, fs } = useApp(); const list = current.list || [];
+            return (
+                <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col h-full transition-colors duration-300">
+                    <div className="flex justify-between items-center mb-4 text-xs shrink-0 pb-2 border-b border-slate-100 dark:border-slate-800"><div className="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.CheckSquare} size={18}/><span style={fs(1)}>{current.title}</span></div></div>
+                    <div className="flex-1 overflow-y-auto mb-4 no-scrollbar"><div className="space-y-2 p-1">{list.map((item, idx) => { const isChecked = !!checkedState[idx]; return (<div key={idx} onClick={() => onToggleItem(idx)} className={`flex items-center space-x-3 p-3 rounded-xl transition-all cursor-pointer select-none border ${isChecked ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/50' : 'bg-slate-50 dark:bg-slate-800/50 border-transparent hover:bg-slate-100 dark:hover:bg-slate-800'}`}><div className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-colors shrink-0 ${isChecked ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-transparent'}`}><Icon path={ICONS.CheckSquare} size={14} /></div><div className="flex-1 min-w-0"><div className="flex justify-between items-baseline"><p className={`text-sm font-semibold truncate ${isChecked ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200'}`} style={fs(0.9)}>{item.text}</p>{item.arabic && <span className="font-serif text-lg text-emerald-600 dark:text-emerald-500 ml-2" dir="rtl">{item.arabic}</span>}</div>{item.sub && <p className={`text-xs whitespace-normal ${isChecked ? 'text-emerald-600/70 dark:text-emerald-500/70' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.7)}>{item.sub}</p>}</div></div>); })}</div></div>
+                </div>
+            );
+        });
+
+        const FetchableZikrCard = memo(({ current, count, next, tap, cooldown, resetLocal }) => {
+            const { t, lang, fs } = useApp();
+            const [data, setData] = useState(null); const [loading, setLoading] = useState(true); const [error, setError] = useState(false);
+            useEffect(() => {
+                let isMounted = true;
+                const fetchData = async () => {
+                    const cacheKey = `zikr_data_${current.type}_${lang}`; const cached = CacheService.get(cacheKey); if (cached) { setData(cached); setLoading(false); return; }
+                    setLoading(true); setError(false);
+                    try {
+                        const edition = ApiService.getTranslationEdition(lang), transEdition = ApiService.getTransliterationEdition(lang); let url = '';
+                        if (current.type === 'kehf_first_10') url = `${CONFIG.API.QURAN}/surah/18/editions/quran-uthmani,${edition},${transEdition}?offset=0&limit=10`;
+                        else if (current.type === 'kehf_last_10') url = `${CONFIG.API.QURAN}/surah/18/editions/quran-uthmani,${edition},${transEdition}?offset=100&limit=10`;
+                        else if (current.type === 'qaf_first_10') url = `${CONFIG.API.QURAN}/surah/50/editions/quran-uthmani,${edition},${transEdition}?offset=0&limit=10`;
+                        else if (current.type === 'qaf_last_10') url = `${CONFIG.API.QURAN}/surah/50/editions/quran-uthmani,${edition},${transEdition}?offset=35&limit=10`;
+                        else if (current.type === 'amenarresulu') url = `${CONFIG.API.QURAN}/surah/2/editions/quran-uthmani,${edition},${transEdition}?offset=284&limit=2`;
+                        if (url) { const json = await ApiService.fetchJson(url); if (json.code === 200 && isMounted) { const processed = json.data[0].ayahs.map((a, i) => ({ arabic: a.text, mean: json.data[1].ayahs[i].text, trans: json.data[2].ayahs[i].text, number: a.numberInSurah })); setData(processed); CacheService.set(cacheKey, processed, null); } else throw new Error(); }
+                    } catch (e) { if (isMounted) setError(true); } finally { if (isMounted) setLoading(false); }
+                }; fetchData(); return () => { isMounted = false; };
+            }, [current.type, lang]);
+            if (loading) return <div className="h-full flex items-center justify-center"><LoadingView /></div>;
+            if (error || !data) return (<div className="h-full flex flex-col items-center justify-center p-4 border border-red-200 rounded-2xl"><p className="text-red-500 mb-2 text-xs">{t('connectionError')}</p><button onClick={next} className="bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded text-xs text-slate-600 dark:text-slate-300">{t('next')}</button></div>);
+            const idx = Math.min(count, data.length - 1), item = data[idx], isLast = count >= current.target - 1;
+            return (
+                <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col transition-colors duration-300 h-full">
+                    <div className="flex justify-between items-center mb-2 text-xs shrink-0">
+                        <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.BookOpen} size={16}/><span style={fs(1)}>{current.title}</span></div>
+                        <div className="flex items-center space-x-2"><span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono" style={fs(0.75)}>{Math.min(count + 1, current.target)}/{current.target}</span><ResetBtn onClick={resetLocal} /></div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto mb-2 no-scrollbar">
+                        {current.type === 'amenarresulu' ? (<div className="space-y-4 p-2"><div className="text-right font-serif text-xl text-emerald-800 dark:text-emerald-400 mb-2 leading-loose" dir="rtl" style={fs(1.5)}>{data.map((d, i) => <span key={i}>{d.arabic} <span className="text-sm border border-current rounded-full w-6 h-6 inline-flex items-center justify-center mx-1">{d.number}</span></span>)}</div><div className="text-slate-800 dark:text-slate-200 font-medium text-base mb-1 leading-relaxed"><h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1 uppercase tracking-wider" style={fs(0.75)}>{t('turkishTrans')}</h4><p style={fs(1)}>{data.map(d => d.trans).join(' ')}</p></div><div className="text-slate-600 dark:text-slate-400 text-base italic leading-relaxed"><h4 className="font-bold text-emerald-700 dark:text-emerald-500 text-xs mb-1 uppercase tracking-wider" style={fs(0.75)}>{t('turkishMean')}</h4><p style={fs(1)}>{data.map(d => d.mean).join(' ')}</p></div></div>)
+                        : (<><p className="text-right font-serif text-2xl text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl" style={fs(1.5)}>{item.arabic}</p><p className="text-slate-800 dark:text-slate-200 font-semibold text-sm mb-1 leading-relaxed" style={fs(0.875)}>{item.trans}</p><p className="text-slate-600 dark:text-slate-400 italic text-xs" style={fs(0.75)}>{item.mean}</p></>)}
+                    </div>
+                    <div className="shrink-0 h-16 flex items-center justify-center border-t border-slate-100 dark:border-slate-800 pt-2">
+                        <button onClick={isLast ? next : tap} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500' : 'bg-emerald-600 text-white active:scale-95'}`}>{cooldown ? <Icon path={ICONS.Lock} size={16}/> : <span style={fs(0.875)}>{isLast ? t('completed') : (current.type === 'amenarresulu' ? t('tapToCount') : t('nextAyah'))}</span>}</button>
+                    </div>
+                </div>
+            );
+        });
+
+        const MultiAyahReadingCard = memo(({ current, next, cooldown }) => {
+            const { t, lang, fs } = useApp();
+            const [showHint, setShowHint] = useState(true);
+            const [ayahs, setAyahs] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(false);
+            const [pageNumber, setPageNumber] = useState(0);
+            
+            const load = useCallback(async () => {
+                setLoading(true); setError(false);
+                const today = new Date().toISOString().split('T')[0];
+                const key = `tasbeeh_read_page_${today}`;
+                
+                const getFromPool = () => {
+                    const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
+                    const lastPage = StorageService.get('last_picked_asr_page');
+                    const available = pool.filter(p => p !== lastPage);
+                    const effectivePool = available.length > 0 ? available : pool;
+                    return effectivePool.length > 0 ? effectivePool[Math.floor(Math.random() * effectivePool.length)] : 1;
+                };
+
+                let targetPage = StorageService.get(key);
+                // Initial selection if empty
+                if (!targetPage) {
+                    targetPage = navigator.onLine ? getSecureRandomNumber(1, 604) : getFromPool();
+                    StorageService.set(key, targetPage);
+                    StorageService.set('last_picked_asr_page', targetPage);
+                }
+
+                // 1. Try Cache First
+                const cacheKey = `page_${targetPage}_${lang}`;
+                const cached = CacheService.get(cacheKey);
+                if (cached) {
+                    setAyahs(cached);
+                    setPageNumber(targetPage);
+                    setLoading(false);
+                    return;
+                }
+
+                // 2. Helper to find ANY working offline page (Randomized)
+                const useFallback = () => {
+                    const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
+                    // Find all pages that are actually cached
+                    const validPages = pool.filter(p => CacheService.get(`page_${p}_${lang}`));
+                    
+                    if (validPages.length > 0) {
+                        // Avoid immediate repeat if possible
+                        const lastPage = parseInt(StorageService.get('last_picked_asr_page') || '0');
+                        const candidates = validPages.filter(p => p !== lastPage);
+                        const effectivePool = candidates.length > 0 ? candidates : validPages;
+                        
+                        const randomPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
+                        
+                        // Retrieve content again (it's fast/sync)
+                        const c = CacheService.get(`page_${randomPage}_${lang}`);
+                        setAyahs(c);
+                        setPageNumber(randomPage);
+                        StorageService.set(key, randomPage);
+                        StorageService.set('last_picked_asr_page', randomPage);
+                        return true;
+                    }
+                    return false;
+                };
+
+                // 3. If Offline, force fallback
+                if (!navigator.onLine) {
+                    if (useFallback()) {
+                        setLoading(false);
+                    } else {
+                        setError(true);
+                        setLoading(false);
+                    }
+                    return;
+                }
+
+                // 4. Online Fetch
+                try {
+                    const edition = ApiService.getTranslationEdition(lang);
+                    const transEdition = ApiService.getTransliterationEdition(lang);
+                    const [p1, p2, p3] = await Promise.all([
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/quran-uthmani`),
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${edition}`),
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${transEdition}`)
+                    ]);
+
+                    if (p1.code === 200) {
+                        const combined = p1.data.ayahs.map((ayah, i) => ({
+                            arabic: ayah.text,
+                            text: p2.data.ayahs[i] ? p2.data.ayahs[i].text : '',
+                            trans: p3.data.ayahs[i] ? p3.data.ayahs[i].text : '',
+                            info: `${ApiService.getSurahNameTR(ayah.surah.number)} : ${ayah.numberInSurah}`
+                        }));
+                        setAyahs(combined);
+                        setPageNumber(targetPage);
+                        CacheService.set(cacheKey, combined, null);
+                    } else {
+                        throw new Error("API Error");
+                    }
+                } catch (e) {
+                    // Fetch failed, try fallback
+                    if (useFallback()) {
+                        // Fallback success
+                    } else {
+                        setError(true);
+                    }
+                } finally {
+                    setLoading(false);
+                }
+            }, [lang]);
+
+            useEffect(() => { load(); }, [load]);
+            
+            const handleScroll = (e) => {
+                const { scrollTop, scrollHeight, clientHeight } = e.target;
+                setShowHint(scrollHeight - scrollTop > clientHeight + 20);
+            };
+            
+            if (error) return <div className="bg-white dark:bg-slate-850 border border-red-200 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-full"><p className="text-red-500 mb-2 text-xs">{t('connectionError')}</p><button onClick={load} className="bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded text-xs text-slate-600 dark:text-slate-300">{t('tryAgain')}</button></div>;
+            if (loading || !ayahs) return <LoadingView />;
+            return (
+                <div className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm relative overflow-hidden flex flex-col h-full transition-colors duration-300">
+                    <div className="flex justify-between items-center mb-2 text-xs shrink-0"><div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold"><Icon path={ICONS.BookOpen} size={16}/><span style={fs(1)}>{current.title}</span></div><span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 dark:text-slate-400 font-mono" style={fs(0.75)}>{t('pageInfo')} {pageNumber}</span></div>
+                    <div className="flex-1 relative overflow-hidden mb-2">
+                        <div className="h-full overflow-y-auto no-scrollbar space-y-4 pr-1 pb-6" onScroll={handleScroll}>
+                            {ayahs.map((currentAyah, index) => (<div key={index} className="border-b border-slate-50 dark:border-slate-800 pb-3 last:border-0"><div className="mb-1 text-[10px] text-emerald-600 dark:text-emerald-500 font-bold uppercase tracking-wider" style={fs(0.65)}>{currentAyah.info}</div><p className="text-right font-serif text-2xl text-emerald-800 dark:text-emerald-400 mb-2 leading-relaxed" dir="rtl" style={fs(1.5)}>{currentAyah.arabic}</p><p className="text-slate-800 dark:text-slate-200 font-medium mb-1 text-xs" style={fs(0.75)}>{currentAyah.trans}</p><p className="text-slate-500 dark:text-slate-400 italic text-xxs" style={fs(0.65)}>{currentAyah.text}</p></div>))}
+                        </div>
+                        {showHint && <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-slate-850 to-transparent pointer-events-none flex justify-center items-end pb-1"><div className="animate-bounce text-emerald-500/30 dark:text-emerald-400/30"><Icon path={ICONS.ChevronRight} className="rotate-90" size={16}/></div></div>}
+                    </div>
+                    <div className="shrink-0 h-16 flex items-center justify-center border-t border-slate-100 dark:border-slate-800 pt-2">
+                        <button onClick={next} className="w-full py-2.5 rounded-lg font-bold bg-emerald-600 text-white active:scale-95 transition text-sm"><span style={fs(0.875)}>{t('completed')}</span></button>
+                    </div>
+                </div>
+            );
+        });
+
+        const CounterCard = memo(({ current, count, next, tap, cooldown, index, totalLength, resetLocal, timeLeft, onDelete }) => {
+            const { t, settings, fs } = useApp();
+            let done = false; if (current.type === 'timer') done = timeLeft === 0; else if (current.type === 'infinite') done = false; else done = count >= current.target;
+            const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60) < 10 ? '0' : ''}${s % 60}`;
+            
+            return (
+                <div className={`border-2 rounded-2xl p-3 flex flex-col text-center shadow-sm transition-colors duration-300 select-none h-full relative ${done ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500' : 'bg-white dark:bg-slate-850 border-emerald-100 dark:border-slate-700'}`}>
+                    <div className="w-full flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-1 relative z-10 shrink-0">
+                        <span style={fs(0.65)}>{t('step')} {index + 1}/{totalLength}</span>
+                        <div className="flex items-center gap-2">
+                            {current.type === 'timer' ? (<span className="text-xs font-bold text-slate-600 dark:text-slate-300 font-mono" style={fs(0.75)}>{t('timeTarget')}: {formatTime(timeLeft)}</span>) : current.type === 'infinite' ? (<div className="flex items-center space-x-1"><span className="text-xs font-bold text-slate-600 dark:text-slate-300" style={fs(0.75)}>{t('unlimited')}</span>{current.minTarget > 0 && <span className="text-[9px] bg-slate-100 dark:bg-slate-700 px-1 rounded text-slate-500">Min: {current.minTarget}</span>}</div>) : (<span className="text-xs font-bold text-slate-600 dark:text-slate-300" style={fs(0.75)}>{t('target')}: {current.target}</span>)}
+                            {onDelete && <button onClick={(e) => { e.stopPropagation(); onDelete(current.id); }} className="text-red-500 p-0.5"><Icon path={ICONS.Trash2} size={14}/></button>}
+                            <ResetBtn onClick={resetLocal} />
+                        </div>
+                    </div>
+                    <div className="w-full shrink-0 mb-2">{current.type === 'timer' ? (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1 transform-gpu"><div className="bg-emerald-600 h-2 rounded-full transition-all duration-1000 ease-linear will-change-transform" style={{ width: `${Math.min(100, ((current.duration - timeLeft) / current.duration) * 100)}%` }}></div></div>) : current.type === 'infinite' ? (<div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-1">{current.minTarget > 0 && (<div className="bg-emerald-600 h-2 rounded-full transition-all duration-300" style={{ width: `${Math.min(100, (count / current.minTarget) * 100)}%` }}></div>)}</div>) : (<ProgressBar current={count} total={current.target}/>)}</div>
+                    <div className="flex-1 w-full flex flex-col justify-center items-center relative overflow-y-auto no-scrollbar py-2 px-1 min-h-0">
+                        <div className="w-full">
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2" style={fs(1.125)}>{current.title}</h2>
+                            {current.arabic && <p className="text-2xl font-serif text-emerald-600 dark:text-emerald-400 dir-rtl mb-3 leading-relaxed" style={fs(1.5)}>{current.arabic}</p>}
+                            <p className="text-slate-500 dark:text-slate-400 leading-relaxed mx-auto max-w-[280px] text-xs" style={fs(0.75)}>{current.text}</p>
+                        </div>
+                    </div>
+                    <div className="shrink-0 h-60 flex flex-col justify-center items-center w-full touch-manipulation cursor-pointer relative" onClick={!done ? tap : undefined}>
+                        {!done && (
+                            <>
+                                <div className="w-48 h-48 rounded-full border-8 border-slate-100 dark:border-slate-700 flex items-center justify-center bg-emerald-50 dark:bg-slate-800 shadow-inner ripple-effect transition-transform active:scale-95 relative">
+                                    <span className="text-6xl font-mono font-bold text-emerald-600 dark:text-emerald-400 select-none" style={fs(3.75)}>{count}</span>
+                                    {current.type === 'timer' && <span className="absolute bottom-8 text-xs font-mono text-slate-400">{formatTime(timeLeft)}</span>}
+                                </div>
+                                <span className="mt-4 text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full font-medium mx-auto" style={fs(0.65)}>{t('tapToCount')}</span>
+                            </>
+                        )}
+                        {done && (
+                            <div className="h-full flex flex-col justify-end w-full pb-2">
+                                <button onClick={next} disabled={cooldown} className={`w-full py-2.5 rounded-lg font-bold text-white flex justify-center items-center space-x-1 transition text-sm ${cooldown ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-600 animate-pulse-slow'}`}>
+                                    <span style={fs(0.875)}>{t('nextZikr')}</span><Icon path={ICONS.ChevronRight} size={16}/>
+                                </button>
+                            </div>
+                        )}
+                        {!done && (current.type === 'infinite' || current.type === 'timer') && (
+                            (current.type !== 'infinite' || count >= (current.minTarget || 0)) ? (
+                                <button onClick={(e) => { e.stopPropagation(); next(); }} className="absolute bottom-2 right-2 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 p-2 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-600 transition-colors z-20">
+                                    <Icon path={ICONS.ChevronRight} size={20}/>
+                                </button>
+                            ) : (
+                                <button disabled className="absolute bottom-2 right-2 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 p-2 rounded-full cursor-not-allowed z-20 border border-slate-100 dark:border-slate-700"><Icon path={ICONS.Lock} size={20}/></button>
+                            )
+                        )}
+                    </div>
+                </div>
+            );
+        });
+
+        const AddZikrModal = ({ onClose, onAdd }) => {
+            const { t } = useApp();
+            const [title, setTitle] = useState('');
+            const [type, setType] = useState('standard');
+            const [target, setTarget] = useState(33);
+            const [duration, setDuration] = useState(5);
+            const [minTarget, setMinTarget] = useState(0);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!title) return;
+                const newZikr = {
+                    id: `custom_${Date.now()}`,
+                    title,
+                    type: type === 'standard' ? 'standard' : (type === 'timer' ? 'timer' : 'infinite'),
+                    target: type === 'standard' ? parseInt(target) : 0,
+                    duration: (type === 'timer' || type === 'min_timer') ? parseInt(duration) * 60 : 0,
+                    minTarget: type === 'min_timer' ? parseInt(minTarget) : 0,
+                    text: '' // Removed "Personal" text as requested
+                };
+                onAdd(newZikr);
+                onClose();
+            };
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 modal-overlay">
+                    <div className="bg-white dark:bg-slate-850 w-full max-w-sm rounded-2xl p-6 shadow-2xl border dark:border-slate-700 animate-fade-in">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold dark:text-slate-100">{t('addZikr')}</h3>
+                            <button onClick={onClose}><Icon path={ICONS.X} size={20}/></button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('title')}</label>
+                                <input className="w-full border dark:border-slate-700 rounded-lg p-2 dark:bg-slate-900 dark:text-white" value={title} onChange={e => setTitle(e.target.value)} required />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">{t('type')}</label>
+                                <select className="w-full border dark:border-slate-700 rounded-lg p-2 dark:bg-slate-900 dark:text-white" value={type} onChange={e => setType(e.target.value)}>
+                                    <option value="standard">{t('fixedCount')}</option>
+                                    <option value="timer">{t('timeBased')}</option>
+                                    <option value="min_timer">{t('timeMin')}</option>
+                                </select>
+                            </div>
+                            {type === 'standard' && (
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-500 mb-1">{t('target')}</label>
+                                    <input type="number" min="1" className="w-full border dark:border-slate-700 rounded-lg p-2 dark:bg-slate-900 dark:text-white" value={target} onChange={e => setTarget(e.target.value)} />
+                                </div>
+                            )}
+                            {(type === 'timer' || type === 'min_timer') && (
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-500 mb-1">{t('timeTarget')} ({t('minutes')})</label>
+                                    <input type="number" min="1" className="w-full border dark:border-slate-700 rounded-lg p-2 dark:bg-slate-900 dark:text-white" value={duration} onChange={e => setDuration(e.target.value)} />
+                                </div>
+                            )}
+                            {type === 'min_timer' && (
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-500 mb-1">{t('minTarget')}</label>
+                                    <input type="number" min="1" className="w-full border dark:border-slate-700 rounded-lg p-2 dark:bg-slate-900 dark:text-white" value={minTarget} onChange={e => setMinTarget(e.target.value)} />
+                                </div>
+                            )}
+                            <button type="submit" className="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold">{t('save')}</button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 7. VIEWS (Defined AFTER Cards) ---
+        const PrayerTimesView = memo(({ prayerData, loading, currentTime, locationName }) => {
+            const { t, settings, fs } = useApp();
+            if (loading || !prayerData) return <LoadingView />;
+            const timings = prayerData.timings;
+            const parseAndAdjust = (timeStr, offset) => { if (!timeStr) return null; const [h, m] = timeStr.split(' ')[0].split(':').map(Number); const d = new Date(); d.setHours(h, m, 0, 0); if (offset) d.setMinutes(d.getMinutes() + parseInt(offset)); return d; };
+            const times = { fajr: parseAndAdjust(timings.Fajr, settings.offsets.fajr), sunrise: parseAndAdjust(timings.Sunrise, settings.offsets.sunrise), dhuhr: parseAndAdjust(timings.Dhuhr, settings.offsets.dhuhr), asr: parseAndAdjust(timings.Asr, settings.offsets.asr), maghrib: parseAndAdjust(timings.Maghrib, settings.offsets.maghrib), isha: parseAndAdjust(timings.Isha, settings.offsets.isha) };
+            const ishraqEnd = new Date(times.sunrise.getTime() + 45 * 60000), istiwaStart = new Date(times.dhuhr.getTime() - 45 * 60000), isfirarStart = new Date(times.maghrib.getTime() - 45 * 60000), fajrTomorrow = new Date(times.fajr); fajrTomorrow.setDate(fajrTomorrow.getDate() + 1); const teheccudStart = new Date(fajrTomorrow.getTime() - ((fajrTomorrow - times.maghrib) / 3));
+            const now = currentTime.getTime(); let nextP = t('fajr'), nextT = fajrTomorrow;
+            if (now < times.fajr.getTime()) { nextP = t('fajr'); nextT = times.fajr; } else if (now < times.sunrise.getTime()) { nextP = t('sunrise'); nextT = times.sunrise; } else if (now < times.dhuhr.getTime()) { nextP = t('dhuhr'); nextT = times.dhuhr; } else if (now < times.asr.getTime()) { nextP = t('asr'); nextT = times.asr; } else if (now < times.maghrib.getTime()) { nextP = t('maghrib'); nextT = times.maghrib; } else if (now < times.isha.getTime()) { nextP = t('isha'); nextT = times.isha; }
+            const diff = nextT - now, diffH = Math.floor(diff / 3600000), diffM = Math.floor((diff % 3600000) / 60000), fmt = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            return (
+                <div className="h-full overflow-y-auto no-scrollbar space-y-1.5 pb-4 animate-fade-in">
+                    <div className="bg-gradient-to-br from-emerald-600 to-teal-800 rounded-2xl p-3 min-h-[100px] text-white shadow-lg relative overflow-hidden transition-colors duration-300">
+                        <div className="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4"><Icon path={ICONS.Moon} size={100} /></div>
+                        <div className="relative z-10 flex justify-between items-start mb-2"><div><h2 className="text-emerald-100 text-xs font-medium uppercase tracking-wider" style={fs(0.75)}>{t('nextPrayer')}</h2><h1 className="text-2xl font-bold mt-1" style={fs(1.5)}>{nextP}</h1></div><div className="text-right"><p className="text-emerald-100 text-xs" style={fs(0.75)}>{t('remaining')}</p><p className="text-2xl font-mono font-semibold mt-1" style={fs(1.5)}>{diffH > 0 ? `${diffH}h ` : ''}{diffM}m</p></div></div>
+                        <div className="flex items-center space-x-2 text-xs text-emerald-100 bg-emerald-900/30 w-fit px-2 py-1 rounded-full backdrop-blur-sm relative z-10"><Icon path={ICONS.MapPin} size={12} /><span style={fs(0.75)}>{locationName}</span></div>
+                    </div>
+                    <div className="bg-white dark:bg-slate-850 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors duration-300">
+                        {[{ k: 'fajr', i: ICONS.Moon }, { k: 'sunrise', i: ICONS.Sun }, { k: 'dhuhr', i: ICONS.Sun }, { k: 'asr', i: ICONS.Sun }, { k: 'maghrib', i: ICONS.Moon }, { k: 'isha', i: ICONS.Moon }].map((o, idx) => (<div key={idx} className="flex items-center justify-between px-3 py-0.5 border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50"><div className="flex items-center space-x-3 text-slate-700 dark:text-slate-300 font-medium"><span className="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 p-1.5 rounded-lg"><Icon path={o.i} size={18} /></span><span className="text-sm" style={fs(0.875)}>{t(o.k)}</span></div><span className="font-mono font-bold text-base text-slate-800 dark:text-slate-200" style={fs(1)}>{fmt(times[o.k])}</span></div>))}
+                    </div>
+                    <div className="space-y-2">
+                        <div className="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-800 rounded-xl p-1.5 flex justify-between items-center transition-colors duration-300"><div className="flex items-center space-x-3"><div className="bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 p-1.5 rounded-lg"><Icon path={ICONS.Moon} size={16} /></div><div><p className="text-indigo-900 dark:text-indigo-200 font-bold text-sm" style={fs(0.875)}>{t('teheccud')}</p><p className="text-[10px] text-indigo-600 dark:text-indigo-400 max-w-[150px] leading-tight" style={fs(0.65)}>{t('bestTimeTeheccud')}</p></div></div><span className="font-mono font-bold text-indigo-800 dark:text-indigo-300 text-xs" style={fs(0.75)}>{fmt(teheccudStart)} - {fmt(fajrTomorrow)}</span></div>
+                        <div className="bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-800 rounded-xl overflow-hidden transition-colors duration-300"><div className="p-1.5 bg-amber-100/50 dark:bg-amber-900/60 border-b border-amber-100 dark:border-amber-800 text-amber-800 dark:text-amber-200 font-semibold text-xs flex items-center" style={fs(0.75)}><span className="mr-2"><Icon path={ICONS.AlertTriangle} size={14} /></span> {t('kerahatHeader')}</div><div className="divide-y divide-amber-100 dark:divide-amber-800"><div className="p-1.5 flex justify-between text-xs text-amber-900 dark:text-amber-100"><span style={fs(0.75)}>{t('kerahatMorning')}</span><span className="font-mono font-medium" style={fs(0.75)}>{fmt(times.sunrise)} - {fmt(ishraqEnd)}</span></div><div className="p-1.5 flex justify-between text-xs text-amber-900 dark:text-amber-100"><span style={fs(0.75)}>{t('kerahatNoon')}</span><span className="font-mono font-medium" style={fs(0.75)}>{fmt(istiwaStart)} - {fmt(times.dhuhr)}</span></div><div className="p-1.5 flex justify-between text-xs text-amber-900 dark:text-amber-100"><span style={fs(0.75)}>{t('kerahatEvening')}</span><span className="font-mono font-medium" style={fs(0.75)}>{fmt(isfirarStart)} - {fmt(times.maghrib)}</span></div></div></div>
+                    </div>
+                </div>
+            );
+        });
+
+        const TasbeehView = memo(() => {
+            const { t, lang, settings, fs } = useApp();
+            const [mode, setMode] = useState(() => StorageService.get('lastZikrMode') || 'morning');
+            const [index, setIndex] = useState(0), [count, setCount] = useState(0), [cooldown, setCooldown] = useState(false), [isFinishedToday, setIsFinishedToday] = useState(false), [resetKey, setResetKey] = useState(0), [resetConfirm, setResetConfirm] = useState(false), [timeLeft, setTimeLeft] = useState(0);
+            const [checklistState, setChecklistState] = useState(() => { const today = new Date().toISOString().split('T')[0]; return StorageService.get(`checklist_${mode}_${today}`) || {}; });
+            const [customZikrs, setCustomZikrs] = useState(() => StorageService.get(CONFIG.STORAGE_KEYS.CUSTOM_ZIKRS) || []);
+            const [showAddModal, setShowAddModal] = useState(false);
+
+            useEffect(() => { const today = new Date().toISOString().split('T')[0], s = StorageService.get(`tasbeeh_status_${mode}`), p = StorageService.get(`tasbeeh_progress_${mode}`), cl = StorageService.get(`checklist_${mode}_${today}`);
+                if (p && p.date !== today) {
+                    StorageService.remove(`tasbeeh_progress_${mode}`);
+                    StorageService.remove(`tasbeeh_status_${mode}`);
+                    setIndex(0); setCount(0); setIsFinishedToday(false);
+                } else {
+                    setChecklistState(cl || {});
+                    if (s) { setIsFinishedToday(s.date === today && s.finished); } else setIsFinishedToday(false);
+                    if (p) { setIndex(p.idx || 0); setCount(p.cnt || 0); } else { setIndex(0); setCount(0); }
+                }
+                setResetConfirm(false);
+            }, [mode, resetKey]);
+
+            // Save custom zikrs
+            useEffect(() => { if (customZikrs.length > 0 || mode === 'personal') StorageService.set(CONFIG.STORAGE_KEYS.CUSTOM_ZIKRS, customZikrs); }, [customZikrs]);
+
+            const zikrList = useMemo(() => {
+                const db = ZIKR_DB; if (!db) return [];
+                const g = (k) => (db[k][lang] || db[k]['en']);
+                const common = {
+                    fatiha: { target: 19, title: "Fatiha", text: g('fatiha').t, arabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ" },
+                    estag: { type: 'timer', id: 'estag', duration: 300, target: 0, title: "Estağfirullah (5 dk)", text: g('estag').t, arabic: "أَسْتَغْفِرُ اللّٰهَ" },
+                    salavatM: { target: 10, title: t('salavatMuhammed'), text: g('salavatM').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ" },
+                    salavatA: { target: 10, title: t('salavatAdam'), text: g('salavatA').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا آدَمَ" },
+                    salavatI: { target: 10, title: t('salavatIsa'), text: g('salavatI').t, arabic: "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا عِيسَى" },
+                    kehf1: { target: 10, title: t('readFirst10'), type: 'kehf_first_10', isReading: true },
+                    kehf2: { target: 10, title: t('readLast10'), type: 'kehf_last_10', isReading: true },
+                    salavatB: { type: 'infinite', target: 3, minTarget: 3, title: t('salavatBedr'), text: g('salavatB').t },
+                    kuddus: { type: 'infinite', target: 3, minTarget: 3, title: "Ya Kuddüs", text: g('kuddus').t, arabic: "يَا قُدُّوسُ" },
+                    random: { target: 1, title: t('read15Random'), type: 'random15', isReading: true },
+                    amena: { target: 11, title: t('amenarresulu'), type: 'amenarresulu' },
+                    ek_tasks: { type: 'checklist', title: t('ekHeader'), list: db.ek_list[lang] || db.ek_list['en'] }
+                };
+                if (mode === 'morning') return [common.fatiha, common.estag, common.salavatA, common.salavatI, common.salavatM, common.kehf1, common.salavatB];
+                if (mode === 'ikindi') return [{ ...common.fatiha, target: 21 }, { ...common.salavatM, target: 11 }, common.kuddus, common.kehf2, common.random];
+                if (mode === 'ek') return [common.ek_tasks];
+                if (mode === 'personal') return customZikrs;
+                return [common.amena];
+            }, [mode, t, lang, customZikrs]);
+
+            const current = zikrList[index] || zikrList[0];
+
+            useEffect(() => {
+                if (current && (current.type === 'timer' || current.type === 'min_timer')) {
+                    const today = new Date().toISOString().split('T')[0];
+                    const savedTime = current.id ? StorageService.get(`timer_${current.id}_${today}`) : null;
+                    if (savedTime !== null && typeof savedTime === 'number') setTimeLeft(savedTime);
+                    else setTimeLeft(current.duration);
+                } else setTimeLeft(0);
+            }, [current]);
+
+            useEffect(() => {
+                let interval;
+                if (current && (current.type === 'timer' || current.type === 'min_timer') && timeLeft > 0 && !isFinishedToday) {
+                    interval = setInterval(() => {
+                        setTimeLeft((prev) => {
+                            const newVal = prev - 1;
+                            if (current.id) { const today = new Date().toISOString().split('T')[0]; StorageService.set(`timer_${current.id}_${today}`, newVal); }
+                            if (prev <= 1) { if (settings.vibrationEnabled) navigator.vibrate([200, 100, 200]); if (settings.soundEnabled) AudioService.play('finish'); return 0; }
+                            return newVal;
+                        });
+                    }, 1000);
+                }
+                return () => clearInterval(interval);
+            }, [current, timeLeft, settings, isFinishedToday]);
+
+            const saveProgress = useCallback((idx, cnt) => { const today = new Date().toISOString().split('T')[0]; StorageService.set(`tasbeeh_progress_${mode}`, { date: today, idx, cnt }); }, [mode]);
+            const toggleChecklistItem = useCallback((itemIndex) => { const today = new Date().toISOString().split('T')[0], key = `checklist_${mode}_${today}`, currentState = StorageService.get(key) || {}, newState = { ...currentState, [itemIndex]: !currentState[itemIndex] }; setChecklistState(newState); StorageService.set(key, newState); if (newState[itemIndex] && settings.soundEnabled) AudioService.play('tick'); }, [mode, settings]);
+            
+            const reset = useCallback(() => {
+                StorageService.remove(`tasbeeh_status_${mode}`); StorageService.remove(`tasbeeh_progress_${mode}`);
+                const today = new Date().toISOString().split('T')[0]; StorageService.remove(`checklist_${mode}_${today}`);
+                if (mode === 'morning') StorageService.remove(`timer_estag_${today}`);
+                // NEW: Clear page for Ikindi on reset
+                if (mode === 'ikindi') StorageService.remove(`tasbeeh_read_page_${today}`);
+                
+                // Reset custom timers
+                if (mode === 'personal') customZikrs.forEach(z => { if(z.type==='timer' || z.type==='min_timer') StorageService.remove(`timer_${z.id}_${today}`); });
+                setChecklistState({}); setIsFinishedToday(false); setIndex(0); setCount(0); setCooldown(false);
+            }, [mode, customZikrs]);
+
+            const resetTime = useCallback(() => {
+                if (!resetConfirm) { setResetConfirm(true); setTimeout(() => setResetConfirm(false), 3000); return; }
+                const today = new Date().toISOString().split('T')[0];
+                StorageService.remove(`tasbeeh_status_${mode}`); StorageService.remove(`tasbeeh_progress_${mode}`); StorageService.remove(`checklist_${mode}_${today}`);
+                if (mode === 'morning') StorageService.remove(`timer_estag_${today}`);
+                // Fix: Specifically remove the reading page key to force new random selection
+                if (mode === 'ikindi') { 
+                    StorageService.remove(`tasbeeh_read_page_${today}`); 
+                    StorageService.remove(`tasbeeh_read_index_${today}`); 
+                }
+                if (mode === 'personal') customZikrs.forEach(z => { if(z.type==='timer' || z.type==='min_timer') StorageService.remove(`timer_${z.id}_${today}`); });
+                setIsFinishedToday(false); setIndex(0); setCount(0); setCooldown(false); setResetKey(prev => prev + 1); setResetConfirm(false);
+            }, [mode, resetConfirm, customZikrs]);
+
+            const resetLocal = useCallback(() => { setCount(0); saveProgress(index, 0); }, [index, saveProgress]);
+
+            const next = useCallback(() => {
+                setCooldown(true); setTimeout(() => setCooldown(false), 500);
+                if (index < zikrList.length - 1) {
+                    const newIdx = index + 1; setIndex(newIdx); setCount(0); saveProgress(newIdx, 0);
+                } else {
+                    const today = new Date().toISOString().split('T')[0];
+                    StorageService.set(`tasbeeh_status_${mode}`, { date: today, finished: true });
+                    StorageService.remove(`tasbeeh_progress_${mode}`);
+                    setIsFinishedToday(true);
+                    // Send notification ONLY when all zikrs are done
+                    sendNotification(t('completed'), { body: `${t(mode + 'Zikr')} tamamlandı.` });
+                }
+            }, [index, zikrList.length, saveProgress, mode, t]);
+
+            const tap = useCallback(() => {
+                if (isFinishedToday || cooldown || !current) return;
+                const isSpecial = current.type?.includes('kehf') || current.type === 'amenarresulu'; let newCount = count;
+                const vibrate = (p) => { if (navigator.vibrate && settings.vibrationEnabled) navigator.vibrate(p); };
+                const triggerFeedback = (isFinish) => { const isReadingNav = current.type?.includes('kehf') || current.isReading; if (isFinish) { vibrate(400); if (settings.soundEnabled) AudioService.play('finish'); } else { vibrate(40); if (settings.soundEnabled && !isReadingNav) AudioService.play('tick'); } };
+                if (isSpecial) {
+                    if (count < current.target - 1) { setCooldown(true); setTimeout(() => setCooldown(false), 500); newCount = count + 1; setCount(newCount); triggerFeedback(newCount + 1 >= current.target); saveProgress(index, newCount); }
+                } else if (!current.isReading && current.type !== 'checklist') {
+                    if (current.type === 'infinite' || current.type === 'timer' || current.type === 'min_timer' || count < current.target) {
+                        newCount = count + 1; setCount(newCount);
+                        const isDone = (current.type !== 'infinite' && current.type !== 'timer' && current.type !== 'min_timer' && newCount === current.target);
+                        triggerFeedback(isDone);
+                        if (isDone) { setTimeout(() => next(), 200); } else { saveProgress(index, newCount); }
+                    }
+                }
+            }, [isFinishedToday, cooldown, current, count, index, saveProgress, settings, next]);
+
+            const addCustomZikr = (zikr) => { setCustomZikrs(prev => [...prev, zikr]); };
+            const deleteCustomZikr = (id) => {
+                const newZikrs = customZikrs.filter(z => z.id !== id);
+                setCustomZikrs(newZikrs);
+                if (newZikrs.length === 0) { setIndex(0); setIsFinishedToday(false); }
+                else if (index >= newZikrs.length) setIndex(0);
+                // Clean up storage
+                const today = new Date().toISOString().split('T')[0];
+                StorageService.remove(`timer_${id}_${today}`);
+            };
+
+            return (
+                <div className="flex flex-col h-full">
+                    <div className="flex flex-col gap-2 mb-2">
+                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg transition-colors duration-300 overflow-x-auto no-scrollbar">
+                            {['morning', 'ikindi', 'night', 'ek', 'personal'].map(m => (
+                                <button key={m} onClick={() => { setMode(m); StorageService.set('lastZikrMode', m); }} className={`flex-1 min-w-[60px] py-1.5 text-xs font-medium rounded-md capitalize transition whitespace-nowrap px-2 ${mode === m ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.75)}>
+                                    {m === 'ek' ? t('ekZikr') : m === 'personal' ? t('personalZikr') : t(m + 'Zikr')}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex justify-between items-center">
+                            {mode === 'personal' && (
+                                <button onClick={() => setShowAddModal(true)} className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center space-x-1">
+                                    <Icon path={ICONS.Plus} size={14}/> <span>{t('addZikr')}</span>
+                                </button>
+                            )}
+                            <button onClick={resetTime} className={`ml-auto bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 transition-colors ${resetConfirm ? 'bg-red-500 !text-white hover:bg-red-600 border-red-500' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                                <span style={fs(0.75)}>{resetConfirm ? t('areYouSure') : t('resetTime')}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {mode === 'personal' && zikrList.length === 0 ? (
+                        <div className="flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-slate-400 dark:text-slate-500">
+                            <Icon path={ICONS.BookOpen} size={40} className="mb-2 opacity-50"/>
+                            <p className="text-sm mb-4">{t('emptyPersonal')}</p>
+                            <button onClick={() => setShowAddModal(true)} className="bg-emerald-600 text-white px-4 py-2 rounded-full font-bold text-xs shadow-lg transform active:scale-95 transition">{t('addZikr')}</button>
+                        </div>
+                    ) : isFinishedToday ? (
+                        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                            <Icon path={ICONS.CheckCircle} size={40} className="text-emerald-500 dark:text-emerald-400 mb-2"/>
+                            <h2 className="font-bold text-lg text-emerald-800 dark:text-emerald-100" style={fs(1.125)}>{t('completed')}</h2>
+                            <button onClick={reset} className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs" style={fs(0.75)}>{t('reset')}</button>
+                        </div>
+                    ) : (
+                        <div className="flex-1 flex flex-col min-h-0 overflow-hidden pb-2">
+                            {!current ? <LoadingView /> : 
+                             (current.type?.includes('kehf') || current.type === 'amenarresulu') ? <FetchableZikrCard key={`${resetKey}_fetchable`} current={current} count={count} next={next} tap={tap} cooldown={cooldown} resetLocal={resetLocal} /> : 
+                             current.type === 'random15' ? <MultiAyahReadingCard key={`${resetKey}_multi`} current={current} next={next} cooldown={cooldown} /> : 
+                             current.type === 'checklist' ? <ChecklistCard key={`${resetKey}_checklist`} current={current} onToggleItem={toggleChecklistItem} checkedState={checklistState} /> : 
+                             (current.isReading ? <ReadingCard current={current} next={next} cooldown={cooldown} /> : 
+                             <CounterCard key={`${resetKey}_counter`} current={current} count={count} next={next} tap={tap} cooldown={cooldown} index={index} totalLength={zikrList.length} resetLocal={resetLocal} timeLeft={timeLeft} onDelete={mode === 'personal' ? deleteCustomZikr : null} />)
+                            }
+                        </div>
+                    )}
+                    
+                    {showAddModal && <AddZikrModal onClose={() => setShowAddModal(false)} onAdd={addCustomZikr} />}
+                </div>
+            );
+        });
+
+        const QuranView = memo(() => {
+            const { t, lang, fs } = useApp();
+            const [showHint, setShowHint] = useState(true);
+            const [ayahs, setAyahs] = useState([]); const [loading, setLoading] = useState(false);
+            const [pageInfo, setPageInfo] = useState(() => { const saved = StorageService.get('last_quran_page'); return saved ? parseInt(saved) : 0; });
+            
+            const handleScroll = (e) => {
+                const { scrollTop, scrollHeight, clientHeight } = e.target;
+                if (scrollHeight - scrollTop <= clientHeight + 20) {
+                    setShowHint(false);
+                } else {
+                    setShowHint(true);
+                }
+            };
+            
+            const load = useCallback(async (existingPage = null) => { 
+                setLoading(true); 
+                try { 
+                    let targetPage = existingPage; 
+                    if (!targetPage) { 
+                        // NEW LOGIC: Use random page if online, pool if offline
+                        if (navigator.onLine) {
+                             targetPage = getSecureRandomNumber(1, 604);
+                        } else {
+                             const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
+                             // Avoid immediate repeat
+                             const lastPage = StorageService.get('last_picked_quran_page');
+                             const available = pool.filter(p => p !== lastPage);
+                             const effectivePool = available.length > 0 ? available : pool;
+                             targetPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
+                        }
+                    } 
+                    
+                    const edition = ApiService.getTranslationEdition(lang), transEdition = ApiService.getTransliterationEdition(lang), cacheKey = `page_${targetPage}_${lang}`;
+                    
+                    const cached = CacheService.get(cacheKey); 
+                    if (cached) { 
+                        setAyahs(cached); 
+                        setPageInfo(targetPage); 
+                        StorageService.set('last_quran_page', targetPage);
+                        StorageService.set('last_picked_quran_page', targetPage);
+                        setLoading(false); 
+                        return; 
+                    } 
+                    
+                    if (!navigator.onLine) {
+                        // Fallback: Try to find ANY cached page from the pool
+                        const pool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL) || [];
+                        const validPages = pool.filter(p => CacheService.get(`page_${p}_${lang}`));
+                        
+                        if (validPages.length > 0) {
+                             const lastPage = parseInt(StorageService.get('last_picked_quran_page') || '0');
+                             const candidates = validPages.filter(p => p !== lastPage);
+                             const effectivePool = candidates.length > 0 ? candidates : validPages;
+                             const fallbackPage = effectivePool[Math.floor(Math.random() * effectivePool.length)];
+                             
+                             const fallbackContent = CacheService.get(`page_${fallbackPage}_${lang}`);
+                             setAyahs(fallbackContent);
+                             setPageInfo(fallbackPage);
+                             StorageService.set('last_quran_page', fallbackPage);
+                             StorageService.set('last_picked_quran_page', fallbackPage);
+                             setLoading(false);
+                             return;
+                        }
+
+                        alert(t('connectionError') + " / Offline Content Missing");
+                        setLoading(false);
+                        return;
+                    }
+
+                    const [p1, p2, p3] = await Promise.all([
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/quran-uthmani`), 
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${edition}`), 
+                        ApiService.fetchJson(`${CONFIG.API.QURAN}/page/${targetPage}/${transEdition}`)
+                    ]); 
+                    
+                    if (p1.code === 200) { 
+                        const combined = p1.data.ayahs.map((item, i) => ({ arabic: item.text, text: p2.data.ayahs[i]?.text || '', trans: p3.data.ayahs[i]?.text || '', info: `${ApiService.getSurahNameTR(item.surah.number)} : ${item.numberInSurah}` })); 
+                        setAyahs(combined); 
+                        setPageInfo(targetPage); 
+                        StorageService.set('last_quran_page', targetPage);
+                        StorageService.set('last_picked_quran_page', targetPage);
+                        // Cache indefinitely since this is a user-visited page
+                        CacheService.set(cacheKey, combined, null); 
+                    } 
+                } catch (e) {
+                    if(!navigator.onLine) alert(t('connectionError') + " / Offline");
+                } 
+                setLoading(false); 
+            }, [lang, t]);
+            
+            useEffect(() => { if (pageInfo > 0 && ayahs.length === 0) load(pageInfo).catch(() => {}); }, []);
+            useEffect(() => { if (pageInfo > 0) load(pageInfo).catch(() => {}); }, [lang, pageInfo]);
+            
+            return (
+                <div className="flex flex-col h-full space-y-3">
+                     <div className="flex justify-between items-center shrink-0">
+                        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100" style={fs(1)}>{t('randomAyahs')} <span className="text-[10px] font-normal text-slate-400" style={fs(0.65)}>({t('pageInfo')} {pageInfo})</span></h2>
+                        <button onClick={() => load(null)} className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full"><Icon path={ICONS.RefreshCw} size={16} className={loading ? "animate-spin" : ""} /></button>
+                    </div>
+                    <div className="flex-1 relative overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-900/50">
+                         {ayahs.length === 0 && !loading ? (
+                            <div className="h-full flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
+                                <Icon path={ICONS.BookOpen} size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-3"/>
+                                <button onClick={() => load(null)} className="bg-emerald-600 text-white px-4 py-2 rounded-full text-xs font-bold transition transform active:scale-95" style={fs(0.75)}>{t('loadBtn')}</button>
+                            </div>
+                        ) : loading ? <LoadingView /> : (
+                            <>
+                                <div className="h-full overflow-y-auto no-scrollbar space-y-3 pb-12 pr-1" onScroll={handleScroll}>
+                                    {ayahs.map((a, i) => (
+                                        <div key={i} className="bg-white dark:bg-slate-850 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                                            <div className="mb-2 border-b border-slate-50 dark:border-slate-800 pb-2 flex justify-between items-center"><span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded" style={fs(0.65)}>{a.info}</span></div>
+                                            <p className="text-right font-serif text-2xl text-emerald-800 dark:text-emerald-400 mb-3 leading-loose" dir="rtl" style={fs(1.5)}>{a.arabic}</p>
+                                            <p className="text-slate-800 dark:text-slate-200 font-medium mb-1 text-sm leading-relaxed" style={fs(0.85)}>{a.trans}</p>
+                                            <p className="text-slate-500 dark:text-slate-400 italic text-xs leading-relaxed" style={fs(0.7)}>{a.text}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                {showHint && <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-slate-50 via-slate-50/80 to-transparent dark:from-slate-900 dark:via-slate-900/80 pointer-events-none flex justify-center items-end pb-2">
+                                    <div className="animate-bounce text-emerald-500/50 dark:text-emerald-400/50"><Icon path={ICONS.ChevronRight} className="rotate-90" size={20}/></div>
+                                </div>}
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        });
+
+        const SettingsView = memo(({ locationHook }) => {
+            const { t, lang, setLang, settings, updateSetting, fs } = useApp();
+            const { downloading, progress, downloadEverything } = useOfflineContent(lang, locationHook);
+            const timerRef = useRef(null), searchContainerRef = useRef(null);
+            const [showVibHint, setShowVibHint] = useState(false), [notifPermission, setNotifPermission] = useState(() => ("Notification" in window) ? Notification.permission : 'default');
+            const [showHelp, setShowHelp] = useState(false);
+            const handleSearchChange = (e) => { const val = e.target.value; if (timerRef.current) clearTimeout(timerRef.current); timerRef.current = setTimeout(() => { locationHook.liveSearch(val); }, 500); };
+            const selectCity = (item) => { const newCoords = { lat: parseFloat(item.lat), lng: parseFloat(item.lon) }, name = item.display_name.split(',')[0]; locationHook.update({ coords: newCoords, locationName: name, loading: false }); StorageService.set(CONFIG.STORAGE_KEYS.COORDS, newCoords); StorageService.set(CONFIG.STORAGE_KEYS.LOC_NAME, name); locationHook.setSuggestions([]); };
+            const handleNotifClick = async () => { if (!("Notification" in window)) { alert("Bu cihazda bildirimler desteklenmiyor."); return; } if (notifPermission === 'granted') { alert(t('notificationGranted')); return; } try { const p = await Notification.requestPermission(); setNotifPermission(p); if (p === 'granted') sendNotification(t('appName'), { body: t('notificationGranted') }); } catch (e) { alert("Hata: " + e.message); } };
+            useEffect(() => { const handleClickOutside = (event) => { if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) locationHook.setSuggestions([]); }; document.addEventListener("mousedown", handleClickOutside); return () => document.removeEventListener("mousedown", handleClickOutside); }, [locationHook]);
+
+            return (
+                <div className="h-full overflow-y-auto no-scrollbar space-y-1.5 pb-4">
+                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                        <div className="flex justify-between items-center mb-1"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.MapPin} size={14} className="mr-1.5 text-emerald-500" /> {t('location')}</h3><span className="text-[9px] text-slate-400 max-w-[120px] truncate" style={fs(0.65)}>{locationHook.locationName}</span></div>
+                        <div className="relative z-50" ref={searchContainerRef}>
+                            <form onSubmit={(e) => { e.preventDefault(); locationHook.searchLocation(e.target.q.value); }} className="flex space-x-1"><input name="q" placeholder={t('searchCity')} onChange={handleSearchChange} autoComplete="off" className="flex-1 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-w-0" style={fs(0.75)}/><button type="submit" className="bg-slate-800 dark:bg-slate-700 text-white px-2 rounded-lg"><Icon path={ICONS.RefreshCw} size={14}/></button><button type="button" onClick={() => locationHook.getUserLocation(true)} className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 rounded-lg flex items-center justify-center"><Icon path={ICONS.Navigation} size={14} className={locationHook.loading ? "animate-spin" : ""} /></button></form>
+                            {locationHook.suggestions.length > 0 && (<ul className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg shadow-xl max-h-40 overflow-y-auto z-50">{locationHook.suggestions.map((item, idx) => (<li key={idx} onClick={() => selectCity(item)} className="px-3 py-2 text-xs border-b dark:border-slate-700 last:border-0 hover:bg-emerald-50 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-200 flex justify-between items-center"><span style={fs(0.75)}>{item.display_name.split(',')[0]}</span><span className="text-[9px] text-slate-400" style={fs(0.65)}>{item.display_name.split(',').slice(1, 2).join('')}</span></li>))}</ul>)}
+                        </div>
+                    </div>
+                    
+                    {/* New Offline Download Section */}
+                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                        <button onClick={downloadEverything} disabled={downloading} className={`w-full flex items-center justify-between p-1 rounded-lg transition-colors ${downloading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                            <div className="flex items-center"><Icon path={ICONS.Download} size={14} className="mr-2 text-emerald-500" /><span className="text-xs font-semibold text-slate-700 dark:text-slate-300" style={fs(0.75)}>{downloading ? t('downloading') : t('downloadOffline')}</span></div>
+                            <div className="text-[9px] font-bold bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded">{downloading ? progress : '50 Pages'}</div>
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5">
+                        <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Volume2} size={14} className="mr-1.5 text-emerald-500" /> {t('sound')}</h3><button onClick={() => updateSetting('soundEnabled', !settings.soundEnabled)} className={`w-8 h-4 rounded-full p-0.5 transition-colors ${settings.soundEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}><div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${settings.soundEnabled ? 'translate-x-4' : 'translate-x-0'}`}></div></button></div>
+                        <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center overflow-visible relative"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><div className="flex items-center"><Icon path={ICONS.Vibrate} size={14} className="mr-1.5 text-emerald-500" /> {t('vibration')}<div className="relative ml-1 inline-block"><button onClick={(e) => { e.stopPropagation(); setShowVibHint(!showVibHint); }} className="text-slate-400 hover:text-emerald-500 focus:outline-none flex"><Icon path={ICONS.HelpCircle} size={12} /></button>{showVibHint && (<div className="absolute top-full right-[-8px] mt-2 w-32 p-2 bg-slate-700 text-white text-[9px] rounded-lg shadow-xl z-50 text-center leading-snug animate-fade-in pointer-events-none" style={fs(0.65)}>{t('iosVibrationWarning')}<div className="absolute bottom-full right-2 border-4 border-transparent border-b-slate-700"></div></div>)}</div></div></h3><button onClick={() => updateSetting('vibrationEnabled', !settings.vibrationEnabled)} className={`w-8 h-4 rounded-full p-0.5 transition-colors ${settings.vibrationEnabled ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}><div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${settings.vibrationEnabled ? 'translate-x-4' : 'translate-x-0'}`}></div></button></div>
+                    </div>
+                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-2">
+                        <div className="flex flex-col space-y-1"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Settings} size={14} className="mr-1.5 text-emerald-500" /> {t('calcMethod')}</h3><select value={settings.methodId} onChange={(e) => updateSetting('methodId', parseInt(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-900 border dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300" style={fs(0.75)}>{[ { id: 13, name: 'Diyanet' }, { id: 3, name: 'Muslim World League' }, { id: 2, name: 'ISNA' }, { id: 5, name: 'Egypt' } ].map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></div>
+                        <div className="h-px bg-slate-100 dark:bg-slate-800"></div>
+                        <div className="flex justify-between items-center"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}>{t('asrMethod')}</h3><div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg"><button onClick={() => updateSetting('asrMethod', 0)} className={`px-2 py-1 rounded-md text-[10px] transition ${settings.asrMethod === 0 ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>{t('standard')}</button><button onClick={() => updateSetting('asrMethod', 1)} className={`px-2 py-1 rounded-md text-[10px] transition ${settings.asrMethod === 1 ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>{t('hanafi')}</button></div></div>
+                    </div>
+                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><div className="flex justify-between items-center mb-2"><h3 className="font-semibold text-slate-700 dark:text-slate-300 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Edit} size={14} className="mr-1.5 text-emerald-500" /> {t('timeAdjustments')}</h3><button onClick={() => updateSetting('offsets', { fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 })} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline" style={fs(0.65)}>{t('reset')}</button></div><div className="grid grid-cols-3 gap-2">{['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'].map(k => (<div key={k} className="flex flex-col"><label className="text-[9px] text-slate-500 dark:text-slate-400 mb-0.5 capitalize" style={fs(0.65)}>{t(k)}</label><input type="number" value={settings.offsets[k]} onChange={(e) => updateSetting('offsets', { ...settings.offsets, [k]: parseInt(e.target.value) || 0 })} className="w-full bg-slate-50 dark:bg-slate-900 border dark:border-slate-700 rounded px-1.5 py-1 text-xs text-center outline-none focus:border-emerald-500 text-slate-700 dark:text-slate-300" style={fs(0.75)} /></div>))}</div></div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                        <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><h3 className="font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Globe} size={14} className="mr-1.5 text-emerald-500" /> {t('language')}</h3><div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg"><button onClick={() => setLang('tr')} className={`flex-1 py-1 rounded-md text-[10px] uppercase font-bold transition ${lang === 'tr' ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>TR</button><button onClick={() => setLang('en')} className={`flex-1 py-1 rounded-md text-[10px] uppercase font-bold transition ${lang === 'en' ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>EN</button><button onClick={() => setLang('de')} className={`flex-1 py-1 rounded-md text-[10px] uppercase font-bold transition ${lang === 'de' ? 'bg-white dark:bg-slate-600 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} style={fs(0.65)}>DE</button></div></div>
+                        <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><h3 className="font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center text-xs" style={fs(0.75)}><Icon path={ICONS.Type} size={14} className="mr-1.5 text-emerald-500" /> {t('fontSize')}</h3><input type="range" min="0.8" max="2.0" step="0.1" value={settings.fontSize} onChange={(e) => updateSetting('fontSize', parseFloat(e.target.value))} className="w-full accent-emerald-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer" /></div>
+                    </div>
+                    
+                    {/* Help Button */}
+                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                        <button onClick={() => setShowHelp(true)} className="w-full flex items-center justify-between"><div className="flex items-center"><Icon path={ICONS.HelpCircle} size={14} className="mr-2 text-emerald-500" /><span className="text-xs font-semibold text-slate-700 dark:text-slate-300" style={fs(0.75)}>{t('help')}</span></div><div className="px-2 py-0.5"><Icon path={ICONS.ChevronRight} size={14} /></div></button>
+                    </div>
+
+                     <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><button onClick={handleNotifClick} className="w-full flex items-center justify-between"><div className="flex items-center"><Icon path={ICONS.Bell} size={14} className="mr-2 text-emerald-500" /><span className="text-xs font-semibold text-slate-700 dark:text-slate-300" style={fs(0.75)}>{t('enableNotifications')}</span></div><div className={`px-2 py-0.5 rounded text-[9px] font-bold ${notifPermission === 'granted' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{notifPermission === 'granted' ? 'ON' : 'OFF'}</div></button></div>
+                    <div className="bg-white dark:bg-slate-850 p-2.5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800"><button onClick={() => { if (confirm(t('areYouSure'))) { localStorage.clear(); window.location.reload(); } }} className="w-full flex items-center justify-center space-x-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors"><Icon path={ICONS.Trash2} size={16} /><span className="font-bold text-xs" style={fs(0.75)}>{t('reset')} (All Data)</span></button></div>
+                    <div className="text-center pb-2"><p className="text-[9px] text-slate-400 dark:text-slate-600" style={fs(0.65)}>v2.6.0 • {t('appName')}</p></div>
+                    
+                    <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
+                </div>
+            );
+        });
+
+        // --- 8. APP COMPONENT ---
+        const App = () => {
+            const { lang, t } = useApp();
+            const currentTime = useTime();
+            const locationHook = useGeolocation();
+            const { data: prayerData, loading: prayerLoading } = usePrayerTimes(locationHook.coords);
+            const [activeTab, setActiveTab] = useState(() => { const hash = window.location.hash.replace('#', ''); return ['times', 'tasbeeh', 'quran', 'settings'].includes(hash) ? hash : 'times'; });
+            
+            // Advanced Zikr Reminder Hook
+            useZikrReminder(prayerData, currentTime);
+
+            // Offline Auto-Update Logic
+            const { checkAndDownloadMissing } = useOfflineContent(lang, locationHook);
+            useEffect(() => {
+                const runCheck = () => {
+                    if (navigator.onLine) {
+                        checkAndDownloadMissing();
+                    }
+                };
+                window.addEventListener('online', runCheck);
+                
+                // Check on mount/update
+                runCheck();
+                
+                return () => window.removeEventListener('online', runCheck);
+            }, [lang, locationHook.coords]);
+
+            useEffect(() => { const handlePopState = (event) => { if (event.state && event.state.tab) { setActiveTab(event.state.tab); } else { const hash = window.location.hash.replace('#', ''); if (['times', 'tasbeeh', 'quran', 'settings'].includes(hash)) setActiveTab(hash); } }; window.addEventListener('popstate', handlePopState); return () => window.removeEventListener('popstate', handlePopState); }, []);
+
+            const renderContent = () => {
+                switch (activeTab) {
+                    case 'times': return <PrayerTimesView prayerData={prayerData} loading={prayerLoading || locationHook.loading} currentTime={currentTime} locationName={locationHook.locationName} />;
+                    case 'tasbeeh': return <TasbeehView />;
+                    case 'quran': return <QuranView />;
+                    case 'settings': return <SettingsView locationHook={locationHook} />;
+                    default: return null;
+                }
+            };
+
+            return (
+                <div className="flex flex-col h-full w-full">
+                    <Header currentTime={currentTime} />
+                    <main className="main-layout flex-1 w-full max-w-md mx-auto relative overflow-hidden flex flex-col px-4">
+                        <ErrorBoundary>
+                            <div className="flex-1 h-full overflow-hidden w-full">
+                                 {renderContent()}
+                            </div>
+                        </ErrorBoundary>
+                    </main>
+                    <Navbar active={activeTab} setActive={setActiveTab} />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AppProvider><App /></AppProvider>);
+    </script>
+</body>
+</html>
