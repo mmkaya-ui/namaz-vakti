@@ -545,7 +545,7 @@
         const AppProvider = ({ children }) => {
             const [lang, setLang] = useState(() => StorageService.get(CONFIG.STORAGE_KEYS.LANG, CONFIG.DEFAULTS.LANG));
             const [isDarkMode, setIsDarkMode] = useState(false);
-            const [settings, setSettings] = useState(() => ({ methodId: 13, asrMethod: 0, offsets: { fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }, fontSize: 1.0, soundEnabled: true, vibrationEnabled: true, ...StorageService.get(CONFIG.STORAGE_KEYS.SETTINGS, {}) }));
+            const [settings, setSettings] = useState(() => ({ methodId: 13, asrMethod: 0, offsets: { fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }, fontSize: 1.15, soundEnabled: true, vibrationEnabled: true, ...StorageService.get(CONFIG.STORAGE_KEYS.SETTINGS, {}) }));
 
             // Initialize Offline Pool Once
             useEffect(() => {
