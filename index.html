@@ -206,18 +206,6 @@
             background-color: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(2px);
         }
-
-        /* Offline Banner */
-        .offline-banner {
-            background-color: #fed7aa;
-            color: #7c2d12;
-            text-align: center;
-            font-size: 0.65rem;
-            padding: 4px 0;
-            width: 100%;
-            font-weight: 600;
-            border-bottom: 1px solid #fdba74;
-        }
     </style>
 </head>
 
@@ -930,10 +918,21 @@
 
             return (
                 <header className="fixed top-0 left-0 right-0 mx-auto max-w-md z-50 pt-safe transition-colors duration-300">
-                    {isOffline && <div className="offline-banner">{t('offlineMode')}</div>}
-                    <div className="mx-4 mt-2 h-14 bg-white dark:bg-slate-850 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center px-4 transition-colors duration-300">
-                        <div className="flex items-center space-x-2"><div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white"><Icon path={ICONS.Moon} size={18} /></div><span className="font-bold text-base tracking-tight text-slate-800 dark:text-slate-100" style={fs(1)}>{t('appName')}</span></div>
-                        <div className="flex items-center space-x-2">
+                    <div className={`mx-4 mt-2 h-14 bg-white dark:bg-slate-850 rounded-2xl shadow-sm border flex justify-between items-center px-4 transition-all duration-300 relative overflow-hidden ${isOffline ? 'border-orange-200 dark:border-orange-900/50' : 'border-slate-100 dark:border-slate-800'}`}>
+                        {isOffline && (
+                            <>
+                                <div className="absolute top-0 left-0 right-0 h-1 bg-orange-400/80 z-20"></div>
+                                <div className="absolute inset-0 bg-orange-50/30 dark:bg-orange-900/10 pointer-events-none z-0"></div>
+                            </>
+                        )}
+                        <div className="flex items-center space-x-2 relative z-10">
+                            <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white shrink-0"><Icon path={ICONS.Moon} size={18} /></div>
+                            <div className="flex flex-col justify-center">
+                                <span className="font-bold text-base tracking-tight text-slate-800 dark:text-slate-100 leading-tight" style={fs(1)}>{t('appName')}</span>
+                                {isOffline && <span className="text-[9px] text-orange-600 dark:text-orange-400 font-bold uppercase tracking-wider animate-pulse leading-none mt-0.5">{t('offlineMode')}</span>}
+                            </div>
+                        </div>
+                        <div className="flex items-center space-x-2 relative z-10">
                             <div className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded" style={fs(0.875)}>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
                             <button onClick={toggleTheme} className="text-slate-500 dark:text-slate-400 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><Icon path={isDarkMode ? ICONS.Sun : ICONS.Moon} size={18} /></button>
                         </div>
