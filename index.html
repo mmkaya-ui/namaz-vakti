@@ -410,7 +410,8 @@
             Plus: <><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></>,
             X: <><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>,
             Download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></>,
-            Info: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></>
+            Info: <><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></>,
+            Sparkles: <><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /><path d="M5 3v4" /><path d="M9 5H5" /><path d="M19 19v4" /><path d="M23 21h-4" /></>
         };
 
         const { useState, useEffect, useCallback, useMemo, memo, useReducer, useRef, useContext, createContext } = React;
@@ -511,7 +512,8 @@
         const AppContext = createContext(null);
         const AppProvider = ({ children }) => {
             const [lang, setLang] = useState(() => StorageService.get(CONFIG.STORAGE_KEYS.LANG, CONFIG.DEFAULTS.LANG));
-            const [isDarkMode, setIsDarkMode] = useState(false);
+            const [themeMode, setThemeMode] = useState(() => StorageService.get(CONFIG.STORAGE_KEYS.THEME, 'auto')); // 'light' | 'dark' | 'auto'
+            const [isOffline, setIsOffline] = useState(!navigator.onLine);
             const [settings, setSettings] = useState(() => ({ methodId: 13, asrMethod: 0, offsets: { fajr: 0, sunrise: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }, fontSize: 1.35, soundEnabled: true, vibrationEnabled: true, ...StorageService.get(CONFIG.STORAGE_KEYS.SETTINGS, {}) }));
 
             // Initialize Offline Pool Once
@@ -519,7 +521,7 @@
                 const existingPool = StorageService.get(CONFIG.STORAGE_KEYS.OFFLINE_QURAN_POOL);
                 if (!existingPool || existingPool.length === 0) {
                     const newPool = [];
-                    while (newPool.length < 50) { // Increased to 50
+                    while (newPool.length < 50) {
                         const r = Math.floor(Math.random() * 604) + 1;
                         if (!newPool.includes(r)) newPool.push(r);
                     }
@@ -528,7 +530,39 @@
                 registerServiceWorker();
             }, []);
 
+            // Robust Offline Check (Polling)
+            useEffect(() => {
+                const checkConnectivity = async () => {
+                    if (!navigator.onLine) {
+                        setIsOffline(true);
+                        return;
+                    }
+                    try {
+                        // Bypass cache with timestamp to check real network
+                        await fetch('./manifest.json?t=' + Date.now(), { method: 'HEAD' });
+                        setIsOffline(false);
+                    } catch (e) {
+                        setIsOffline(true);
+                    }
+                };
+
+                const interval = setInterval(checkConnectivity, 30000); // Check every 30 seconds
+                window.addEventListener('online', checkConnectivity);
+                window.addEventListener('offline', () => setIsOffline(true));
+
+                // Initial check
+                checkConnectivity();
+
+                return () => {
+                    clearInterval(interval);
+                    window.removeEventListener('online', checkConnectivity);
+                    window.removeEventListener('offline', () => setIsOffline(true));
+                };
+            }, []);
+
+
             useEffect(() => { StorageService.set(CONFIG.STORAGE_KEYS.SETTINGS, settings); }, [settings]);
+
             useEffect(() => {
                 StorageService.set(CONFIG.STORAGE_KEYS.LANG, lang);
                 const appName = TRANSLATIONS[lang]?.appName || "Namaz ve Zikir";
@@ -538,22 +572,74 @@
                 document.title = appName;
             }, [lang]);
 
-            const toggleTheme = useCallback(() => setIsDarkMode(p => !p), []);
+            // Theme Logic
+            const toggleTheme = useCallback(() => {
+                setThemeMode(prev => {
+                    const next = prev === 'light' ? 'dark' : (prev === 'dark' ? 'auto' : 'light');
+                    StorageService.set(CONFIG.STORAGE_KEYS.THEME, next);
+                    return next;
+                });
+            }, []);
+
+            // Apply Theme
             useEffect(() => {
-                if (isDarkMode) {
-                    document.documentElement.classList.add('dark');
-                    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000000');
-                    document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content', 'black-translucent');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f8fafc');
-                    document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content', 'default');
+                const apply = (isDark) => {
+                    if (isDark) {
+                        document.documentElement.classList.add('dark');
+                        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000000');
+                        document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content', 'black-translucent');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f8fafc');
+                        document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute('content', 'default');
+                    }
+                };
+
+                if (themeMode === 'light') apply(false);
+                else if (themeMode === 'dark') apply(true);
+                else {
+                    // Auto Logic
+                    const checkAutoTheme = () => {
+                        const now = new Date();
+                        const coords = StorageService.get(CONFIG.STORAGE_KEYS.COORDS);
+                        if (!coords) { apply(false); return; } // Default to light if no location
+
+                        const year = now.getFullYear();
+                        const month = now.getMonth() + 1;
+                        const cacheKey = `prayer_calendar_${year}_${month}_${coords.lat.toFixed(2)}_${coords.lng.toFixed(2)}_${settings.methodId}_${settings.asrMethod}`;
+                        const cached = CacheService.get(cacheKey);
+
+                        if (cached) {
+                            const todayDay = now.getDate();
+                            const todayData = cached.find(d => parseInt(d.date.gregorian.day) === todayDay);
+                            if (todayData) {
+                                const parseTime = (str) => { const [h, m] = str.split(' ')[0].split(':').map(Number); const d = new Date(); d.setHours(h, m, 0, 0); return d; };
+                                const fajr = parseTime(todayData.timings.Fajr);
+                                const maghrib = parseTime(todayData.timings.Maghrib);
+
+                                const dayStart = new Date(fajr.getTime() + 60 * 60 * 1000); // Fajr + 1h
+                                const nightStart = new Date(maghrib.getTime() + 2 * 60 * 60 * 1000); // Maghrib + 2h
+
+                                if (now >= dayStart && now < nightStart) apply(false);
+                                else apply(true);
+                                return;
+                            }
+                        }
+                        // Fallback time-based if no prayer data
+                        const h = now.getHours();
+                        apply(h < 6 || h >= 20); // Dark between 8PM and 6AM simple fallback
+                    };
+                    checkAutoTheme();
+                    const timer = setInterval(checkAutoTheme, 60000); // Check every minute
+                    return () => clearInterval(timer);
                 }
-            }, [isDarkMode]);
+            }, [themeMode, settings.methodId, settings.asrMethod]);
+
             const t = useCallback((key) => TRANSLATIONS[lang]?.[key] || key, [lang]);
             const updateSetting = useCallback((key, val) => { setSettings(prev => ({ ...prev, [key]: val })); }, []);
             const fs = useCallback((baseRem) => ({ fontSize: `${baseRem * settings.fontSize}rem`, lineHeight: '1.4' }), [settings.fontSize]);
-            const value = useMemo(() => ({ lang, setLang, isDarkMode, setIsDarkMode, toggleTheme, settings, updateSetting, t, fs }), [lang, isDarkMode, settings, t, toggleTheme, updateSetting, fs]);
+
+            const value = useMemo(() => ({ lang, setLang, themeMode, toggleTheme, isOffline, setIsOffline, settings, updateSetting, t, fs }), [lang, themeMode, isOffline, settings, t, toggleTheme, updateSetting, fs]);
             return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
         };
         const useApp = () => useContext(AppContext);
@@ -906,27 +992,13 @@
         const LoadingView = memo(() => (<div className="flex justify-center items-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 dark:border-emerald-400"></div></div>));
 
         const Header = memo(({ currentTime }) => {
-            const { t, isDarkMode, toggleTheme, fs } = useApp();
-            const [isOffline, setIsOffline] = useState(!navigator.onLine);
+            const { t, themeMode, toggleTheme, isOffline, fs } = useApp();
+
 
             useEffect(() => {
-                const handleOnline = () => setIsOffline(false);
-                const handleOffline = () => setIsOffline(true);
-                // Extra check on focus/visibility change
-                const checkStatus = () => setIsOffline(!navigator.onLine);
-
-                window.addEventListener('online', handleOnline);
-                window.addEventListener('offline', handleOffline);
-                window.addEventListener('focus', checkStatus);
-                // Initial check
-                checkStatus();
-
-                return () => {
-                    window.removeEventListener('online', handleOnline);
-                    window.removeEventListener('offline', handleOffline);
-                    window.removeEventListener('focus', checkStatus);
-                };
+                // We now use global isOffline state, no local logic needed here beyond mounting check
             }, []);
+
 
             return (
                 <header className="fixed top-0 left-0 right-0 mx-auto max-w-md z-50 pt-safe transition-colors duration-300">
@@ -947,7 +1019,12 @@
                         </div>
                         <div className="flex items-center space-x-2 relative z-10">
                             <div className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded" style={fs(0.875)}>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
-                            <button onClick={toggleTheme} className="text-slate-500 dark:text-slate-400 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><Icon path={isDarkMode ? ICONS.Sun : ICONS.Moon} size={18} /></button>
+                            <button onClick={toggleTheme} className="text-slate-500 dark:text-slate-400 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
+                                {themeMode === 'light' && <Icon path={ICONS.Moon} size={18} />}
+                                {themeMode === 'dark' && <Icon path={ICONS.Sparkles} size={18} />}
+                                {themeMode === 'auto' && <Icon path={ICONS.Sun} size={18} />}
+                                {themeMode === 'auto' && <span className="absolute -top-2 -right-1 flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span></span>}
+                            </button>
                         </div>
                     </div>
                 </header>
