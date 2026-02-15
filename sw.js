@@ -1,4 +1,4 @@
-const CACHE_NAME = 'namaz-zikir-v2.7.2';
+const CACHE_NAME = 'namaz-zikir-v2.7.3';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -28,8 +28,8 @@ self.addEventListener('activate', event => {
 });
 
 // Fetch strategy: 
-// - App files (HTML): Cache-first (offline-ready)
-// - API calls: Network-first with cache fallback (fresh data when online)
+// - App files (HTML): Network-First (Ensures updates are seen immediately when online)
+// - API calls: Network-first with cache fallback
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
@@ -41,7 +41,6 @@ self.addEventListener('fetch', event => {
         event.respondWith(
             fetch(event.request)
                 .then(response => {
-                    // Cache successful API responses
                     if (response.ok) {
                         const clone = response.clone();
                         caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
@@ -53,7 +52,7 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // CDN resources (React, Tailwind, etc): cache-first
+    // CDN resources (React, Tailwind, etc): cache-first (Stable libraries)
     if (url.hostname.includes('cdn') || url.hostname.includes('unpkg') || url.hostname.includes('fonts')) {
         event.respondWith(
             caches.match(event.request).then(cached => {
@@ -70,8 +69,17 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // App files: cache-first
+    // App files (index.html, manifest, etc): Network-First
+    // This solves the "stuck on old version" problem while keeping offline support
     event.respondWith(
-        caches.match(event.request).then(cached => cached || fetch(event.request))
+        fetch(event.request)
+            .then(response => {
+                if (response.ok) {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                }
+                return response;
+            })
+            .catch(() => caches.match(event.request))
     );
 });
