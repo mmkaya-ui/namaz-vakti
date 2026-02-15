@@ -325,54 +325,23 @@
         const registerServiceWorker = async () => {
             if ('serviceWorker' in navigator) {
                 try {
-                    // Expanded SW to cache common assets
-                    const swCode = `
-                        const CACHE_NAME = 'namaz-v4-static';
-                        const ASSETS = [
-                            './',
-                            './index.html',
-                            './manifest.json',
-                            './icon1.jpg',
-                            'https://cdn.tailwindcss.com',
-                            'https://unpkg.com/react@18/umd/react.production.min.js',
-                            'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
-                            'https://unpkg.com/@babel/standalone/babel.min.js',
-                            'https://cdn-icons-png.flaticon.com/512/5533/5533023.png'
-                        ];
-                        self.addEventListener('install', (event) => {
-                            self.skipWaiting();
-                            event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
-                        });
-                        self.addEventListener('activate', (event) => self.clients.claim());
-                        self.addEventListener('fetch', (event) => {
-                            event.respondWith(
-                                caches.match(event.request).then(response => {
-                                    return response || fetch(event.request).then(networkResponse => {
-                                        // Cache new static assets & API responses dynamically
-                                        const url = new URL(event.request.url);
-                                        const isSameOrigin = url.origin === self.location.origin;
-                                        const isExternalAsset = url.protocol.startsWith('http') && (
-                                            url.href.includes('cdn') || 
-                                            url.href.includes('unpkg') || 
-                                            url.href.includes('aladhan.com') || 
-                                            url.href.includes('alquran.cloud')
-                                        );
+                    const registration = await navigator.serviceWorker.register('./sw.js');
+                    console.log('SW Registered:', registration);
 
-                                        if (isSameOrigin || isExternalAsset) {
-                                            const clone = networkResponse.clone();
-                                            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-                                        }
-                                        return networkResponse;
-                                    });
-                                }).catch(() => null)
-                            );
-                        });
-                    `;
-                    const blob = new Blob([swCode], { type: 'text/javascript' });
-                    const url = URL.createObjectURL(blob);
-                    await navigator.serviceWorker.register(url).catch(err => {
-                        console.warn("Service Worker registration failed (common in preview/iframe):", err.message);
-                    });
+                    // Force update if found
+                    registration.onupdatefound = () => {
+                        const installingWorker = registration.installing;
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed') {
+                                if (navigator.serviceWorker.controller) {
+                                    console.log('New content available, please refresh.');
+                                    // Optional: Show toast to user
+                                } else {
+                                    console.log('Content cached for offline use.');
+                                }
+                            }
+                        };
+                    };
                 } catch (e) {
                     console.warn('SW Setup Error:', e);
                 }
