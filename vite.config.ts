@@ -101,8 +101,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor': ['react', 'react-dom'],
-          'ui': ['./src/components/index.ts']
+          'vendor': ['react', 'react-dom']
         }
       }
     }
