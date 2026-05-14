@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   GLOBAL STYLES - Namaz ve Zikir App
+   ============================================================ */
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html,
+  body,
+  #root {
+    @apply h-full w-full m-0 p-0;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+    @apply dark:bg-slate-950 dark:text-slate-100;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Font settings */
+  html {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 
+                 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+}
+
+@layer components {
+  /* Safe area utilities for notched devices */
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-pl {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-pr {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Scrollbar hiding */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Ripple effect for buttons */
+  .ripple-effect {
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+  }
+
+  .ripple-effect::after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, currentColor 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform 0.5s, opacity 1s;
+  }
+
+  .ripple-effect:active::after {
+    transform: scale(0, 0);
+    opacity: 0.3;
+    transition: 0s;
+  }
+
+  /* Touch optimization */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+
+  /* Range input styling */
+  input[type="range"] {
+    @apply appearance-none bg-slate-200 rounded-lg h-2 cursor-pointer dark:bg-slate-700;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    @apply appearance-none w-4 h-4 bg-emerald-500 rounded-full cursor-pointer;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    @apply w-4 h-4 bg-emerald-500 rounded-full cursor-pointer border-0;
+  }
+
+  /* Number input spin button removal */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer utilities {
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out forwards;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Font size utilities */
+  .text-xxs {
+    font-size: 0.65rem;
+  }
+
+  /* Modal backdrop */
+  .modal-overlay {
+    @apply bg-black/50 backdrop-blur-sm;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* RTL support for Arabic text */
+[dir="rtl"] {
+  text-align: right;
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .ios-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
