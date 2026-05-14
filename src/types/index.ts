@@ -217,6 +217,9 @@ export interface StorageKeys {
   CUSTOM_ZIKRS: string;
   OFFLINE_QURAN_POOL: string;
   LAST_POOL_UPDATE: string;
+  TASBEEH_PROGRESS_PREFIX: string;
+  TASBEEH_STATUS_PREFIX: string;
+  LAST_ZIKR_MODE: string;
 }
 
 // Notification Types
@@ -226,6 +229,7 @@ export interface NotificationOptions {
   tag?: string;
   requireInteraction?: boolean;
   actions?: { action: string; title: string; icon?: string }[];
+  badge?: string;
 }
 
 // Component Props
@@ -304,7 +308,8 @@ export interface OfflinePoolState {
 export interface DownloadProgress {
   current: number;
   total: number;
-  percentage: number;
+  percentage?: number;
+  phase?: 'pages' | 'special' | 'complete';
 }
 
 // API Config
@@ -335,6 +340,30 @@ export interface ZikrDbEntry {
 
 // Icon Path (SVG)
 export type IconPath = ReactNode;
+
+// Prayer Times Hook Result
+export interface PrayerTimesResult {
+  times: {
+    fajr: Date;
+    sunrise: Date;
+    dhuhr: Date;
+    asr: Date;
+    maghrib: Date;
+    isha: Date;
+  };
+  special: {
+    teheccud: { start: Date; end: Date };
+    kerahat: { start: Date; end: Date };
+    israk: Date;
+    kerahet: Date;
+  };
+  nextPrayer: {
+    name: string;
+    time: Date;
+    remaining: number;
+  };
+  date: string;
+}
 
 // Timeout/Interval refs
 export type TimerRef = ReturnType<typeof setTimeout> | null;

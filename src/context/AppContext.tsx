@@ -45,7 +45,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // Settings state
   const [settings, setSettings] = useState<AppSettings>(() => {
     return {
-      ...CONFIG.DEFAULTS.SETTINGS,
+      ...(CONFIG.DEFAULTS.SETTINGS as AppSettings),
       ...StorageService.get<Partial<AppSettings>>(CONFIG.STORAGE_KEYS.SETTINGS, {})
     };
   });
@@ -142,7 +142,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const interval = setInterval(async () => {
       if (navigator.onLine) {
         try {
-          await fetch('./manifest.json?t=' + Date.now(), { method: 'HEAD' });
+          await fetch('./manifest.json?t=' + Date.now(), { method: 'HEAD' as 'HEAD' });
           setIsOffline(false);
         } catch {
           setIsOffline(true);

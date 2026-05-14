@@ -158,7 +158,7 @@ export class CacheHelper {
     if (!('caches' in window)) return null;
     
     try {
-      return await caches.match(url);
+      return (await caches.match(url)) || null;
     } catch (e) {
       console.warn('CacheHelper.get error:', e);
       return null;

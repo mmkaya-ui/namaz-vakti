@@ -93,12 +93,15 @@ export class QuranService {
       if (arabic.code !== 200 || !arabic.data || Array.isArray(arabic.data)) {
         throw new Error('Invalid Quran data');
       }
+      
       const arabicData = arabic.data as { ayahs: Array<{ text: string; surah: { name: string }; numberInSurah: number }> };
+      const transData = (translation.data as { ayahs?: Array<{ text: string }> } | undefined);
+      const translitData = (transliteration.data as { ayahs?: Array<{ text: string }> } | undefined);
 
-      const ayahs: QuranAyah[] = arabicData.ayahs.map((ayah: { text: string; surah: { name: string }; numberInSurah: number }, i: number) => ({
+      const ayahs: QuranAyah[] = arabicData.ayahs.map((ayah, i) => ({
         arabic: ayah.text,
-        text: translation.data?.ayahs?.[i]?.text || '',
-        trans: transliteration.data?.ayahs?.[i]?.text || '',
+        text: transData?.ayahs?.[i]?.text || '',
+        trans: translitData?.ayahs?.[i]?.text || '',
         info: `${ayah.surah.name} : ${ayah.numberInSurah}`,
         number: ayah.numberInSurah
       }));

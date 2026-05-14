@@ -1,5 +1,11 @@
 import type { AudioType } from '../types';
 
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
+
 // ============================================================
 // AUDIO SERVICE - Web Audio API with Compressor
 // ============================================================
