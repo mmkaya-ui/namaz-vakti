@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { PrayerService } from '@services/prayer';
-import { CONFIG } from '@constants/config';
 import type { 
   Coordinates, 
   AppSettings, 

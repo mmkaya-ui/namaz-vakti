@@ -309,7 +309,7 @@ export interface DownloadProgress {
   current: number;
   total: number;
   percentage?: number;
-  phase?: 'pages' | 'special' | 'complete';
+  phase?: 'pages' | 'special' | 'complete' | 'preparing';
 }
 
 // API Config
@@ -341,29 +341,6 @@ export interface ZikrDbEntry {
 // Icon Path (SVG)
 export type IconPath = ReactNode;
 
-// Prayer Times Hook Result
-export interface PrayerTimesResult {
-  times: {
-    fajr: Date;
-    sunrise: Date;
-    dhuhr: Date;
-    asr: Date;
-    maghrib: Date;
-    isha: Date;
-  };
-  special: {
-    teheccud: { start: Date; end: Date };
-    kerahat: { start: Date; end: Date };
-    israk: Date;
-    kerahet: Date;
-  };
-  nextPrayer: {
-    name: string;
-    time: Date;
-    remaining: number;
-  };
-  date: string;
-}
 
 // Timeout/Interval refs
 export type TimerRef = ReturnType<typeof setTimeout> | null;

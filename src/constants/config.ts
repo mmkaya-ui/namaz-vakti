@@ -33,7 +33,7 @@ export const CONFIG = Object.freeze({
     THEME: 'auto' as const,
     SETTINGS: {
       methodId: 13,      // Diyanet
-      asrMethod: 0,      // Standard
+      asrMethod: 0 as 0 | 1,      // Standard
       offsets: {
         fajr: 0,
         sunrise: 0,

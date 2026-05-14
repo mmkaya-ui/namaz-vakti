@@ -7,6 +7,7 @@ import type { NotificationOptions } from '@app-types';
 export class NotificationService {
   private static permission: NotificationPermission = 'default';
   private static sentNotifications: Set<string> = new Set();
+  private static cleanupScheduled = false;
 
   /**
    * Initialize notification service
@@ -102,6 +103,20 @@ export class NotificationService {
       setTimeout(() => {
         this.sentNotifications.delete(tag);
       }, 60000); // 1 minute
+
+      // Clear all sent notifications at midnight to prevent memory leak
+      const now = new Date();
+      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      const msUntilMidnight = midnight.getTime() - now.getTime();
+      
+      // Schedule a one-time cleanup if not already scheduled
+      if (!this.cleanupScheduled) {
+        this.cleanupScheduled = true;
+        setTimeout(() => {
+          this.sentNotifications.clear();
+          this.cleanupScheduled = false;
+        }, msUntilMidnight);
+      }
 
       return notification;
 

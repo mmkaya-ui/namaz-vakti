@@ -4,8 +4,7 @@ import {
   parseTimeString, 
   adjustTime, 
   calculateTeheccudTime,
-  calculateKerahatTimes,
-  getTomorrow
+  calculateKerahatTimes
 } from '@utils/helpers';
 import type { 
   PrayerData, 
@@ -46,7 +45,7 @@ export interface PrayerTimesResult {
     time: Date;
     remaining: number; // milliseconds
   };
-  current: PrayerData['date'];
+  date: PrayerData['date'];
 }
 
 export class PrayerService {
@@ -226,7 +225,7 @@ export class PrayerService {
     settings: Pick<AppSettings, 'methodId' | 'asrMethod'>
   ): Promise<boolean> {
     const now = new Date();
-    const nextMonth = now.getMonth() === 11 ? 1 : now.getMonth() + 2;
+    const nextMonth = now.getMonth() === 11 ? 0 : now.getMonth() + 1;
     const nextYear = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
 
     try {

@@ -172,16 +172,27 @@ export class StorageService {
    * Check if a key is protected from eviction
    */
   private static isProtectedKey(key: string): boolean {
-    const protectedPrefixes = [
+    const protectedKeys = [
       CONFIG.STORAGE_KEYS.COORDS,
       CONFIG.STORAGE_KEYS.LOC_NAME,
       CONFIG.STORAGE_KEYS.LANG,
       CONFIG.STORAGE_KEYS.THEME,
       CONFIG.STORAGE_KEYS.SETTINGS,
-      CONFIG.STORAGE_KEYS.LAST_ZIKR_MODE
+      CONFIG.STORAGE_KEYS.LAST_ZIKR_MODE,
+      CONFIG.STORAGE_KEYS.TASBEEH_PROGRESS_PREFIX,
+      CONFIG.STORAGE_KEYS.TASBEEH_STATUS_PREFIX
     ];
     
-    return protectedPrefixes.some(prefix => key.startsWith(prefix));
+    // Check exact match OR if key starts with prefix patterns (but not partial matches)
+    return protectedKeys.some(protectedKey => {
+      if (key === protectedKey) return true;
+      // For prefix-based keys like 'tasbeeh_progress_morning', check if starts with prefix
+      if (protectedKey.endsWith('_PREFIX')) {
+        const basePrefix = protectedKey.replace('_PREFIX', '_');
+        return key.startsWith(basePrefix);
+      }
+      return false;
+    });
   }
 
   /**
