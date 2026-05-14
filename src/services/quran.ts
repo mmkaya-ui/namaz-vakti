@@ -11,7 +11,7 @@ import type {
   QuranAyah, 
   QuranPageData,
   OfflinePoolState 
-} from '@app-types';
+} from '@/types';
 
 // ============================================================
 // QURAN SERVICE - Page fetching and offline management
@@ -90,11 +90,12 @@ export class QuranService {
       const { arabic, translation, transliteration } = 
         await ApiService.fetchQuranPage(page, lang);
 
-      if (arabic.code !== 200 || !arabic.data?.ayahs) {
+      if (arabic.code !== 200 || !arabic.data || Array.isArray(arabic.data)) {
         throw new Error('Invalid Quran data');
       }
+      const arabicData = arabic.data as { ayahs: Array<{ text: string; surah: { name: string }; numberInSurah: number }> };
 
-      const ayahs: QuranAyah[] = arabic.data.ayahs.map((ayah, i) => ({
+      const ayahs: QuranAyah[] = arabicData.ayahs.map((ayah: { text: string; surah: { name: string }; numberInSurah: number }, i: number) => ({
         arabic: ayah.text,
         text: translation.data?.ayahs?.[i]?.text || '',
         trans: transliteration.data?.ayahs?.[i]?.text || '',

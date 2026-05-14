@@ -1,7 +1,7 @@
 import { CONFIG } from '@constants/config';
 import { SURAH_NAMES_TR } from '@constants/config';
 import { CacheService } from './cache';
-import type { Language, AladhanResponse, QuranApiResponse } from '@app-types';
+import type { Language, AladhanResponse, QuranApiResponse } from '@/types';
 
 // ============================================================
 // API SERVICE - With Retry Logic and Rate Limiting
@@ -316,7 +316,12 @@ export class ApiService {
 
     const url = `${CONFIG.API.NOMINATIM}/search?format=json&q=${encodeURIComponent(query)}&limit=${limit}`;
     
-    const results = await this.fetchJson<typeof results>(url);
+    interface LocationResult {
+      display_name: string;
+      lat: string;
+      lon: string;
+    }
+    const results = await this.fetchJson<LocationResult[]>(url);
     
     // Cache for 7 days
     CacheService.set(cacheKey, results, CONFIG.CACHE_TTL.LOCATION);

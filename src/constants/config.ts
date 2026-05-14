@@ -1,4 +1,4 @@
-import type { ApiConfig, StorageKeys, Coordinates, Language, CalcMethod } from '@app-types';
+import type { ApiConfig, StorageKeys, Coordinates, Language, CalcMethod } from '@/types';
 
 // ============================================================
 // APP CONFIGURATION

@@ -13,7 +13,7 @@ import type {
   Coordinates, 
   AppSettings,
   TimeOffsets 
-} from '@app-types';
+} from '@/types';
 
 // ============================================================
 // PRAYER TIMES SERVICE - Calculation and Management

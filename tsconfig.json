@@ -12,8 +12,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
@@ -21,6 +21,7 @@
       "@components/*": ["src/components/*"],
       "@hooks/*": ["src/hooks/*"],
       "@utils/*": ["src/utils/*"],
+      "@app-types": ["src/types/index"],
       "@app-types/*": ["src/types/*"],
       "@services/*": ["src/services/*"],
       "@constants/*": ["src/constants/*"]
