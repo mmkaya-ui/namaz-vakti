@@ -159,7 +159,7 @@ export class PrayerService {
       times,
       special,
       nextPrayer,
-      current: date
+      date
     };
   }
 
