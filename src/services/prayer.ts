@@ -11,7 +11,9 @@ import type {
   PrayerTimings, 
   Coordinates, 
   AppSettings,
-  TimeOffsets 
+  TimeOffsets,
+  PrayerTimesResult,
+  SpecialTimes
 } from '@/types';
 
 // ============================================================
@@ -28,25 +30,6 @@ export interface ProcessedPrayerTimes {
   midnight: Date;
 }
 
-export interface SpecialTimes {
-  teheccud: { start: Date; end: Date };
-  kerahat: {
-    ishraq: { start: Date; end: Date };
-    istiwa: { start: Date; end: Date };
-    isfirar: { start: Date; end: Date };
-  };
-}
-
-export interface PrayerTimesResult {
-  times: ProcessedPrayerTimes;
-  special: SpecialTimes;
-  nextPrayer: {
-    name: string;
-    time: Date;
-    remaining: number; // milliseconds
-  };
-  date: PrayerData['date'];
-}
 
 export class PrayerService {
   /**

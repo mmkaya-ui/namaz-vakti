@@ -349,7 +349,17 @@ export type IntervalRef = ReturnType<typeof setInterval> | null;
 // Abort Controller ref
 export type AbortControllerRef = AbortController | null;
 
-// Prayer Times Hook Result (re-export from service)
+// Special times for prayers
+export interface SpecialTimes {
+  teheccud: { start: Date; end: Date };
+  kerahat: {
+    ishraq: { start: Date; end: Date };
+    istiwa: { start: Date; end: Date };
+    isfirar: { start: Date; end: Date };
+  };
+}
+
+// Prayer Times Hook Result
 export interface PrayerTimesResult {
   times: {
     fajr: Date;
@@ -359,12 +369,7 @@ export interface PrayerTimesResult {
     maghrib: Date;
     isha: Date;
   };
-  special: {
-    teheccud: { start: Date; end: Date };
-    kerahat: { start: Date; end: Date };
-    israk: Date;
-    kerahet: Date;
-  };
+  special: SpecialTimes;
   nextPrayer: {
     name: string;
     time: Date;
