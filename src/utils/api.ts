@@ -184,12 +184,9 @@ export class ApiService {
       return cached;
     }
 
-    // Fix: Aladhan ignores school=1 for method=13 (Diyanet)
-    // Use Method 3 (MWL) as proxy for Diyanet angles when Hanafi is selected
-    const effectiveMethod = (methodId === 13 && asrMethod === 1) ? 3 : methodId;
     const schoolParam = asrMethod === 1 ? '&school=1' : '&school=0';
 
-    const url = `${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${lat}&longitude=${lng}&method=${effectiveMethod}${schoolParam}`;
+    const url = `${CONFIG.API.ALADHAN}/calendar/${year}/${month}?latitude=${lat}&longitude=${lng}&method=${methodId}${schoolParam}`;
     
     const response = await this.fetchJson<AladhanResponse>(url);
     
