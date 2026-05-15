@@ -14,6 +14,8 @@ export class AudioService {
   private static ctx: AudioContext | null = null;
   private static compressor: DynamicsCompressorNode | null = null;
   private static isInitializing = false;
+  private static lastTickTime = 0;
+  private static tickDebounceMs = 50; // Minimum 50ms between ticks
 
   /**
    * Initialize AudioContext with compressor
@@ -32,13 +34,13 @@ export class AudioService {
 
       this.ctx = new AudioContextClass();
 
-      // Create master compressor for loudness normalization
+      // Create master compressor for loudness normalization (softer settings)
       this.compressor = this.ctx.createDynamicsCompressor();
-      this.compressor.threshold.setValueAtTime(-24, this.ctx.currentTime);
-      this.compressor.knee.setValueAtTime(30, this.ctx.currentTime);
-      this.compressor.ratio.setValueAtTime(12, this.ctx.currentTime);
-      this.compressor.attack.setValueAtTime(0.003, this.ctx.currentTime);
-      this.compressor.release.setValueAtTime(0.25, this.ctx.currentTime);
+      this.compressor.threshold.setValueAtTime(-12, this.ctx.currentTime);
+      this.compressor.knee.setValueAtTime(12, this.ctx.currentTime);
+      this.compressor.ratio.setValueAtTime(4, this.ctx.currentTime);
+      this.compressor.attack.setValueAtTime(0.01, this.ctx.currentTime);
+      this.compressor.release.setValueAtTime(0.1, this.ctx.currentTime);
       this.compressor.connect(this.ctx.destination);
 
       console.log('AudioService initialized');
@@ -61,6 +63,8 @@ export class AudioService {
     
     if (this.ctx.state === 'suspended') {
       try {
+        // iOS fix: Add small delay before resume to prevent pop/click
+        await new Promise(resolve => setTimeout(resolve, 10));
         await this.ctx.resume();
         return true;
       } catch (e) {
@@ -107,36 +111,41 @@ export class AudioService {
   }
 
   /**
-   * Play tick sound (soft sine wave)
+   * Play tick sound (soft sine wave) with debounce
    */
   private static playTick(): void {
     if (!this.ctx || !this.compressor) return;
 
-    const now = this.ctx.currentTime;
+    // Debounce: prevent rapid-fire ticks
+    const now = Date.now();
+    if (now - this.lastTickTime < this.tickDebounceMs) return;
+    this.lastTickTime = now;
+
+    const audioNow = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
     osc.connect(gain);
     gain.connect(this.compressor);
 
-    // Soft sine wave
+    // Softer sine wave
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(400, now);
-    osc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+    osc.frequency.setValueAtTime(600, audioNow);
+    osc.frequency.exponentialRampToValueAtTime(200, audioNow + 0.12);
 
-    // Envelope
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.5, now + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+    // Gentler envelope (lower gain, longer duration)
+    gain.gain.setValueAtTime(0, audioNow);
+    gain.gain.linearRampToValueAtTime(0.2, audioNow + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.15);
 
-    osc.start(now);
-    osc.stop(now + 0.09);
+    osc.start(audioNow);
+    osc.stop(audioNow + 0.16);
 
     // Cleanup
     setTimeout(() => {
       osc.disconnect();
       gain.disconnect();
-    }, 100);
+    }, 200);
   }
 
   /**
