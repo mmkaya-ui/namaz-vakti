@@ -34,13 +34,13 @@ export class AudioService {
 
       this.ctx = new AudioContextClass();
 
-      // Create master compressor for loudness normalization (softer settings)
+      // Create master compressor for loudness normalization (makes quiet sounds louder)
       this.compressor = this.ctx.createDynamicsCompressor();
-      this.compressor.threshold.setValueAtTime(-12, this.ctx.currentTime);
-      this.compressor.knee.setValueAtTime(12, this.ctx.currentTime);
-      this.compressor.ratio.setValueAtTime(4, this.ctx.currentTime);
-      this.compressor.attack.setValueAtTime(0.01, this.ctx.currentTime);
-      this.compressor.release.setValueAtTime(0.1, this.ctx.currentTime);
+      this.compressor.threshold.setValueAtTime(-24, this.ctx.currentTime); // Start compressing early
+      this.compressor.knee.setValueAtTime(30, this.ctx.currentTime); // Soft knee
+      this.compressor.ratio.setValueAtTime(12, this.ctx.currentTime); // High compression ratio
+      this.compressor.attack.setValueAtTime(0.003, this.ctx.currentTime); // Fast attack
+      this.compressor.release.setValueAtTime(0.25, this.ctx.currentTime);
       this.compressor.connect(this.ctx.destination);
 
       console.log('AudioService initialized');
@@ -128,18 +128,18 @@ export class AudioService {
     osc.connect(gain);
     gain.connect(this.compressor);
 
-    // Softer sine wave
+    // Softer sine wave for more spiritual sound
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(600, audioNow);
-    osc.frequency.exponentialRampToValueAtTime(200, audioNow + 0.12);
+    osc.frequency.setValueAtTime(400, audioNow);
+    osc.frequency.exponentialRampToValueAtTime(100, audioNow + 0.08);
 
-    // Gentler envelope (lower gain, longer duration)
+    // Keep linear ramp for audibility, but smoother attack
     gain.gain.setValueAtTime(0, audioNow);
-    gain.gain.linearRampToValueAtTime(0.2, audioNow + 0.008);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioNow + 0.15);
+    gain.gain.linearRampToValueAtTime(0.5, audioNow + 0.005); 
+    gain.gain.exponentialRampToValueAtTime(0.01, audioNow + 0.08);
 
     osc.start(audioNow);
-    osc.stop(audioNow + 0.16);
+    osc.stop(audioNow + 0.09);
 
     // Cleanup
     setTimeout(() => {

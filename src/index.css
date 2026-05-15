@@ -19,13 +19,18 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-800 antialiased;
-    @apply dark:bg-slate-950 dark:text-slate-100;
+    @apply bg-slate-50 text-slate-800 antialiased transition-colors duration-300;
+    @apply dark:bg-black dark:text-slate-100;
     -webkit-tap-highlight-color: transparent;
     touch-action: pan-y;
     user-select: none;
     -webkit-user-select: none;
   }
+
+  html.dark, html.dark body, html.dark #root {
+    background-color: #000000 !important;
+  }
+
 
   /* Font settings */
   html {
@@ -50,6 +55,60 @@
 
   .safe-area-pr {
     padding-right: env(safe-area-inset-right);
+  }
+
+  /* Dark mode global background fix — OLED pure black */
+  html.dark,
+  html.dark body,
+  html.dark #root {
+      background-color: #000000 !important;
+      color: #f1f5f9;
+  }
+
+  /* OLED: Force all Tailwind dark backgrounds to true black */
+  html.dark .dark\:bg-slate-700 {
+      background-color: #1a1a1a !important;
+  }
+
+  html.dark .dark\:bg-slate-800 {
+      background-color: #0f0f0f !important;
+  }
+
+  html.dark .dark\:bg-slate-850 {
+      background-color: #0a0a0a !important;
+  }
+
+  html.dark .dark\:bg-slate-900 {
+      background-color: #050505 !important;
+  }
+
+  html.dark .dark\:bg-slate-950 {
+      background-color: #000000 !important;
+  }
+
+  html.dark .bg-slate-50.dark\:bg-slate-900,
+  html.dark .dark\:from-slate-900 {
+      --tw-gradient-from: #000000 !important;
+  }
+
+  html.dark .dark\:via-slate-900\/80 {
+      --tw-gradient-stops: var(--tw-gradient-from), rgba(0, 0, 0, 0.8), var(--tw-gradient-to) !important;
+  }
+
+  /* --- IOS SAFE AREA UTILITIES --- */
+  .pt-safe {
+      padding-top: env(safe-area-inset-top);
+  }
+
+  .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .main-layout {
+    padding-top: calc(env(safe-area-inset-top) + 72px);
+    /* Header */
+    padding-bottom: calc(env(safe-area-inset-bottom) + 65px);
+    /* Navbar */
   }
 
   /* Scrollbar hiding */
