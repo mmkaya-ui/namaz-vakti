@@ -14,11 +14,42 @@
             "sizes": "512x512",
             "type": "image/jpeg",
             "purpose": "any maskable"
+        },
+        {
+            "src": "icon1.jpg",
+            "sizes": "192x192",
+            "type": "image/jpeg",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icon1.jpg",
+            "sizes": "144x144",
+            "type": "image/jpeg",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icon1.jpg",
+            "sizes": "96x96",
+            "type": "image/jpeg",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icon1.jpg",
+            "sizes": "72x72",
+            "type": "image/jpeg",
+            "purpose": "any maskable"
         }
     ],
     "categories": [
         "lifestyle",
         "education"
     ],
-    "dir": "ltr"
+    "dir": "ltr",
+    "screenshots": [
+        {
+            "src": "icon1.jpg",
+            "sizes": "512x512",
+            "type": "image/jpeg"
+        }
+    ]
 }

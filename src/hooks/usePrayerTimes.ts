@@ -21,6 +21,7 @@ interface UsePrayerTimesReturn {
   loading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
+  isOffline: boolean; // Add offline status
 }
 
 export const usePrayerTimes = ({
@@ -62,7 +63,15 @@ export const usePrayerTimes = ({
       }
     } catch (err) {
       if (isMountedRef.current) {
-        setError(err instanceof Error ? err : new Error(String(err)));
+        const error = err instanceof Error ? err : new Error(String(err));
+        
+        // Offline fallback: if we have cached data, keep using it
+        if (!navigator.onLine && data) {
+          console.log('Offline mode: using cached prayer times');
+          // Don't set error, just keep the cached data
+        } else {
+          setError(error);
+        }
       }
     } finally {
       if (isMountedRef.current) {
@@ -94,6 +103,7 @@ export const usePrayerTimes = ({
     data,
     loading,
     error,
-    refetch
+    refetch,
+    isOffline: !navigator.onLine
   };
 };
